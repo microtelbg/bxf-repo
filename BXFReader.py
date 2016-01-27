@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 from Tkinter import *
 from tkFileDialog import askopenfilename
 
@@ -6,7 +9,13 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-#Testing how to use GitHub
+''' ***************************************************************************
+*** Labels
+*************************************************************************** '''
+rotateButtonText = 'Завърти'
+openBXFFileButtonText = 'Отвори BXF файл'
+placeOnMachineButtonText = 'Постави на машината'
+instrumentiLabelText = 'Инструменти'
 
 ''' ***************************************************************************
 *** Global Variables
@@ -419,7 +428,7 @@ def zaredi_file_info():
     cheti_bxf_file(myfilename)
 
     # 2. Pokaji izbrania file
-    fileNameLabel['text'] = "The chosen file is: tester.bxf"
+    fileNameLabel['text'] = myfilename
 
     # 3. Populti lista s elementi
     print elementi_za_dupchene
@@ -427,9 +436,11 @@ def zaredi_file_info():
         listbox.insert(END, ek)
 
 def izberi_element_za_dupchene():
+      
     #Nameri izbrania element
     itemIndex = int(listbox.curselection()[0])
     itemValue = listbox.get(itemIndex)
+
     izbranElement = elementi_za_dupchene[itemValue]
 
     #Sloji elementa v lista i purvonachalnata orientacia
@@ -438,7 +449,7 @@ def izberi_element_za_dupchene():
 
     print izbranElement.opisanie()
 
-    narisuvai_po_horizontalata(izbranElement)
+    narisuvai_po_horizontalata(izbranElement, 0)
 
 def narisuvai_strana_na_plota(shirina, duljina):
     canvas.create_rectangle(30, 30, shirina+30, duljina+30, fill="lightblue")
@@ -454,16 +465,26 @@ def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius):
 def rotate_element():
     #Nameri izbrania element
     izbranElement = izbrani_elementi['L']
-    currentOrienatation = izbrani_elementi['LO']
-
-    if currentOrienatation == 0:
-        izbrani_elementi['LO'] = 1
-        narisuvai_po_verticalata(izbranElement)
+    currentOrienatation = int(izbrani_elementi['LO'])
+    
+    if currentOrienatation == 3:
+        newOrientation = 0
     else:
-        izbrani_elementi['LO'] = 0
-        narisuvai_po_horizontalata(izbranElement)
+        newOrientation = currentOrienatation + 1
+        
+    izbrani_elementi['LO'] = newOrientation
 
-def narisuvai_po_horizontalata(izbranElement):
+    if newOrientation == 0:
+        narisuvai_po_horizontalata(izbranElement, newOrientation)
+    elif newOrientation == 1:
+        narisuvai_po_verticalata(izbranElement, newOrientation)
+    elif newOrientation == 2:
+        narisuvai_po_horizontalata(izbranElement, newOrientation)
+    elif newOrientation == 3:
+        narisuvai_po_verticalata(izbranElement, newOrientation)
+        
+
+def narisuvai_po_horizontalata(izbranElement, rotation):
     #Reset
     canvas.delete(ALL)
     canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
@@ -498,9 +519,16 @@ def narisuvai_po_horizontalata(izbranElement):
             d_x = float(dupka['y'])*mashtab
             d_y = float(dupka['x'])*mashtab
             d_r = float(dupka['r'])*mashtab
+        
+        if rotation == 2:
+            d_x = masa_x - d_x
+            d_y = masa_y - d_y
+                 
         narisuvai_dupka_na_plota(d_x, d_y, d_r)
 
-def narisuvai_po_verticalata(izbranElement):
+        
+
+def narisuvai_po_verticalata(izbranElement, rotation):
     #Reset
     canvas.delete(ALL)
     canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
@@ -535,6 +563,12 @@ def narisuvai_po_verticalata(izbranElement):
             d_x = float(dupka['x'])*mashtab
             d_y = float(dupka['y'])*mashtab
             d_r = float(dupka['r'])*mashtab
+            
+        if rotation == 1:
+            d_x = masa_x - d_x
+        elif rotation == 3:
+            d_y = masa_y - d_y
+            
         narisuvai_dupka_na_plota(d_x, d_y, d_r)
 
 
@@ -549,14 +583,14 @@ mainMenu.add_cascade(label="File", menu=fileManu)
 
 # ********** Toolbar *************
 toolbar = Frame(mainframe, bg="honeydew")
-openButton = Button(toolbar, text="Open BXF file", command=zaredi_file_info)
+openButton = Button(toolbar, text=openBXFFileButtonText, command=zaredi_file_info)
 openButton.grid(row=0, padx=20, pady=2)
 fileNameLabel = Label(toolbar, text="")
 fileNameLabel.grid(row=0, column=1, padx=2, pady=2)
 toolbar.grid(row=0, columnspan=3, sticky=W+E)
 
 # ********** Rotate Button *************
-rotateButton = Button(mainframe, text='Rotate element', bg="lightblue", command=rotate_element)
+rotateButton = Button(mainframe, text=rotateButtonText, bg="lightblue", command=rotate_element)
 rotateButton.grid(row=1, column=2, sticky=W, padx=20, pady=2)
 
 # ********** Listbox *************
@@ -568,11 +602,11 @@ frame = Frame(mainframe)
 frame.grid(row=2, column=1, sticky=N+S)
 
 # ********** Move Button *************
-moveButton = Button(frame, text='Place on machine --->', bg="bisque", command=izberi_element_za_dupchene)
+moveButton = Button(frame, text=placeOnMachineButtonText, bg="bisque", command=izberi_element_za_dupchene)
 moveButton.grid(row=0, columnspan=2, sticky=N)
 
 # ********** Instrumenti *************
-instrumentiLabel = Label(frame, text='Instrumenti')
+instrumentiLabel = Label(frame, text=instrumentiLabelText)
 instrumentiLabel.grid(row=1, columnspan=2, pady=10)
 
 instr1Label = Label(frame, text='1:')
@@ -605,7 +639,7 @@ instr5Label.grid(row=6, sticky=W)
 instr5Entry = Entry(frame)
 instr5Entry.grid(row=6, column=1, sticky=E)
 # ********** Canvas *************
-canvas = Canvas(mainframe, width=1300, heigh=700, bg="grey")
+canvas = Canvas(mainframe, width=1100, heigh=700, bg="grey")
 #Slojib bg = grey za da vijdam kude e canvas
 canvas.grid(row=2, column=2, padx=20, sticky=W+E+N+S)
 
