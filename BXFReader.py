@@ -16,6 +16,7 @@ rotateButtonText = 'Завърти'
 openBXFFileButtonText = 'Отвори BXF файл'
 placeOnMachineButtonText = 'Постави на машината'
 instrumentiLabelText = 'Инструменти'
+generateGCodeButtonText = 'Генериране на G код'
 
 ''' ***************************************************************************
 *** Global Variables
@@ -37,6 +38,9 @@ elementi_za_dupchene = {}
 # Currently selected elements (izbranite v momenta elementi)
 izbrani_elementi = {}
 
+#Dupki za g-code
+dupki_za_gcode = []
+
 class ElementZaDupchene(object):
     def __init__(self, ime, razmeri, dupki):
         self.ime = ime
@@ -55,6 +59,9 @@ class ElementZaDupchene(object):
 def cheti_bxf_file(filename1):
     tree = ET.parse(filename1)
     myroot = tree.getroot()
+    
+    #Reset
+    elementi_za_dupchene.clear()
 
     suzdai_element_strana(myroot, elementi_za_dupchene, 'LinkeSeitenwand')
     suzdai_element_strana(myroot, elementi_za_dupchene, 'RechteSeitenwand')
@@ -421,7 +428,6 @@ def suzdai_element_vrata(root, elements, name):
 
 
 def zaredi_file_info():
-
     myfilename = askopenfilename(filetypes=(("BXF files", "*.bxf"), ("All files", "*.*")))
 
     # 1. Procheti BXF file
@@ -431,10 +437,14 @@ def zaredi_file_info():
     fileNameLabel['text'] = myfilename
 
     # 3. Populti lista s elementi
-    print elementi_za_dupchene
+    listbox.delete(0, END)
     for ek, ev in elementi_za_dupchene.iteritems():
         listbox.insert(END, ek)
 
+    #Reset
+    canvas.delete(ALL)
+    canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
+    
 def izberi_element_za_dupchene():
       
     #Nameri izbrania element
@@ -488,43 +498,50 @@ def narisuvai_po_horizontalata(izbranElement, rotation):
     #Reset
     canvas.delete(ALL)
     canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
+    del dupki_za_gcode[:]
 
     #Vzemi razmerite na stranata
     razmeri_na_elementa = izbranElement.razmeri
     orientacia_na_elementa = razmeri_na_elementa['orientation']
     if orientacia_na_elementa == 'xz':
-        masa_x = float(razmeri_na_elementa['z'])*mashtab
-        masa_y = float(razmeri_na_elementa['x'])*mashtab
+        masa_x = float(razmeri_na_elementa['z'])
+        masa_y = float(razmeri_na_elementa['x'])
     elif orientacia_na_elementa == 'yz':
-        masa_x = float(razmeri_na_elementa['y'])*mashtab
-        masa_y = float(razmeri_na_elementa['z'])*mashtab
+        masa_x = float(razmeri_na_elementa['y'])
+        masa_y = float(razmeri_na_elementa['z'])
     elif orientacia_na_elementa == 'xy':
-        masa_x = float(razmeri_na_elementa['y'])*mashtab
-        masa_y = float(razmeri_na_elementa['x'])*mashtab
+        masa_x = float(razmeri_na_elementa['y'])
+        masa_y = float(razmeri_na_elementa['x'])
 
     #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(masa_x, masa_y)
+    narisuvai_strana_na_plota(masa_x*mashtab, masa_y*mashtab)
 
     dupki_na_elementa = izbranElement.dupki
     for dupka in dupki_na_elementa:
         if orientacia_na_elementa == 'xz':
-            d_x = float(dupka['z'])*mashtab
-            d_y = float(dupka['x'])*mashtab
-            d_r = float(dupka['r'])*mashtab
+            d_x = float(dupka['z'])
+            d_y = float(dupka['x'])
+            d_r = float(dupka['r'])
         elif orientacia_na_elementa == 'yz':
-            d_x = float(dupka['y'])*mashtab
-            d_y = float(dupka['z'])*mashtab
-            d_r = float(dupka['r'])*mashtab
+            d_x = float(dupka['y'])
+            d_y = float(dupka['z'])
+            d_r = float(dupka['r'])
         elif orientacia_na_elementa == 'xy':
-            d_x = float(dupka['y'])*mashtab
-            d_y = float(dupka['x'])*mashtab
-            d_r = float(dupka['r'])*mashtab
+            d_x = float(dupka['y'])
+            d_y = float(dupka['x'])
+            d_r = float(dupka['r'])
+        
+        dulbochina = float(dupka['h'])
         
         if rotation == 2:
             d_x = masa_x - d_x
             d_y = masa_y - d_y
+            
+        # Zapazi tochnite koordinati na dupkite za g-code
+        dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
+        dupki_za_gcode.append(dupka_za_gcode)
                  
-        narisuvai_dupka_na_plota(d_x, d_y, d_r)
+        narisuvai_dupka_na_plota(d_x*mashtab, d_y*mashtab, d_r*mashtab)
 
         
 
@@ -532,48 +549,79 @@ def narisuvai_po_verticalata(izbranElement, rotation):
     #Reset
     canvas.delete(ALL)
     canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
+    del dupki_za_gcode[:]
 
     #Vzemi razmerite na stranata
     razmeri_na_elementa = izbranElement.razmeri
     orientacia_na_elementa = razmeri_na_elementa['orientation']
     if orientacia_na_elementa == 'xz':
-        masa_x = float(razmeri_na_elementa['x'])*mashtab
-        masa_y = float(razmeri_na_elementa['z'])*mashtab
+        masa_x = float(razmeri_na_elementa['x'])
+        masa_y = float(razmeri_na_elementa['z'])
     elif orientacia_na_elementa == 'yz':
-        masa_x = float(razmeri_na_elementa['z'])*mashtab
-        masa_y = float(razmeri_na_elementa['y'])*mashtab
+        masa_x = float(razmeri_na_elementa['z'])
+        masa_y = float(razmeri_na_elementa['y'])
     elif orientacia_na_elementa == 'xy':
-        masa_x = float(razmeri_na_elementa['x'])*mashtab
-        masa_y = float(razmeri_na_elementa['y'])*mashtab
+        masa_x = float(razmeri_na_elementa['x'])
+        masa_y = float(razmeri_na_elementa['y'])
 
     #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(masa_x, masa_y)
+    narisuvai_strana_na_plota(masa_x*mashtab, masa_y*mashtab)
 
     dupki_na_elementa = izbranElement.dupki
     for dupka in dupki_na_elementa:
         if orientacia_na_elementa == 'xz':
-            d_x = float(dupka['x'])*mashtab
-            d_y = float(dupka['z'])*mashtab
-            d_r = float(dupka['r'])*mashtab
+            d_x = float(dupka['x'])
+            d_y = float(dupka['z'])
+            d_r = float(dupka['r'])
         elif orientacia_na_elementa == 'yz':
-            d_x = float(dupka['z'])*mashtab
-            d_y = float(dupka['y'])*mashtab
-            d_r = float(dupka['r'])*mashtab
+            d_x = float(dupka['z'])
+            d_y = float(dupka['y'])
+            d_r = float(dupka['r'])
         elif orientacia_na_elementa == 'xy':
-            d_x = float(dupka['x'])*mashtab
-            d_y = float(dupka['y'])*mashtab
-            d_r = float(dupka['r'])*mashtab
+            d_x = float(dupka['x'])
+            d_y = float(dupka['y'])
+            d_r = float(dupka['r'])
+        
+        dulbochina = float(dupka['h'])
             
         if rotation == 1:
             d_x = masa_x - d_x
         elif rotation == 3:
             d_y = masa_y - d_y
-            
-        narisuvai_dupka_na_plota(d_x, d_y, d_r)
+         
+        # Zapazi tochnite koordinati na dupkite za g-code
+        dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
+        dupki_za_gcode.append(dupka_za_gcode)
+           
+        narisuvai_dupka_na_plota(d_x*mashtab, d_y*mashtab, d_r*mashtab)
 
+def suzdai_gcode_file():  
+    #Stoinosti na instrumentite
+    instr1Value = instrument1EntryValue.get()
+    instr2Value = instrument2EntryValue.get()
+    instr3Value = instrument3EntryValue.get()
+    instr4Value = instrument4EntryValue.get()
+    instr5Value = instrument5EntryValue.get()
+    
+    print dupki_za_gcode
+            
+    fw = open("sample123.txt", "w")
+    fw.write("Tuk she ima G-code\n")
+    fw.close()
 
 print ('*** BEGIN PROGRAM *************************')
 mainframe = Tk()
+#mainframe.geometry('450x450+500+300') - Use that for window size
+
+''' ***************************************************************************
+*** Variables za stoinosti na instrumentite
+*************************************************************************** '''
+instrument1EntryValue = StringVar()
+instrument2EntryValue = StringVar()
+instrument3EntryValue = StringVar()
+instrument4EntryValue = StringVar()
+instrument5EntryValue = StringVar()
+
 # ********** File Menu *************
 mainMenu = Menu(mainframe)
 mainframe.config(menu=mainMenu)
@@ -612,32 +660,37 @@ instrumentiLabel.grid(row=1, columnspan=2, pady=10)
 instr1Label = Label(frame, text='1:')
 instr1Label.grid(row=2, sticky=W)
 
-instr1Entry = Entry(frame)
+instr1Entry = Entry(frame, textvariable=instrument1EntryValue)
 instr1Entry.grid(row=2, column=1, sticky=E)
 
 instr2Label = Label(frame, text='2:')
 instr2Label.grid(row=3, sticky=W)
 
-instr2Entry = Entry(frame)
+instr2Entry = Entry(frame, textvariable=instrument2EntryValue)
 instr2Entry.grid(row=3, column=1, sticky=E)
 
 instr3Label = Label(frame, text='3:')
 instr3Label.grid(row=4, sticky=W)
 
-instr3Entry = Entry(frame)
+instr3Entry = Entry(frame, textvariable=instrument3EntryValue)
 instr3Entry.grid(row=4, column=1, sticky=E)
 
 instr4Label = Label(frame, text='4:')
 instr4Label.grid(row=5, sticky=W)
 
-instr4Entry = Entry(frame)
+instr4Entry = Entry(frame, textvariable=instrument4EntryValue)
 instr4Entry.grid(row=5, column=1, sticky=E)
 
 instr5Label = Label(frame, text='5:')
 instr5Label.grid(row=6, sticky=W)
 
-instr5Entry = Entry(frame)
+instr5Entry = Entry(frame, textvariable=instrument5EntryValue)
 instr5Entry.grid(row=6, column=1, sticky=E)
+
+# ********** Generate G-Code Button *************
+generateGCodeButton = Button(frame, text=generateGCodeButtonText, bg="tomato", command=suzdai_gcode_file)
+generateGCodeButton.grid(row=7, columnspan=2, pady = 20, sticky=N)
+
 # ********** Canvas *************
 canvas = Canvas(mainframe, width=1100, heigh=700, bg="grey")
 #Slojib bg = grey za da vijdam kude e canvas
