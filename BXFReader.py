@@ -33,6 +33,9 @@ ns = {'blum' : 'http://www.blum.com/bxf'}
 mashtab = 0.5
 filename = 'tester.bxf'
 
+PLOT_NA_MACHINA_X = 1500
+PLOT_NA_MACHINA_Y = 600
+
 #Vsichi elementi of BXF faila za dupchene
 elementi_za_dupchene = {}
 
@@ -469,18 +472,22 @@ def izberi_element_za_dupchene():
 
     print izbranElement.opisanie()
 
-    narisuvai_po_horizontalata(izbranElement, 0)
+    #narisuvai_po_horizontalata(izbranElement, 0)
+    narisuvai_element_na_plota(izbranElement, 0)
 
 def narisuvai_strana_na_plota(shirina, duljina):
     canvas.create_rectangle(30, 30, shirina*mashtab+30, duljina*mashtab+30, fill="lightblue")
 
-def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius):
+def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius, eIzvunPlota):
     nachalo_x = 30 + (xcoordinata - radius)*mashtab
     nachalo_y = 30 + (ycoordinata - radius)*mashtab
     krai_x = 30 + (xcoordinata + radius)*mashtab
     krai_y = 30 + (ycoordinata + radius)*mashtab
 
-    canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
+    if eIzvunPlota == 1:
+        canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon")
+    else:
+        canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
 
 def rotate_element():
     #Nameri izbrania element
@@ -494,116 +501,190 @@ def rotate_element():
         
     izbrani_elementi['LO'] = newOrientation
 
-    if newOrientation == 0:
-        narisuvai_po_horizontalata(izbranElement, newOrientation)
-    elif newOrientation == 1:
-        narisuvai_po_verticalata(izbranElement, newOrientation)
-    elif newOrientation == 2:
-        narisuvai_po_horizontalata(izbranElement, newOrientation)
-    elif newOrientation == 3:
-        narisuvai_po_verticalata(izbranElement, newOrientation)
+    narisuvai_element_na_plota(izbranElement, newOrientation)
+
+#     if newOrientation == 0:
+#         #narisuvai_po_horizontalata(izbranElement, newOrientation)
+#         narisuvai_element_na_plota(izbranElement, newOrientation)
+#     elif newOrientation == 1:
+#         narisuvai_po_verticalata(izbranElement, newOrientation)
+#     elif newOrientation == 2:
+#         narisuvai_po_horizontalata(izbranElement, newOrientation)
+#     elif newOrientation == 3:
+#         narisuvai_po_verticalata(izbranElement, newOrientation)
         
-
-def narisuvai_po_horizontalata(izbranElement, rotation):
-    #Reset
-    canvas.delete(ALL)
-    canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
-    del dupki_za_gcode[:]
-
-    #Vzemi razmerite na stranata
-    razmeri_na_elementa = izbranElement.razmeri
-    orientacia_na_elementa = razmeri_na_elementa['orientation']
-    if orientacia_na_elementa == 'xz':
-        masa_x = float(razmeri_na_elementa['z'])
-        masa_y = float(razmeri_na_elementa['x'])
-    elif orientacia_na_elementa == 'yz':
-        masa_x = float(razmeri_na_elementa['y'])
-        masa_y = float(razmeri_na_elementa['z'])
-    elif orientacia_na_elementa == 'xy':
-        masa_x = float(razmeri_na_elementa['y'])
-        masa_y = float(razmeri_na_elementa['x'])
-
-    #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(masa_x, masa_y)
-
-    dupki_na_elementa = izbranElement.dupki
-    for dupka in dupki_na_elementa:
-        if orientacia_na_elementa == 'xz':
-            d_x = float(dupka['z'])
-            d_y = float(dupka['x'])
-            d_r = float(dupka['r'])
-        elif orientacia_na_elementa == 'yz':
-            d_x = float(dupka['y'])
-            d_y = float(dupka['z'])
-            d_r = float(dupka['r'])
-        elif orientacia_na_elementa == 'xy':
-            d_x = float(dupka['y'])
-            d_y = float(dupka['x'])
-            d_r = float(dupka['r'])
+def ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_za_proverka, rotation, element_x, element_y):
+    poneEdnaDupkaIzlizaPoX = 0
+    poneEdnaDupkaIzlizaPoY = 0
+    
+    for dupka in dupki_za_proverka:
+        if rotation == 0 or rotation == 2:
+            if orientacia_na_elementa == 'xz':
+                d_x = float(dupka['z'])
+                d_y = float(dupka['x'])
+                d_r = float(dupka['r'])
+            elif orientacia_na_elementa == 'yz':
+                d_x = float(dupka['y'])
+                d_y = float(dupka['z'])
+                d_r = float(dupka['r'])
+            elif orientacia_na_elementa == 'xy':
+                d_x = float(dupka['y'])
+                d_y = float(dupka['x'])
+                d_r = float(dupka['r'])
+        else:
+            if orientacia_na_elementa == 'xz':
+                d_x = float(dupka['x'])
+                d_y = float(dupka['z'])
+                d_r = float(dupka['r'])
+            elif orientacia_na_elementa == 'yz':
+                d_x = float(dupka['z'])
+                d_y = float(dupka['y'])
+                d_r = float(dupka['r'])
+            elif orientacia_na_elementa == 'xy':
+                d_x = float(dupka['x'])
+                d_y = float(dupka['y'])
+                d_r = float(dupka['r'])
         
-        dulbochina = float(dupka['h'])
+        d_r = float(dupka['r'])
         
-        if rotation == 2:
-            d_x = masa_x - d_x
-            d_y = masa_y - d_y
-            
-        # Zapazi tochnite koordinati na dupkite za g-code
-        dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
-        dupki_za_gcode.append(dupka_za_gcode)
-                 
-        narisuvai_dupka_na_plota(d_x, d_y, d_r)
-
-        
-
-def narisuvai_po_verticalata(izbranElement, rotation):
-    #Reset
-    canvas.delete(ALL)
-    canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
-    del dupki_za_gcode[:]
-
-    #Vzemi razmerite na stranata
-    razmeri_na_elementa = izbranElement.razmeri
-    orientacia_na_elementa = razmeri_na_elementa['orientation']
-    if orientacia_na_elementa == 'xz':
-        masa_x = float(razmeri_na_elementa['x'])
-        masa_y = float(razmeri_na_elementa['z'])
-    elif orientacia_na_elementa == 'yz':
-        masa_x = float(razmeri_na_elementa['z'])
-        masa_y = float(razmeri_na_elementa['y'])
-    elif orientacia_na_elementa == 'xy':
-        masa_x = float(razmeri_na_elementa['x'])
-        masa_y = float(razmeri_na_elementa['y'])
-
-    #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(masa_x, masa_y)
-
-    dupki_na_elementa = izbranElement.dupki
-    for dupka in dupki_na_elementa:
-        if orientacia_na_elementa == 'xz':
-            d_x = float(dupka['x'])
-            d_y = float(dupka['z'])
-            d_r = float(dupka['r'])
-        elif orientacia_na_elementa == 'yz':
-            d_x = float(dupka['z'])
-            d_y = float(dupka['y'])
-            d_r = float(dupka['r'])
-        elif orientacia_na_elementa == 'xy':
-            d_x = float(dupka['x'])
-            d_y = float(dupka['y'])
-            d_r = float(dupka['r'])
-        
-        dulbochina = float(dupka['h'])
-            
         if rotation == 1:
-            d_x = masa_x - d_x
+            d_x = element_x - d_x
+        elif rotation == 2:
+            d_x = element_x - d_x
+            d_y = element_y - d_y
         elif rotation == 3:
-            d_y = masa_y - d_y
-         
-        # Zapazi tochnite koordinati na dupkite za g-code
-        dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
-        dupki_za_gcode.append(dupka_za_gcode)
-           
-        narisuvai_dupka_na_plota(d_x, d_y, d_r)
+            d_y = element_y - d_y
+        
+        # Dobavi radiusa za da imame nai krainata tochka
+        d_x = d_x + d_r
+        d_y = d_y + d_r
+        
+        print 'd_x:', d_x
+        print 'd_y:', d_y
+               
+        if poneEdnaDupkaIzlizaPoX == 0:
+            if d_x > PLOT_NA_MACHINA_X:
+                poneEdnaDupkaIzlizaPoX = 1
+            
+        if poneEdnaDupkaIzlizaPoY == 0:
+            if d_y > PLOT_NA_MACHINA_Y:
+                poneEdnaDupkaIzlizaPoY = 1    
+        
+    dupkiIzvunPlota = {}
+    dupkiIzvunPlota["IzvunX"] = poneEdnaDupkaIzlizaPoX
+    dupkiIzvunPlota["IzvunY"] = poneEdnaDupkaIzlizaPoY
+    
+    return dupkiIzvunPlota
+        
+        
+def narisuvai_element_na_plota(izbranElement, rotation):
+    #Reset
+    canvas.delete(ALL)
+    canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
+    del dupki_za_gcode[:]
+    
+    #Vzemi razmerite na stranata
+    razmeri_na_elementa = izbranElement.razmeri
+    orientacia_na_elementa = razmeri_na_elementa['orientation']
+    if rotation == 0 or rotation == 2:
+        if orientacia_na_elementa == 'xz':
+            element_x = float(razmeri_na_elementa['z'])
+            element_y = float(razmeri_na_elementa['x'])
+        elif orientacia_na_elementa == 'yz':
+            element_x = float(razmeri_na_elementa['y'])
+            element_y = float(razmeri_na_elementa['z'])
+        elif orientacia_na_elementa == 'xy':
+            element_x = float(razmeri_na_elementa['y'])
+            element_y = float(razmeri_na_elementa['x'])
+    else:
+        if orientacia_na_elementa == 'xz':
+            element_x = float(razmeri_na_elementa['x'])
+            element_y = float(razmeri_na_elementa['z'])
+        elif orientacia_na_elementa == 'yz':
+            element_x = float(razmeri_na_elementa['z'])
+            element_y = float(razmeri_na_elementa['y'])
+        elif orientacia_na_elementa == 'xy':
+            element_x = float(razmeri_na_elementa['x'])
+            element_y = float(razmeri_na_elementa['y'])
+        
+    #Nachertai elementa vurhu plota na machinata
+    narisuvai_strana_na_plota(element_x, element_y)
+
+    # Izliza li elementa ot plota na machinata?
+    izlizaPoX = 0
+    izlizaPoY = 0
+    if element_x > PLOT_NA_MACHINA_X:
+        izlizaPoX = 1
+    if element_y > PLOT_NA_MACHINA_Y:
+        izlizaPoY = 1
+        
+    dupki_na_elementa = izbranElement.dupki
+    
+    dupkaIzvunX = 0
+    dupkaIzvunY = 0
+    if izlizaPoX == 1 or izlizaPoY == 1:
+        dupkiIzvunPlot = ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_na_elementa, rotation, element_x, element_y)
+        dupkaIzvunX = dupkiIzvunPlot['IzvunX']
+        dupkaIzvunY = dupkiIzvunPlot['IzvunY']
+            
+    for dupka in dupki_na_elementa:
+        if rotation == 0 or rotation == 2:
+            if orientacia_na_elementa == 'xz':
+                d_x = float(dupka['z'])
+                d_y = float(dupka['x'])
+                d_r = float(dupka['r'])
+            elif orientacia_na_elementa == 'yz':
+                d_x = float(dupka['y'])
+                d_y = float(dupka['z'])
+                d_r = float(dupka['r'])
+            elif orientacia_na_elementa == 'xy':
+                d_x = float(dupka['y'])
+                d_y = float(dupka['x'])
+                d_r = float(dupka['r'])
+        else:
+            if orientacia_na_elementa == 'xz':
+                d_x = float(dupka['x'])
+                d_y = float(dupka['z'])
+                d_r = float(dupka['r'])
+            elif orientacia_na_elementa == 'yz':
+                d_x = float(dupka['z'])
+                d_y = float(dupka['y'])
+                d_r = float(dupka['r'])
+            elif orientacia_na_elementa == 'xy':
+                d_x = float(dupka['x'])
+                d_y = float(dupka['y'])
+                d_r = float(dupka['r'])
+                
+        dulbochina = float(dupka['h'])
+        
+        if rotation == 1:
+            d_x = element_x - d_x
+        elif rotation == 2:
+            d_x = element_x - d_x
+            d_y = element_y - d_y
+        elif rotation == 3:
+            d_y = element_y - d_y
+        
+        # Proveri kude e tazi dupka spriamo sredata na elementa
+        izlizaPoX = 0
+        izlizaPoY = 0
+        if dupkaIzvunX == 1:
+            if d_x > element_x/2:
+                izlizaPoX = 1
+        
+        if dupkaIzvunY == 1:
+            if d_y > element_y/2:
+                izlizaPoY = 1
+        
+        
+        if izlizaPoX == 0 and izlizaPoY == 0:     
+            # Zapazi tochnite koordinati na dupkite za g-code
+            dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
+            dupki_za_gcode.append(dupka_za_gcode)
+            
+            narisuvai_dupka_na_plota(d_x, d_y, d_r, 0)
+        else:
+            narisuvai_dupka_na_plota(d_x, d_y, d_r, 1)        
 
 def instrument_za_dupka(diametur):
     if diametur == 35:
@@ -863,7 +944,7 @@ canvas.grid(row=2, column=2, padx=20, sticky=W+E+N+S)
 # ********** Masa *************
 # Originalen razmer e 1500 mm na 600 mm. Mashtab (x 0.5) => duljinata e 750 i shirina e 300.
 # Sledovatelno koordinatite she sa offset s nachalnata tochka. (+20)
-masa = canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
+masa = canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
 
 
 mainframe.mainloop()
