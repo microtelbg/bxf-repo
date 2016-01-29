@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import time
+## dd/mm/yyyy format
 
 from Tkinter import *
 from tkFileDialog import askopenfilename
@@ -15,7 +17,13 @@ except ImportError:
 rotateButtonText = 'Завърти'
 openBXFFileButtonText = 'Отвори BXF файл'
 placeOnMachineButtonText = 'Постави на машината'
-instrumentiLabelText = 'Инструменти'
+instrument1LabelText = 'Инструмент 1'
+instrument2LabelText = 'Инструмент 2'
+instrument3LabelText = 'Инструмент 3'
+instrument4LabelText = 'Инструмент 4'
+instrument5LabelText = 'Инструмент 5'
+diameturLabelText = 'Диаметър (мм)'
+skorostText = 'Скорост (мм/мин)'
 generateGCodeButtonText = 'Генериране на G код'
 
 ''' ***************************************************************************
@@ -438,7 +446,7 @@ def zaredi_file_info():
 
     # 3. Populti lista s elementi
     listbox.delete(0, END)
-    for ek, ev in elementi_za_dupchene.iteritems():
+    for ek in elementi_za_dupchene.keys():
         listbox.insert(END, ek)
 
     #Reset
@@ -450,6 +458,8 @@ def izberi_element_za_dupchene():
     #Nameri izbrania element
     itemIndex = int(listbox.curselection()[0])
     itemValue = listbox.get(itemIndex)
+    
+    print elementi_za_dupchene
 
     izbranElement = elementi_za_dupchene[itemValue]
 
@@ -462,13 +472,13 @@ def izberi_element_za_dupchene():
     narisuvai_po_horizontalata(izbranElement, 0)
 
 def narisuvai_strana_na_plota(shirina, duljina):
-    canvas.create_rectangle(30, 30, shirina+30, duljina+30, fill="lightblue")
+    canvas.create_rectangle(30, 30, shirina*mashtab+30, duljina*mashtab+30, fill="lightblue")
 
 def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius):
-    nachalo_x = 30 + (xcoordinata - radius)
-    nachalo_y = 30 + (ycoordinata - radius)
-    krai_x = 30 + (xcoordinata + radius)
-    krai_y = 30 + (ycoordinata + radius)
+    nachalo_x = 30 + (xcoordinata - radius)*mashtab
+    nachalo_y = 30 + (ycoordinata - radius)*mashtab
+    krai_x = 30 + (xcoordinata + radius)*mashtab
+    krai_y = 30 + (ycoordinata + radius)*mashtab
 
     canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
 
@@ -514,7 +524,7 @@ def narisuvai_po_horizontalata(izbranElement, rotation):
         masa_y = float(razmeri_na_elementa['x'])
 
     #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(masa_x*mashtab, masa_y*mashtab)
+    narisuvai_strana_na_plota(masa_x, masa_y)
 
     dupki_na_elementa = izbranElement.dupki
     for dupka in dupki_na_elementa:
@@ -541,7 +551,7 @@ def narisuvai_po_horizontalata(izbranElement, rotation):
         dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
         dupki_za_gcode.append(dupka_za_gcode)
                  
-        narisuvai_dupka_na_plota(d_x*mashtab, d_y*mashtab, d_r*mashtab)
+        narisuvai_dupka_na_plota(d_x, d_y, d_r)
 
         
 
@@ -565,7 +575,7 @@ def narisuvai_po_verticalata(izbranElement, rotation):
         masa_y = float(razmeri_na_elementa['y'])
 
     #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(masa_x*mashtab, masa_y*mashtab)
+    narisuvai_strana_na_plota(masa_x, masa_y)
 
     dupki_na_elementa = izbranElement.dupki
     for dupka in dupki_na_elementa:
@@ -593,20 +603,134 @@ def narisuvai_po_verticalata(izbranElement, rotation):
         dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
         dupki_za_gcode.append(dupka_za_gcode)
            
-        narisuvai_dupka_na_plota(d_x*mashtab, d_y*mashtab, d_r*mashtab)
+        narisuvai_dupka_na_plota(d_x, d_y, d_r)
 
-def suzdai_gcode_file():  
-    #Stoinosti na instrumentite
-    instr1Value = instrument1EntryValue.get()
-    instr2Value = instrument2EntryValue.get()
-    instr3Value = instrument3EntryValue.get()
-    instr4Value = instrument4EntryValue.get()
-    instr5Value = instrument5EntryValue.get()
+def instrument_za_dupka(diametur):
+    if diametur == 35:
+        return 'T1'
+    elif diametur == 15:
+        return 'T2'
+    elif diametur == 8:
+        return 'T3'
+    elif diametur == 5:
+        return 'T4'
+    elif diametur == 2.5:
+        return 'T5'
+    else:
+        return 'invalid'
+
+def skorost_za_dupka(instrument):
+    if instrument == 'T1':
+        return float(instrument1EntrySkorostValue.get())
+    elif instrument == 'T2':
+        return float(instrument2EntrySkorostValue.get())
+    elif instrument == 'T3':
+        return float(instrument3EntrySkorostValue.get())
+    elif instrument == 'T4':
+        return float(instrument4EntrySkorostValue.get())
+    elif instrument == 'T5':
+        return float(instrument5EntrySkorostValue.get())
+    else:
+        return -1
     
-    print dupki_za_gcode
-            
+def suzdai_gcode_file():  
+    # Line iterator
+    n10 = 30
+    bezopasno_z = "{0:.3f}".format(50.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
+    debelinaMaterial = 18.0
+    razmerNachalnaDupka = 0
+    
+    # Stoinosti na instrumentite
+    dateTimeLine = '('+time.strftime("%d/%m/%Y")+')\n'
+    instr1Value = '(Instrument 1: Diametur:'+ instrument1EntryDiaValue.get()+', Skorost:'+ instrument1EntrySkorostValue.get()+ ')\n'
+    instr2Value = '(Instrument 2: Diametur:'+ instrument2EntryDiaValue.get()+', Skorost:'+ instrument2EntrySkorostValue.get()+ ')\n'
+    instr3Value = '(Instrument 3: Diametur:'+ instrument3EntryDiaValue.get()+', Skorost:'+ instrument3EntrySkorostValue.get()+ ')\n'
+    instr4Value = '(Instrument 4: Diametur:'+ instrument4EntryDiaValue.get()+', Skorost:'+ instrument4EntrySkorostValue.get()+ ')\n'
+    instr5Value = '(Instrument 5: Diametur:'+ instrument5EntryDiaValue.get()+', Skorost:'+ instrument5EntrySkorostValue.get()+ ')\n'
+         
     fw = open("sample123.txt", "w")
-    fw.write("Tuk she ima G-code\n")
+    fw.write("(Imeto na file)\n")
+    fw.write(dateTimeLine)
+    fw.write(instr1Value)
+    fw.write(instr2Value)
+    fw.write(instr3Value)
+    fw.write(instr4Value)
+    fw.write(instr5Value)   
+    # Tova e samo za komentar v g-code za da vidq koq sled koq dupka se dupchi
+    for dupka in dupki_za_gcode:
+        dupkaLine = '(Dupka: X:'+ str("{0:.3f}".format(dupka['x'])) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ')\n'
+        fw.write(dupkaLine)
+        if razmerNachalnaDupka == 0:
+            razmerNachalnaDupka = dupka['r']*2
+    
+    
+    # Logika za liniite na g-coda
+    TT = instrument_za_dupka(razmerNachalnaDupka)
+    HT = 'H'+TT[1]
+    SD = "{0:.1f}".format(skorost_za_dupka(TT))
+    vzemiInstrument = 'N'+str(n10)+TT+'M06\n'
+    n10 = n10 + 10
+    predpazvaneNaZ = 'N'+str(n10)+'G00G43Z'+str(bezopasno_z)+HT+'\n'
+    n10 = n10 + 10
+    zavurtiNaMaxOboroti = 'N'+str(n10)+'S6000M03\n'
+    n10 = n10 + 10
+    prediNachalnoPozicionirane = 'N'+str(n10)+'G94\n'
+    n10 = n10 + 10
+    
+    # Nachalo na g-code
+    fw.write('N10G00G21G17G90G40G49G80\n')    
+    fw.write('N20G71G91.1\n')  
+    fw.write(vzemiInstrument)
+    fw.write(predpazvaneNaZ)
+    fw.write(zavurtiNaMaxOboroti)
+    fw.write(prediNachalnoPozicionirane)
+    
+    #Dupki
+    purvonachaloZ = "{0:.3f}".format(debelinaMaterial + 5)
+    for dupka in dupki_za_gcode:
+        # Vij kakuv instrument triabva da polzvash
+        instrZaDupka = instrument_za_dupka(dupka['r']*2)
+        
+        if instrZaDupka != TT:  
+            # Smeni instrumenta
+            TT = instrZaDupka
+            HT = 'H'+TT[1]
+            SD = "{0:.1f}".format(skorost_za_dupka(TT))
+            vzemiInstrument = 'N'+str(n10)+TT+'M06\n'
+            n10 = n10 + 10
+            fw.write(vzemiInstrument)
+            d4Line = 'N'+str(n10)+'G43'+HT+'\n'
+            fw.write(d4Line)
+            n10 = n10 + 10
+            zavurtiNaMaxOboroti = 'N'+str(n10)+'S6000M03\n'
+            n10 = n10 + 10
+            fw.write(zavurtiNaMaxOboroti)
+            
+        d1Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(dupka['x']))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
+        n10 = n10 + 10
+        fw.write(d1Line)
+        krainoZ = "{0:.3f}".format(debelinaMaterial - dupka['h'])
+        d2Line = 'N'+str(n10)+'G1X'+str("{0:.3f}".format(dupka['x']))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(krainoZ)+'F'+SD+'\n'
+        n10 = n10 + 10
+        fw.write(d2Line)   
+        d3Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(dupka['x']))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
+        n10 = n10 + 10
+        fw.write(d3Line)
+    
+    krai1 = 'N'+str(n10)+'G00Z'+str(bezopasno_z)+'\n'
+    n10 = n10 + 10
+    krai2 = 'N'+str(n10)+'G00X0.000Y0.000\n'
+    n10 = n10 + 10
+    krai3 = 'N'+str(n10)+'M09\n'
+    n10 = n10 + 10
+    krai4 ='N'+str(n10)+'M30\n'
+    n10 = n10 + 10
+    
+    fw.write(krai1)
+    fw.write(krai2)
+    fw.write(krai3)
+    fw.write(krai4)
+    
     fw.close()
 
 print ('*** BEGIN PROGRAM *************************')
@@ -616,11 +740,28 @@ mainframe = Tk()
 ''' ***************************************************************************
 *** Variables za stoinosti na instrumentite
 *************************************************************************** '''
-instrument1EntryValue = StringVar()
-instrument2EntryValue = StringVar()
-instrument3EntryValue = StringVar()
-instrument4EntryValue = StringVar()
-instrument5EntryValue = StringVar()
+instrument1EntryDiaValue = StringVar()
+instrument1EntrySkorostValue = StringVar()
+instrument2EntryDiaValue = StringVar()
+instrument2EntrySkorostValue = StringVar()
+instrument3EntryDiaValue = StringVar()
+instrument3EntrySkorostValue = StringVar()
+instrument4EntryDiaValue = StringVar()
+instrument4EntrySkorostValue = StringVar()
+instrument5EntryDiaValue = StringVar()
+instrument5EntrySkorostValue = StringVar()
+
+# Default values (she doidat posle of file)
+instrument1EntryDiaValue.set('35')
+instrument1EntrySkorostValue.set('800')
+instrument2EntryDiaValue.set('15')
+instrument2EntrySkorostValue.set('1000')
+instrument3EntryDiaValue.set('8')
+instrument3EntrySkorostValue.set('1200')
+instrument4EntryDiaValue.set('5')
+instrument4EntrySkorostValue.set('1500')
+instrument5EntryDiaValue.set('2.5')
+instrument5EntrySkorostValue.set('1500')
 
 # ********** File Menu *************
 mainMenu = Menu(mainframe)
@@ -654,38 +795,61 @@ moveButton = Button(frame, text=placeOnMachineButtonText, bg="bisque", command=i
 moveButton.grid(row=0, columnspan=2, sticky=N)
 
 # ********** Instrumenti *************
-instrumentiLabel = Label(frame, text=instrumentiLabelText)
-instrumentiLabel.grid(row=1, columnspan=2, pady=10)
+instr1LabelBox = LabelFrame(frame, text=instrument1LabelText)
+instr1LabelBox.grid(row=1, columnspan=2, pady=10)
+dia1Label = Label(instr1LabelBox, text=diameturLabelText)
+dia1Label.grid(row=0, sticky=W)
+dia1Entry = Entry(instr1LabelBox, textvariable=instrument1EntryDiaValue)
+dia1Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+skorost1Label = Label(instr1LabelBox, text=skorostText)
+skorost1Label.grid(row=1, sticky=W)
+skorost1Entry = Entry(instr1LabelBox, textvariable=instrument1EntrySkorostValue)
+skorost1Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
 
-instr1Label = Label(frame, text='1:')
-instr1Label.grid(row=2, sticky=W)
+instr2LabelBox = LabelFrame(frame, text=instrument2LabelText)
+instr2LabelBox.grid(row=2, columnspan=2, pady=10)
+dia2Label = Label(instr2LabelBox, text=diameturLabelText)
+dia2Label.grid(row=0, sticky=W)
+dia2Entry = Entry(instr2LabelBox, textvariable=instrument2EntryDiaValue)
+dia2Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+skorost2Label = Label(instr2LabelBox, text=skorostText)
+skorost2Label.grid(row=1, sticky=W)
+skorost2Entry = Entry(instr2LabelBox, textvariable=instrument2EntrySkorostValue)
+skorost2Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
 
-instr1Entry = Entry(frame, textvariable=instrument1EntryValue)
-instr1Entry.grid(row=2, column=1, sticky=E)
+instr3LabelBox = LabelFrame(frame, text=instrument3LabelText)
+instr3LabelBox.grid(row=3, columnspan=2, pady=10)
+dia3Label = Label(instr3LabelBox, text=diameturLabelText)
+dia3Label.grid(row=0, sticky=W)
+dia3Entry = Entry(instr3LabelBox, textvariable=instrument3EntryDiaValue)
+dia3Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+skorost3Label = Label(instr3LabelBox, text=skorostText)
+skorost3Label.grid(row=1, sticky=W)
+skorost3Entry = Entry(instr3LabelBox, textvariable=instrument3EntrySkorostValue)
+skorost3Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
 
-instr2Label = Label(frame, text='2:')
-instr2Label.grid(row=3, sticky=W)
+instr4LabelBox = LabelFrame(frame, text=instrument4LabelText)
+instr4LabelBox.grid(row=4, columnspan=2, pady=10)
+dia4Label = Label(instr4LabelBox, text=diameturLabelText)
+dia4Label.grid(row=0, sticky=W)
+dia4Entry = Entry(instr4LabelBox, textvariable=instrument4EntryDiaValue)
+dia4Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+skorost4Label = Label(instr4LabelBox, text=skorostText)
+skorost4Label.grid(row=1, sticky=W)
+skorost4Entry = Entry(instr4LabelBox, textvariable=instrument4EntrySkorostValue)
+skorost4Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
 
-instr2Entry = Entry(frame, textvariable=instrument2EntryValue)
-instr2Entry.grid(row=3, column=1, sticky=E)
+instr5LabelBox = LabelFrame(frame, text=instrument5LabelText)
+instr5LabelBox.grid(row=5, columnspan=2, pady=10)
+dia5Label = Label(instr5LabelBox, text=diameturLabelText)
+dia5Label.grid(row=0, sticky=W)
+dia5Entry = Entry(instr5LabelBox, textvariable=instrument5EntryDiaValue)
+dia5Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+skorost5Label = Label(instr5LabelBox, text=skorostText)
+skorost5Label.grid(row=1, sticky=W)
+skorost5Entry = Entry(instr5LabelBox, textvariable=instrument5EntrySkorostValue)
+skorost5Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
 
-instr3Label = Label(frame, text='3:')
-instr3Label.grid(row=4, sticky=W)
-
-instr3Entry = Entry(frame, textvariable=instrument3EntryValue)
-instr3Entry.grid(row=4, column=1, sticky=E)
-
-instr4Label = Label(frame, text='4:')
-instr4Label.grid(row=5, sticky=W)
-
-instr4Entry = Entry(frame, textvariable=instrument4EntryValue)
-instr4Entry.grid(row=5, column=1, sticky=E)
-
-instr5Label = Label(frame, text='5:')
-instr5Label.grid(row=6, sticky=W)
-
-instr5Entry = Entry(frame, textvariable=instrument5EntryValue)
-instr5Entry.grid(row=6, column=1, sticky=E)
 
 # ********** Generate G-Code Button *************
 generateGCodeButton = Button(frame, text=generateGCodeButtonText, bg="tomato", command=suzdai_gcode_file)
