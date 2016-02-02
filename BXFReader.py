@@ -15,8 +15,12 @@ except ImportError:
 *** Labels
 *************************************************************************** '''
 rotateButtonText = 'Завърти'
+removeButtonText = 'Премахни'
 openBXFFileButtonText = 'Отвори BXF файл'
-placeOnMachineButtonText = 'Постави на машината'
+placeOnMachineButtonText = 'Постави на ЛЯВА база'
+placeOnMachineRightButtonText = 'Постави на ДЯСНА база'
+leftBazaGrouperText = 'ЛЯВА база'
+rightBazaGrouperText = 'ДЯСНА база'
 instrument1LabelText = 'Инструмент 1'
 instrument2LabelText = 'Инструмент 2'
 instrument3LabelText = 'Инструмент 3'
@@ -27,14 +31,22 @@ skorostText = 'Скорост (мм/мин)'
 generateGCodeButtonText = 'Генериране на G код'
 
 ''' ***************************************************************************
-*** Global Variables
+*** Constants
 *************************************************************************** '''
 ns = {'blum' : 'http://www.blum.com/bxf'}
 mashtab = 0.5
-filename = 'tester.bxf'
 
 PLOT_NA_MACHINA_X = 1500
 PLOT_NA_MACHINA_Y = 600
+
+''' ***************************************************************************
+*** Global Variables
+*************************************************************************** '''
+# Elementi svurzani s SAMO s grafikata
+leftRectangle = None
+rightRectangle = None
+leftOvals = []
+rightOvals = []
 
 #Vsichi elementi of BXF faila za dupchene
 elementi_za_dupchene = {}
@@ -454,64 +466,105 @@ def zaredi_file_info():
 
     #Reset
     canvas.delete(ALL)
-    canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
+    masa = canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
     
-def izberi_element_za_dupchene():
+def izberi_element_za_dupchene(side):
       
     #Nameri izbrania element
     itemIndex = int(listbox.curselection()[0])
     itemValue = listbox.get(itemIndex)
-    
-    print elementi_za_dupchene
 
     izbranElement = elementi_za_dupchene[itemValue]
-
-    #Sloji elementa v lista i purvonachalnata orientacia
-    izbrani_elementi['L'] = izbranElement
-    izbrani_elementi['LO'] = 0
-
     print izbranElement.opisanie()
+    
+    if side == 'L':
+        #Sloji elementa v lista i purvonachalnata orientacia
+        izbrani_elementi['L'] = izbranElement
+        izbrani_elementi['LO'] = 0
+        narisuvai_element_na_plota(izbranElement, 0, 'L')
+    elif side == 'R':
+        #Sloji elementa v lista i purvonachalnata orientacia
+        izbrani_elementi['R'] = izbranElement
+        izbrani_elementi['RO'] = 0
+        narisuvai_element_na_plota(izbranElement, 0, 'R')
 
-    #narisuvai_po_horizontalata(izbranElement, 0)
-    narisuvai_element_na_plota(izbranElement, 0)
+def izberi_element_za_lqva_strana():
+    izberi_element_za_dupchene('L')
 
-def narisuvai_strana_na_plota(shirina, duljina):
-    canvas.create_rectangle(30, 30, shirina*mashtab+30, duljina*mashtab+30, fill="lightblue")
+def izberi_element_za_dqsna_strana():
+    izberi_element_za_dupchene('R')
 
-def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius, eIzvunPlota):
-    nachalo_x = 30 + (xcoordinata - radius)*mashtab
+def narisuvai_strana_na_plota(shirina, duljina, side):
+    if side == 'L':
+        global leftRectangle
+        leftRectangle = canvas.create_rectangle(30, 30, shirina*mashtab+30, duljina*mashtab+30, fill="lightblue")
+    elif side == 'R':
+        nachalenX = PLOT_NA_MACHINA_X*mashtab+10 - shirina*mashtab
+        kraenX = nachalenX + shirina*mashtab
+        
+        global rightRectangle
+        rightRectangle = canvas.create_rectangle(nachalenX, 30, kraenX, duljina*mashtab+30, fill="lightgreen")
+
+def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius, eIzvunPlota, side):
+    if side == 'L':
+        nachalo_x = 30 + (xcoordinata - radius)*mashtab
+        krai_x = 30 + (xcoordinata + radius)*mashtab
+    elif side == 'R':
+        nachalo_x = 10 + (PLOT_NA_MACHINA_X - xcoordinata - radius)*mashtab
+        krai_x = 10 + (PLOT_NA_MACHINA_X - xcoordinata + radius)*mashtab
+        
     nachalo_y = 30 + (ycoordinata - radius)*mashtab
-    krai_x = 30 + (xcoordinata + radius)*mashtab
     krai_y = 30 + (ycoordinata + radius)*mashtab
 
     if eIzvunPlota == 1:
-        canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon")
+        ov = canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon")
     else:
-        canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
+        ov = canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
+    
+    if side == 'L':    
+        leftOvals.append(ov)
+    elif side == 'R':
+        rightOvals.append(ov)
 
-def rotate_element():
+def mahni_element_ot_lqva_baza():
+    canvas.delete(leftRectangle)
+    for ov in leftOvals:
+        canvas.delete(ov)
+    
+    #Oshte neshta za reset
+    del dupki_za_gcode[:]
+    del izbrani_elementi['L']
+    del izbrani_elementi['LO']
+
+def mahni_element_ot_dqsna_baza():
+    canvas.delete(rightRectangle)
+
+def rotate_element_lqva_baza():
+    rotate_element('L')
+    
+def rotate_element_dqsna_baza():
+    rotate_element('R')
+        
+def rotate_element(side):
     #Nameri izbrania element
-    izbranElement = izbrani_elementi['L']
-    currentOrienatation = int(izbrani_elementi['LO'])
+    if side == 'L':
+        izbranElement = izbrani_elementi['L']
+        currentOrienatation = int(izbrani_elementi['LO'])
+    elif side == 'R':
+        izbranElement = izbrani_elementi['R']
+        currentOrienatation = int(izbrani_elementi['RO'])
     
     if currentOrienatation == 3:
         newOrientation = 0
     else:
         newOrientation = currentOrienatation + 1
-        
-    izbrani_elementi['LO'] = newOrientation
-
-    narisuvai_element_na_plota(izbranElement, newOrientation)
-
-#     if newOrientation == 0:
-#         #narisuvai_po_horizontalata(izbranElement, newOrientation)
-#         narisuvai_element_na_plota(izbranElement, newOrientation)
-#     elif newOrientation == 1:
-#         narisuvai_po_verticalata(izbranElement, newOrientation)
-#     elif newOrientation == 2:
-#         narisuvai_po_horizontalata(izbranElement, newOrientation)
-#     elif newOrientation == 3:
-#         narisuvai_po_verticalata(izbranElement, newOrientation)
+    
+    if side == 'L':   
+        izbrani_elementi['LO'] = newOrientation
+        narisuvai_element_na_plota(izbranElement, newOrientation, 'L')
+    elif side == 'R':
+        izbrani_elementi['RO'] = newOrientation
+        narisuvai_element_na_plota(izbranElement, newOrientation, 'R')
         
 def ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_za_proverka, rotation, element_x, element_y):
     poneEdnaDupkaIzlizaPoX = 0
@@ -577,10 +630,16 @@ def ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_za_proverka, rotation
     return dupkiIzvunPlota
         
         
-def narisuvai_element_na_plota(izbranElement, rotation):
+def narisuvai_element_na_plota(izbranElement, rotation, side):
     #Reset
-    canvas.delete(ALL)
-    canvas.create_rectangle(20, 20, 770, 320, fill="bisque")
+    if side == 'L':
+        canvas.delete(leftRectangle)
+        for ov in leftOvals:
+            canvas.delete(ov)
+    elif side == 'R':
+        canvas.delete(rightRectangle)
+        for ov in rightOvals:
+            canvas.delete(ov)
     del dupki_za_gcode[:]
     
     #Vzemi razmerite na stranata
@@ -608,7 +667,7 @@ def narisuvai_element_na_plota(izbranElement, rotation):
             element_y = float(razmeri_na_elementa['y'])
         
     #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(element_x, element_y)
+    narisuvai_strana_na_plota(element_x, element_y, side)
 
     # Izliza li elementa ot plota na machinata?
     izlizaPoX = 0
@@ -682,9 +741,9 @@ def narisuvai_element_na_plota(izbranElement, rotation):
             dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
             dupki_za_gcode.append(dupka_za_gcode)
             
-            narisuvai_dupka_na_plota(d_x, d_y, d_r, 0)
+            narisuvai_dupka_na_plota(d_x, d_y, d_r, 0, side)
         else:
-            narisuvai_dupka_na_plota(d_x, d_y, d_r, 1)        
+            narisuvai_dupka_na_plota(d_x, d_y, d_r, 1, side)        
 
 def instrument_za_dupka(diametur):
     if diametur == 35:
@@ -832,6 +891,9 @@ instrument4EntrySkorostValue = StringVar()
 instrument5EntryDiaValue = StringVar()
 instrument5EntrySkorostValue = StringVar()
 
+leftBazaCheckBox = IntVar()
+rightBazaCheckBox = IntVar()
+
 # Default values (she doidat posle of file)
 instrument1EntryDiaValue.set('35')
 instrument1EntrySkorostValue.set('800')
@@ -857,11 +919,22 @@ openButton = Button(toolbar, text=openBXFFileButtonText, command=zaredi_file_inf
 openButton.grid(row=0, padx=20, pady=2)
 fileNameLabel = Label(toolbar, text="")
 fileNameLabel.grid(row=0, column=1, padx=2, pady=2)
-toolbar.grid(row=0, columnspan=3, sticky=W+E)
+toolbar.grid(row=0, columnspan=4, sticky=W+E)
 
 # ********** Rotate Button *************
-rotateButton = Button(mainframe, text=rotateButtonText, bg="lightblue", command=rotate_element)
-rotateButton.grid(row=1, column=2, sticky=W, padx=20, pady=2)
+leftBazaLabelBox = LabelFrame(mainframe, text=leftBazaGrouperText)
+leftBazaLabelBox.grid(row=1, column=2, sticky=W, padx=20, pady=2)
+rotateButtonLeftBaza = Button(leftBazaLabelBox, text=rotateButtonText, bg="lightblue", command=rotate_element_lqva_baza)
+rotateButtonLeftBaza.grid(row=0, sticky=W, padx=2, pady=2)
+removeElementButtonLeftBaza = Button(leftBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_lqva_baza)
+removeElementButtonLeftBaza.grid(row=0, column=1, sticky=W, padx=2, pady=2)
+
+rightBazaLabelBox = LabelFrame(mainframe, text=rightBazaGrouperText)
+rightBazaLabelBox.grid(row=1, column=3, sticky=W, padx=20, pady=2)
+rotateButtonRightBaza = Button(rightBazaLabelBox, text=rotateButtonText, bg="lightblue", command=rotate_element_dqsna_baza)
+rotateButtonRightBaza.grid(row=0, sticky=W, padx=2, pady=2)
+removeElementButtonRightBaza = Button(rightBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_dqsna_baza)
+removeElementButtonRightBaza.grid(row=0, column=1, sticky=W, padx=2, pady=2)
 
 # ********** Listbox *************
 listbox = Listbox(mainframe, width=50)
@@ -872,8 +945,11 @@ frame = Frame(mainframe)
 frame.grid(row=2, column=1, sticky=N+S)
 
 # ********** Move Button *************
-moveButton = Button(frame, text=placeOnMachineButtonText, bg="bisque", command=izberi_element_za_dupchene)
-moveButton.grid(row=0, columnspan=2, sticky=N)
+slojiLqvaBazaButton = Button(frame, text=placeOnMachineButtonText, bg="bisque", command=izberi_element_za_lqva_strana)
+slojiLqvaBazaButton.grid(row=0, padx = 3, sticky=N)
+
+slojiDqsnaBazaButton = Button(frame, text=placeOnMachineRightButtonText, bg="bisque", command=izberi_element_za_dqsna_strana)
+slojiDqsnaBazaButton.grid(row=0, column=1, padx = 3, sticky=N)
 
 # ********** Instrumenti *************
 instr1LabelBox = LabelFrame(frame, text=instrument1LabelText)
@@ -939,7 +1015,7 @@ generateGCodeButton.grid(row=7, columnspan=2, pady = 20, sticky=N)
 # ********** Canvas *************
 canvas = Canvas(mainframe, width=1100, heigh=700, bg="grey")
 #Slojib bg = grey za da vijdam kude e canvas
-canvas.grid(row=2, column=2, padx=20, sticky=W+E+N+S)
+canvas.grid(row=2, column=2, columnspan = 2, padx=20, sticky=W+E+N+S)
 
 # ********** Masa *************
 # Originalen razmer e 1500 mm na 600 mm. Mashtab (x 0.5) => duljinata e 750 i shirina e 300.
