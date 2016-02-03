@@ -64,6 +64,8 @@ izbrani_elementi = {}
 #Dupki za g-code
 dupki_za_gcode = []
 
+prevod_za_elemnti_v_list = {}
+
 class ElementZaDupchene(object):
     def __init__(self, ime, razmeri, dupki):
         self.ime = ime
@@ -86,15 +88,16 @@ def cheti_bxf_file(filename1):
     #Reset
     elementi_za_dupchene.clear()
 
+    suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Oberboden')
+    suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Unterboden')
     suzdai_element_strana(myroot, elementi_za_dupchene, 'LinkeSeitenwand')
     suzdai_element_strana(myroot, elementi_za_dupchene, 'RechteSeitenwand')
     suzdai_element_vrata(myroot, elementi_za_dupchene, 'Tuer')
+    suzdai_element_vrata(myroot, elementi_za_dupchene, 'Doppeltuer')
     suzdai_element_shkafche(myroot, elementi_za_dupchene, 'Aussenschubkasten')
-
-    #suzdai_element_duno_gornica(root, element_dictionary, 'Oberboden')
-    #suzdai_element_duno_gornica(root, element_dictionary, 'Unterboden')
-    #print '-------------------------------------------'
-    #suzdai_element_grub_prednica(root, element_dictionary, 'KorpusRueckwand')
+    suzdai_element_vrata(myroot, elementi_za_dupchene, 'Klappensystem')
+    
+    # Da se dobavi oshte: 
 
 def suzdai_element(root, elements, name):
     parenttag = 'blum:'+name
@@ -188,14 +191,15 @@ def suzdai_element_strana(root, elements, name):
 
         stana = ElementZaDupchene(name, razmeri_map, dupki_map)
         if name == 'LinkeSeitenwand':
-            elements['Lqva Strana'] = stana
+            elements['LinkeSeitenwand'] = stana
+            prevod_za_elemnti_v_list['LinkeSeitenwand'] = u'Лява страна'
         elif  name == 'RechteSeitenwand':
-            elements['Dqsna Strana'] = stana
+            elements['RechteSeitenwand'] = stana
+            prevod_za_elemnti_v_list['RechteSeitenwand'] = u'Дясна страна'
         else:
             elements[name] = stana
+            prevod_za_elemnti_v_list[name] = name
 
-        print 'x:', razmer_x
-        print 'z:', razmer_z
     else:
         print 'Greshka -', name, " ne e nameren takuv tag"
 
@@ -225,6 +229,8 @@ def suzdai_dupki(curparent):
 ''' ***************************************************************************
 **** Izpolzvai tazi funkcia za:
      KorpusRueckwand (grub)
+     
+     Moje sigurno da se mahne, zashtoto e sushtoto kato _vrata
 *******************************************************************************'''
 def suzdai_element_grub_prednica(root, elements, name):
     parenttag = 'blum:'+name
@@ -276,12 +282,20 @@ def suzdai_element_grub_prednica(root, elements, name):
 *******************************************************************************'''
 def suzdai_element_duno_gornica(root, elements, name):
     parenttag = 'blum:'+name
-    print parenttag
+
     parent = root.find(parenttag, ns) #Namira samo 1 element s tozi tag. Predpolagam che samo 1 ima v bxf
     if parent is not None:
         quader = parent.findall('.//blum:Quader', ns)
 
         if quader is not None:
+            # <Hoehe>0.0</Hoehe> visochina
+            hoehe = quader[0].find('blum:Hoehe', ns)
+            if hoehe is not None:
+                razmer_debelina = hoehe.text
+            else:
+                razmer_debelina = 0
+                print 'Greshka - Hoehe tag ne e nameren za ', name
+                    
             # <Position X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
             position = quader[0].find('blum:Position', ns)
             if position is not None:
@@ -305,11 +319,27 @@ def suzdai_element_duno_gornica(root, elements, name):
             #Izchisli razmerite na tazi starna
             razmer_x = float(pointc_x) - float(pos_x)
             razmer_y = float(pointc_y) - float(pos_y)
+            
+            #Dupki
+            dupki_map = suzdai_dupki(quader)
+
+            #Create object
+            razmeri_map = {"orientation" : "xy", "x" : razmer_x, "y": razmer_y, "z":razmer_debelina}
+
+            plot = ElementZaDupchene(name, razmeri_map, dupki_map)
+
+            if name == 'Oberboden':
+                elements['Oberboden'] = plot
+                prevod_za_elemnti_v_list['Oberboden'] = u'Горен плот'
+            elif name == 'Unterboden':
+                elements['Unterboden'] = plot
+                prevod_za_elemnti_v_list['Unterboden'] = u'Долен плот'
+            else:
+                elements[name] = plot
+                prevod_za_elemnti_v_list[name] = name
         else:
             print 'Greshka -Quader tag ne e namer za ', name
 
-        print 'x:', razmer_x
-        print 'y:', razmer_y
     else:
         print 'Greshka -', name, " ne e nameren takuv tag"
 
@@ -327,6 +357,7 @@ def suzdai_element_shkafche(root, elements, name):
     parents = root.findall(parenttag, ns) #Namira vsichki tags
     for parent in parents:
         parentName = parent.attrib['Name']
+        
         duna = parent.findall('.//blum:Holzschubkasten', ns)
         for duno in duna:
             dunoID = duno.attrib['ID']
@@ -375,13 +406,70 @@ def suzdai_element_shkafche(root, elements, name):
 
                 if name == 'Aussenschubkasten':
                     elements['Shafche-'+parentName+'Duno-'+dunoID] = dunoShkafche
+                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Duno-'+dunoID] = u'Чекмедже-'+parentName+u'Дъно-'+dunoID
                 else:
                     elements[name] = dunoShkafche
+                    prevod_za_elemnti_v_list[name] = name
 
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
 
 
+        rueckwands = parent.findall('.//blum:Rueckwand', ns)
+        for rueckwand in rueckwands:
+            rueckwandID = rueckwand.attrib['ID']
+            quader = rueckwand.findall('.//blum:Quader', ns)
+
+            if quader is not None:
+                # <Hoehe>0.0</Hoehe> visochina
+                hoehe = quader[0].find('blum:Hoehe', ns)
+                if hoehe is not None:
+                    razmer_debelina = hoehe.text
+                else:
+                    razmer_debelina = 0
+                    print 'Greshka - Hoehe tag ne e nameren za ', name
+
+                # <Position X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
+                position = quader[0].find('blum:Position', ns)
+                if position is not None:
+                    pos_x = position.attrib['X']
+                    pos_y = position.attrib['Y']
+                else:
+                    pos_x = 0
+                    pos_y = 0
+                    print 'Greshka - Position tag ne e namer za ', name
+
+                # <PunktC X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
+                point_c = quader[0].find('blum:PunktC', ns)
+                if point_c is not None:
+                    pointc_x = point_c.attrib['X']
+                    pointc_y = point_c.attrib['Y']
+                else:
+                    pointc_x = 0
+                    pointc_y = 0
+                    print 'Greshka - PunktC tag ne e namer za ', name
+
+                #Izchisli razmerite na tazi vrata
+                razmer_x = float(pointc_x) - float(pos_x)
+                razmer_y = float(pointc_y) - float(pos_y)
+
+                #Dupki
+                dupki_map = suzdai_dupki(quader)
+
+                #Create object
+                razmeri_map = {"orientation" : "xy", "x" : razmer_x, "y": razmer_y, "z":razmer_debelina}
+
+                rueckwandShkafche = ElementZaDupchene(name, razmeri_map, dupki_map)
+
+                if name == 'Aussenschubkasten':
+                    elements['Shafche-'+parentName+'Rueckwand-'+rueckwandID] = rueckwandShkafche
+                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Rueckwand-'+rueckwandID] = u'Чекмедже-'+parentName+'Rueckwand-'+rueckwandID
+                else:
+                    elements[name] = rueckwandShkafche
+                    prevod_za_elemnti_v_list[name] = name
+
+            else:
+                print 'Greshka -Quader tag ne e namer za ', name
 ''' ***************************************************************************
 **** Izpolzvai tazi funkcia za:
      Tuer(edinichka vratichka)
@@ -441,10 +529,19 @@ def suzdai_element_vrata(root, elements, name):
 
                 if name == 'Tuer':
                     elements['Vrata-'+parentName+'Front-'+frontID] = vrata
+                    prevod_za_elemnti_v_list['Vrata-'+parentName+'Front-'+frontID] = u'Врата-'+parentName+'Front-'+frontID
+                elif name == 'Doppeltuer':
+                    elements['Dvoina Vrata-'+parentName+'Front-'+frontID] = vrata
+                    prevod_za_elemnti_v_list['Dvoina Vrata-'+parentName+'Front-'+frontID] = u'Двойна Врата-'+parentName+'Front-'+frontID
                 elif name == 'Aussenschubkasten':
                     elements['Shafche-'+parentName+'Front-'+frontID] = vrata
+                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Front-'+frontID] = u'Чекмедже-'+parentName+'Front-'+frontID
+                elif name == 'Klappensystem':
+                    elements['Vrata Aventos HF-'+parentName+'Front-'+frontID] = vrata
+                    prevod_za_elemnti_v_list['Vrata Aventos HF-'+parentName+'Front-'+frontID] = u'Врата Aventos HF-'+parentName+'Front-'+frontID
                 else:
                     elements[name] = vrata
+                    prevod_za_elemnti_v_list[name] = name
 
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
@@ -462,7 +559,8 @@ def zaredi_file_info():
     # 3. Populti lista s elementi
     listbox.delete(0, END)
     for ek in elementi_za_dupchene.keys():
-        listbox.insert(END, ek)
+        prevod = prevod_za_elemnti_v_list[ek]
+        listbox.insert(END, prevod)
 
     #Reset
     canvas.delete(ALL)
@@ -473,8 +571,14 @@ def izberi_element_za_dupchene(side):
     #Nameri izbrania element
     itemIndex = int(listbox.curselection()[0])
     itemValue = listbox.get(itemIndex)
+    iValue = itemValue
+    
+    for eng, bg in prevod_za_elemnti_v_list.iteritems():
+        if itemValue == bg:
+            iValue = eng
+            break
 
-    izbranElement = elementi_za_dupchene[itemValue]
+    izbranElement = elementi_za_dupchene[iValue]
     print izbranElement.opisanie()
     
     if side == 'L':
@@ -538,6 +642,13 @@ def mahni_element_ot_lqva_baza():
 
 def mahni_element_ot_dqsna_baza():
     canvas.delete(rightRectangle)
+    for ov in rightOvals:
+        canvas.delete(ov)
+    
+    #Oshte neshta za reset
+    del dupki_za_gcode[:]
+    del izbrani_elementi['R']
+    del izbrani_elementi['RO']
 
 def rotate_element_lqva_baza():
     rotate_element('L')
