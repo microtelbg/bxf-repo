@@ -14,21 +14,33 @@ except ImportError:
 ''' ***************************************************************************
 *** Labels
 *************************************************************************** '''
-rotateButtonText = 'Завърти'
-removeButtonText = 'Премахни'
-openBXFFileButtonText = 'Отвори BXF файл'
-placeOnMachineButtonText = 'Постави на ЛЯВА база'
-placeOnMachineRightButtonText = 'Постави на ДЯСНА база'
-leftBazaGrouperText = 'ЛЯВА база'
-rightBazaGrouperText = 'ДЯСНА база'
-instrument1LabelText = 'Инструмент 1'
-instrument2LabelText = 'Инструмент 2'
-instrument3LabelText = 'Инструмент 3'
-instrument4LabelText = 'Инструмент 4'
-instrument5LabelText = 'Инструмент 5'
-diameturLabelText = 'Диаметър (мм)'
-skorostText = 'Скорост (мм/мин)'
-generateGCodeButtonText = 'Генериране на G код'
+rotateButtonText = u'Завърти'
+removeButtonText = u'Премахни'
+orLabelText = u' или '
+openBXFFileButtonText = u'Отвори BXF файл'
+createButtonText = u'Създай елемент'
+placeOnMachineButtonText = u'Постави на ЛЯВА база'
+placeOnMachineRightButtonText = u'Постави на ДЯСНА база'
+leftBazaGrouperText = u'ЛЯВА база'
+rightBazaGrouperText = u'ДЯСНА база'
+instrument1LabelText = u'Инструмент 1'
+instrument2LabelText = u'Инструмент 2'
+instrument3LabelText = u'Инструмент 3'
+instrument4LabelText = u'Инструмент 4'
+instrument5LabelText = u'Инструмент 5'
+diameturLabelText = u'Диаметър (мм)'
+skorostText = u'Скорост (мм/мин)'
+generateGCodeButtonText = u'Генериране на G код'
+
+detailTitleText = u'Детайл'
+detailImeText = u'Име на детайла: '
+detailRazmeriText = u'Размери '
+detailDuljinaText = u'Дължина: '
+detailShirinaText = u'Ширина: '
+detailDebelinaText = u'Дебелина: '
+
+okButtonText = u'Потвърди'
+cancelButtonText = u'Отхвърли'
 
 ''' ***************************************************************************
 *** Constants
@@ -192,10 +204,10 @@ def suzdai_element_strana(root, elements, name):
         stana = ElementZaDupchene(name, razmeri_map, dupki_map)
         if name == 'LinkeSeitenwand':
             elements['LinkeSeitenwand'] = stana
-            prevod_za_elemnti_v_list['LinkeSeitenwand'] = u'Лява страна'
+            prevod_za_elemnti_v_list['LinkeSeitenwand'] = u'Лява страна '+str(razmer_x)+' x '+str(razmer_z)
         elif  name == 'RechteSeitenwand':
             elements['RechteSeitenwand'] = stana
-            prevod_za_elemnti_v_list['RechteSeitenwand'] = u'Дясна страна'
+            prevod_za_elemnti_v_list['RechteSeitenwand'] = u'Дясна страна '+str(razmer_x)+' x '+str(razmer_z)
         else:
             elements[name] = stana
             prevod_za_elemnti_v_list[name] = name
@@ -330,10 +342,10 @@ def suzdai_element_duno_gornica(root, elements, name):
 
             if name == 'Oberboden':
                 elements['Oberboden'] = plot
-                prevod_za_elemnti_v_list['Oberboden'] = u'Горен плот'
+                prevod_za_elemnti_v_list['Oberboden'] = u'Горен плот '+str(razmer_x)+' x '+str(razmer_y)
             elif name == 'Unterboden':
                 elements['Unterboden'] = plot
-                prevod_za_elemnti_v_list['Unterboden'] = u'Долен плот'
+                prevod_za_elemnti_v_list['Unterboden'] = u'Долен плот '+str(razmer_x)+' x '+str(razmer_y)
             else:
                 elements[name] = plot
                 prevod_za_elemnti_v_list[name] = name
@@ -406,10 +418,10 @@ def suzdai_element_shkafche(root, elements, name):
 
                 if name == 'Aussenschubkasten':
                     elements['Shafche-'+parentName+'Duno-'+dunoID] = dunoShkafche
-                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Duno-'+dunoID] = u'Чекмедже-'+parentName+u'Дъно-'+dunoID
+                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Duno-'+dunoID] = u'Чекмедже-'+parentName+u'Дъно-'+dunoID+str(razmer_x)+' x '+str(razmer_y)
                 else:
                     elements[name] = dunoShkafche
-                    prevod_za_elemnti_v_list[name] = name
+                    prevod_za_elemnti_v_list[name] = name+str(razmer_x)+' x '+str(razmer_y)
 
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
@@ -463,10 +475,10 @@ def suzdai_element_shkafche(root, elements, name):
 
                 if name == 'Aussenschubkasten':
                     elements['Shafche-'+parentName+'Rueckwand-'+rueckwandID] = rueckwandShkafche
-                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Rueckwand-'+rueckwandID] = u'Чекмедже-'+parentName+'Rueckwand-'+rueckwandID
+                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Rueckwand-'+rueckwandID] = u'Чекмедже-'+parentName+'Rueckwand-'+rueckwandID+str(razmer_x)+' x '+str(razmer_y)
                 else:
                     elements[name] = rueckwandShkafche
-                    prevod_za_elemnti_v_list[name] = name
+                    prevod_za_elemnti_v_list[name] = name+str(razmer_x)+' x '+str(razmer_y)
 
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
@@ -528,20 +540,22 @@ def suzdai_element_vrata(root, elements, name):
                 vrata = ElementZaDupchene(name, razmeri_map, dupki_map)
 
                 if name == 'Tuer':
-                    elements['Vrata-'+parentName+'Front-'+frontID] = vrata
-                    prevod_za_elemnti_v_list['Vrata-'+parentName+'Front-'+frontID] = u'Врата-'+parentName+'Front-'+frontID
+                    ekey = 'Vrata-'+parentName+'Front-'+frontID
+                    elements[ekey] = vrata
+                    prevod_za_elemnti_v_list[ekey] = u'Врата - '+'ID:'+parentName+u'Лице:'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
                 elif name == 'Doppeltuer':
-                    elements['Dvoina Vrata-'+parentName+'Front-'+frontID] = vrata
-                    prevod_za_elemnti_v_list['Dvoina Vrata-'+parentName+'Front-'+frontID] = u'Двойна Врата-'+parentName+'Front-'+frontID
+                    ekey = 'Dvoina Vrata-'+parentName+'Front-'+frontID
+                    elements[ekey] = vrata
+                    prevod_za_elemnti_v_list[ekey] = u'Двойна Врата-'+'ID:'+parentName+u'Лице:'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
                 elif name == 'Aussenschubkasten':
                     elements['Shafche-'+parentName+'Front-'+frontID] = vrata
-                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Front-'+frontID] = u'Чекмедже-'+parentName+'Front-'+frontID
+                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Front-'+frontID] = u'Чекмедже-'+parentName+'Front-'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
                 elif name == 'Klappensystem':
                     elements['Vrata Aventos HF-'+parentName+'Front-'+frontID] = vrata
-                    prevod_za_elemnti_v_list['Vrata Aventos HF-'+parentName+'Front-'+frontID] = u'Врата Aventos HF-'+parentName+'Front-'+frontID
+                    prevod_za_elemnti_v_list['Vrata Aventos HF-'+parentName+'Front-'+frontID] = u'Врата Aventos HF-'+parentName+'Front-'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
                 else:
                     elements[name] = vrata
-                    prevod_za_elemnti_v_list[name] = name
+                    prevod_za_elemnti_v_list[name] = name+str(razmer_y)+' x '+str(razmer_z)
 
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
@@ -984,6 +998,40 @@ def suzdai_gcode_file():
     
     fw.close()
 
+def pokaji_suzdai_element_window():
+    imeValue = StringVar()
+    duljinaValue = StringVar()
+    shirinaValue = StringVar()
+    debelinaValue = StringVar()
+
+    top = Toplevel()
+    top.title(detailTitleText)
+    
+    imeLabel = Label(top, text=detailImeText)
+    imeLabel.grid(row=0, padx=10, pady=10, sticky=W)
+    imeEntry = Entry (top, textvariable=imeValue, width=30)
+    imeEntry.grid(row=0, column=1, padx = 5, sticky=W)
+    
+    razmeriLabelBox = LabelFrame(top, text=detailRazmeriText)
+    razmeriLabelBox.grid(row=1, columnspan=2, padx = 10, pady=10, sticky=W+E)
+    duljinaLabel = Label(razmeriLabelBox, text=detailDuljinaText)
+    duljinaLabel.grid(row=0, sticky=W)
+    duljinaEntry = Entry(razmeriLabelBox, textvariable=duljinaValue)
+    duljinaEntry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    shirinaLabel = Label(razmeriLabelBox, text=detailShirinaText)
+    shirinaLabel.grid(row=1, sticky=W)
+    shirinaEntry = Entry(razmeriLabelBox, textvariable=shirinaValue)
+    shirinaEntry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    debelinaLabel = Label(razmeriLabelBox, text=detailDebelinaText)
+    debelinaLabel.grid(row=2, sticky=W)
+    debelinaEntry = Entry(razmeriLabelBox, textvariable=debelinaValue)
+    debelinaEntry.grid(row=2, column=1, padx = 5, pady = 2, sticky=E)
+    
+    okbutton = Button(top, text=okButtonText, command=top.destroy)
+    okbutton.grid(row=2, padx = 10, pady = 10, sticky = W)
+    cancelButton = Button(top, text=cancelButtonText, command=top.destroy)
+    cancelButton.grid(row=2, column=1, pady = 10, sticky=W)
+       
 print ('*** BEGIN PROGRAM *************************')
 mainframe = Tk()
 #mainframe.geometry('450x450+500+300') - Use that for window size
@@ -1026,11 +1074,17 @@ mainMenu.add_cascade(label="File", menu=fileManu)
 
 # ********** Toolbar *************
 toolbar = Frame(mainframe, bg="honeydew")
-openButton = Button(toolbar, text=openBXFFileButtonText, command=zaredi_file_info)
-openButton.grid(row=0, padx=20, pady=2)
-fileNameLabel = Label(toolbar, text="")
-fileNameLabel.grid(row=0, column=1, padx=2, pady=2)
 toolbar.grid(row=0, columnspan=4, sticky=W+E)
+
+openButton = Button(toolbar, text=openBXFFileButtonText, command=zaredi_file_info)
+openButton.grid(row=0, column=0, padx=10, pady=2,  sticky=W)
+orLabel = Label(toolbar, text=orLabelText)
+orLabel.grid(row=0, column=1, padx=10, pady=2,  sticky=W)
+createButton = Button(toolbar, text=createButtonText, command=pokaji_suzdai_element_window)
+createButton.grid(row=0, column=2, padx=10, pady=2,  sticky=W)
+fileNameLabel = Label(toolbar, text="")
+fileNameLabel.grid(row=0, column=3, padx=10, pady=2,  sticky=W)
+
 
 # ********** Rotate Button *************
 leftBazaLabelBox = LabelFrame(mainframe, text=leftBazaGrouperText)
