@@ -998,7 +998,7 @@ def suzdai_gcode_file():
     
     fw.close()
 
-def pokaji_suzdai_element_window():
+def pokaji_suzdai_detail_window():
     imeValue = StringVar()
     duljinaValue = StringVar()
     shirinaValue = StringVar()
@@ -1006,7 +1006,7 @@ def pokaji_suzdai_element_window():
 
     top = Toplevel()
     top.title(detailTitleText)
-    
+        
     imeLabel = Label(top, text=detailImeText)
     imeLabel.grid(row=0, padx=10, pady=10, sticky=W)
     imeEntry = Entry (top, textvariable=imeValue, width=30)
@@ -1027,10 +1027,28 @@ def pokaji_suzdai_element_window():
     debelinaEntry = Entry(razmeriLabelBox, textvariable=debelinaValue)
     debelinaEntry.grid(row=2, column=1, padx = 5, pady = 2, sticky=E)
     
-    okbutton = Button(top, text=okButtonText, command=top.destroy)
+    def zapazi_nov_detail():
+        dupki_blank = {}
+        razmer_x = float(duljinaValue.get())
+        razmer_y = float(shirinaValue.get())
+        razmer_z = float(debelinaValue.get())
+        razmeri_map = {"orientation" : "xy", "x" : razmer_x, "y": razmer_y, "z":razmer_z}
+        detail = ElementZaDupchene(imeValue.get(), razmeri_map, dupki_blank)
+        ekey = 'customdetail'+imeValue.get()
+        elementi_za_dupchene[ekey] = detail
+        prevod_za_elemnti_v_list[ekey] = u'Въведен детайл: '+imeValue.get()+'..... '+str(razmer_x)+' x '+str(razmer_y)
+        
+        prevod = prevod_za_elemnti_v_list[ekey]
+        listbox.insert(END, prevod)
+
+        top.destroy()
+    
+    okbutton = Button(top, text=okButtonText, command=zapazi_nov_detail)
     okbutton.grid(row=2, padx = 10, pady = 10, sticky = W)
     cancelButton = Button(top, text=cancelButtonText, command=top.destroy)
     cancelButton.grid(row=2, column=1, pady = 10, sticky=W)
+    
+
        
 print ('*** BEGIN PROGRAM *************************')
 mainframe = Tk()
@@ -1080,7 +1098,7 @@ openButton = Button(toolbar, text=openBXFFileButtonText, command=zaredi_file_inf
 openButton.grid(row=0, column=0, padx=10, pady=2,  sticky=W)
 orLabel = Label(toolbar, text=orLabelText)
 orLabel.grid(row=0, column=1, padx=10, pady=2,  sticky=W)
-createButton = Button(toolbar, text=createButtonText, command=pokaji_suzdai_element_window)
+createButton = Button(toolbar, text=createButtonText, command=pokaji_suzdai_detail_window)
 createButton.grid(row=0, column=2, padx=10, pady=2,  sticky=W)
 fileNameLabel = Label(toolbar, text="")
 fileNameLabel.grid(row=0, column=3, padx=10, pady=2,  sticky=W)
