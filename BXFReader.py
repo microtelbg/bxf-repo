@@ -16,6 +16,7 @@ except ImportError:
 *************************************************************************** '''
 rotateButtonText = u'Завърти'
 removeButtonText = u'Премахни'
+editButtonText = u'Редактирай'
 orLabelText = u' или '
 openBXFFileButtonText = u'Отвори BXF файл'
 createButtonText = u'Създай елемент'
@@ -41,6 +42,21 @@ detailDebelinaText = u'Дебелина: '
 
 okButtonText = u'Потвърди'
 cancelButtonText = u'Отхвърли'
+
+dobaviFixLabelText = u'Добави фикс'
+leftFixLabelText = u'Ляво'
+centerFixLabelText = u'Централно'
+rightFixLabelText = u'Дясно'
+dulbochinaFixLabelText = u'Дълбочина на хоризонтален отвор:'
+dobaviButtonText = u'Добави'
+dobaviOtvorLabelText = u'Добави отвор'
+vertikalenLabelText = u'Вертикален'
+horizontalenLabelText = u'Хоризонтален'
+otstoqniePoXLabelText = u'Отстояние по X'
+otstoqniePoYLabelText = u'Отстояние по Y'
+dulbochinaLabelText = u'Дълбочина'
+dobaviPantaLabelText = u'Добави панта'
+iztriiButtonText = u'Изтрий'
 
 ''' ***************************************************************************
 *** Constants
@@ -490,7 +506,7 @@ def suzdai_element_shkafche(root, elements, name):
 *******************************************************************************'''
 def suzdai_element_vrata(root, elements, name):
     parenttag = './/blum:'+name
-    parents = root.findall(parenttag, ns) #Namira vsichki tags
+    parents = root.findall(parenttag, ns) #Namira vsichki tags 
     for parent in parents:
         parentName = parent.attrib['Name']
         fronts = parent.findall('.//blum:Front', ns)
@@ -559,7 +575,6 @@ def suzdai_element_vrata(root, elements, name):
 
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
-
 
 def zaredi_file_info():
     myfilename = askopenfilename(filetypes=(("BXF files", "*.bxf"), ("All files", "*.*")))
@@ -753,8 +768,7 @@ def ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_za_proverka, rotation
     dupkiIzvunPlota["IzvunY"] = poneEdnaDupkaIzlizaPoY
     
     return dupkiIzvunPlota
-        
-        
+                
 def narisuvai_element_na_plota(izbranElement, rotation, side):
     #Reset
     if side == 'L':
@@ -1048,7 +1062,90 @@ def pokaji_suzdai_detail_window():
     cancelButton = Button(top, text=cancelButtonText, command=top.destroy)
     cancelButton.grid(row=2, column=1, pady = 10, sticky=W)
     
+def pokaji_redaktirai_window():
+    ramka = Toplevel()
+    ramka.title(editButtonText)
+    
+    rtoolbar = Frame(ramka, bg="honeydew")
+    rtoolbar.grid(row=0, columnspan=2, sticky=W+E)
+    dLabel = Label(rtoolbar, text=detailTitleText)
+    dLabel.grid(row=0, padx=10, pady=5,sticky=W)
+    iLabel = Label(rtoolbar, text='')
+    iLabel.grid(row=0, column=1, pady=5, sticky=W)
+    
+    frame1 = Frame(ramka)
+    frame1.grid(row=1, sticky=N+S)
+    
+    # ===== Dobavi FIKS =====
+    dqsnoValue = IntVar()
+    centerValue = IntVar()
+    lqvoValue = IntVar()
+    dulbochinaValue = StringVar()
+    
+    dobaviFixLabelBox = LabelFrame(frame1, text=dobaviFixLabelText)
+    dobaviFixLabelBox.grid(row=0, padx=5, pady=5, sticky=W+E)
+    leftCheckBox = Checkbutton(dobaviFixLabelBox, text=leftFixLabelText, variable=lqvoValue)
+    leftCheckBox.grid(row=0, padx=3, pady=2, sticky=W)
+    centerCheckBox = Checkbutton(dobaviFixLabelBox, text=centerFixLabelText, variable=centerValue)
+    centerCheckBox.grid(row=0, column=1, padx=3, pady=2, sticky=W)
+    rightCheckBox = Checkbutton(dobaviFixLabelBox, text=rightFixLabelText, variable=dqsnoValue)
+    rightCheckBox.grid(row=0, column=2, padx=3, pady=2, sticky=W)
+    dulbochinaLabel = Label(dobaviFixLabelBox, text=dulbochinaFixLabelText)
+    dulbochinaLabel.grid(row=1, columnspan=2, pady=2, sticky=W)
+    dulbochinaEntry = Entry(dobaviFixLabelBox, textvariable=dulbochinaValue)
+    dulbochinaEntry.grid(row=1, column=2, padx=3, pady=2, sticky=E)
+    dobaviFixButton = Button(dobaviFixLabelBox, text=dobaviButtonText, bg="greenyellow")
+    dobaviFixButton.grid(row=2, column=2, padx=2, pady=2, sticky=E)
+    
+    # ===== Dobavi otvor =====
+    vertikalenValue = IntVar()
+    horizontalenValue = IntVar()
+    xeValue = StringVar()
+    yeValue = StringVar()
+    dimValue = StringVar()
+    dulbValue = StringVar()
+    
+    dobaviOtvorLabelBox = LabelFrame(frame1, text=dobaviOtvorLabelText)
+    dobaviOtvorLabelBox.grid(row=1, padx=5, pady=5, sticky=W+E)
+    vertikalenCheckBox = Checkbutton(dobaviOtvorLabelBox, text=vertikalenLabelText, variable=vertikalenValue)
+    vertikalenCheckBox.grid(row=0, padx=3, pady=2, sticky=W)
+    horizontalenCheckBox = Checkbutton(dobaviOtvorLabelBox, text=horizontalenLabelText, variable=horizontalenValue)
+    horizontalenCheckBox.grid(row=0, column=1, padx=3, pady=2, sticky=W)
+    xLabel = Label(dobaviOtvorLabelBox, text=otstoqniePoXLabelText)
+    xLabel.grid(row=1, sticky=W)
+    xEntry = Entry(dobaviOtvorLabelBox, textvariable=xeValue)
+    xEntry.grid(row=1, column=1, padx = 2, pady = 2, sticky=E)
+    yLabel = Label(dobaviOtvorLabelBox, text=otstoqniePoYLabelText)
+    yLabel.grid(row=2, sticky=W)
+    yEntry = Entry(dobaviOtvorLabelBox, textvariable=yeValue)
+    yEntry.grid(row=2, column=1, padx = 2, pady = 2, sticky=E)
+    diamLabel = Label(dobaviOtvorLabelBox, text=diameturLabelText)
+    diamLabel.grid(row=3, sticky=W)
+    diamEntry = Entry(dobaviOtvorLabelBox, textvariable=dimValue)
+    diamEntry.grid(row=3, column=1, padx = 2, pady = 2, sticky=E)
+    dulbLabel = Label(dobaviOtvorLabelBox, text=dulbochinaLabelText)
+    dulbLabel.grid(row=4, sticky=W)
+    dulbEntry = Entry(dobaviOtvorLabelBox, textvariable=dulbValue)
+    dulbEntry.grid(row=4, column=1, padx = 2, pady = 2, sticky=E)
+    dobaviOtvorButton = Button(dobaviOtvorLabelBox, text=dobaviButtonText, bg="greenyellow")
+    dobaviOtvorButton.grid(row=5, column=1, padx=2, pady=2, sticky=E)
 
+    # ===== Dobavi panta =====
+    dobaviPantaLabelBox = LabelFrame(frame1, text=dobaviPantaLabelText)
+    dobaviPantaLabelBox.grid(row=2, padx=5, pady=5, sticky=W+E)
+    dopDetailiLabel = Label(dobaviPantaLabelBox, text=u'Тук ще има допълнителни компоненти')
+    dopDetailiLabel.grid(row=0, columnspan=3)
+    
+    # ===== List za dobavenite dupki =====
+    listbox = Listbox(frame1)
+    listbox.grid(row=3, padx=5, pady=5, sticky=W+E+N+S)
+    removeDButton = Button(frame1, text=iztriiButtonText)
+    removeDButton.grid(row=4, sticky=E)
+
+
+    rcanvas = Canvas(ramka, width=1000, heigh=700, bg="grey")
+    rcanvas.grid(row=1, column=1, padx=20, sticky=W+E+N+S)
+    
        
 print ('*** BEGIN PROGRAM *************************')
 mainframe = Tk()
@@ -1111,6 +1208,8 @@ rotateButtonLeftBaza = Button(leftBazaLabelBox, text=rotateButtonText, bg="light
 rotateButtonLeftBaza.grid(row=0, sticky=W, padx=2, pady=2)
 removeElementButtonLeftBaza = Button(leftBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_lqva_baza)
 removeElementButtonLeftBaza.grid(row=0, column=1, sticky=W, padx=2, pady=2)
+editButtonLeftBaza = Button(leftBazaLabelBox, text=editButtonText, bg="lightblue", command=pokaji_redaktirai_window)
+editButtonLeftBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
 rightBazaLabelBox = LabelFrame(mainframe, text=rightBazaGrouperText)
 rightBazaLabelBox.grid(row=1, column=3, sticky=W, padx=20, pady=2)
@@ -1118,6 +1217,8 @@ rotateButtonRightBaza = Button(rightBazaLabelBox, text=rotateButtonText, bg="lig
 rotateButtonRightBaza.grid(row=0, sticky=W, padx=2, pady=2)
 removeElementButtonRightBaza = Button(rightBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_dqsna_baza)
 removeElementButtonRightBaza.grid(row=0, column=1, sticky=W, padx=2, pady=2)
+editButtonRightBaza = Button(rightBazaLabelBox, text=editButtonText, bg="lightblue", command=pokaji_redaktirai_window)
+editButtonRightBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
 # ********** Listbox *************
 listbox = Listbox(mainframe, width=50)
