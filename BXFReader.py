@@ -49,14 +49,30 @@ centerFixLabelText = u'Централно'
 rightFixLabelText = u'Дясно'
 dulbochinaFixLabelText = u'Дълбочина на хоризонтален отвор:'
 dobaviButtonText = u'Добави'
+dobaviVerOtvorLabelText = u'Добави вертикален отвор'
+dobaviHorOtvorLabelText = u'Добави хоризонтален отвор'
 dobaviOtvorLabelText = u'Добави отвор'
 vertikalenLabelText = u'Вертикален'
 horizontalenLabelText = u'Хоризонтален'
-otstoqniePoXLabelText = u'Отстояние по X'
-otstoqniePoYLabelText = u'Отстояние по Y'
-dulbochinaLabelText = u'Дълбочина'
+paramFixLabelText = u'Параметри на фикса'
+otstoqniePoXLabelText = u'Отстояние по хоризонтал'
+otstoqniePoYLabelText = u'Отстояние по вертикал'
+dulbochinaPoXLabelText = u'Хоризонтален отвор - Дълбочина'
+dulbochinaPoYLabelText = u'Вертикален отвор - Дълбочина'
+diameturPoXLabelText = u'Хоризонтален отвор - Диаметър'
+diameturPoYLabelText = u'Вертикален отвор - Диаметър'
+kopiraiPoXSimetrichnoLabelText = u'Постави фикс симетрично по ХОРИЗОНТАЛ'
+kopiraiPoYSimetrichnoLabelText = u'Постави фикс симетрично по ВЕРТИКАЛ'
+centralenFixLabelText = u'Постави централен фикс'
+postaviFixLabelText = u'Постави фикс'
+stupkaNazadLabelText = u'Стъпка назад'
+izchistiFixoveLabelText = u'Изчисти фиксове' 
+zapaziFixoveLabelText = u'Запази фиксове'
+izbereteOpciaLabelText = u'Изберете опция за редактиране ...'
 dobaviPantaLabelText = u'Добави панта'
 iztriiButtonText = u'Изтрий'
+
+
 
 ''' ***************************************************************************
 *** Constants
@@ -1065,7 +1081,75 @@ def pokaji_suzdai_detail_window():
 def pokaji_redaktirai_window():
     ramka = Toplevel()
     ramka.title(editButtonText)
-    
+
+    def verikalenOtvorUI():
+        for wid in frame1.grid_slaves():
+            wid.grid_forget()
+            
+        lab = Label(frame1, text="Coming soon...", width= 50)
+        lab.grid(row=0)
+                
+    def fiksUI():
+        for wid in frame1.grid_slaves():
+            wid.grid_forget()
+        
+        fiksFrame = Frame(ramka)
+        fiksFrame.grid(row=2, sticky=N+S)
+        
+        paramFixLabelBox = LabelFrame(frame1, text=paramFixLabelText)
+        paramFixLabelBox.grid(row=0, padx=5, pady=15, sticky=W+E)
+        
+        xeValue = StringVar()
+        yeValue = StringVar()
+        dimXValue = StringVar()
+        dulbXValue = StringVar()
+        dimYValue = StringVar()
+        dulbYValue = StringVar()
+        simetrichnoPoXValue = IntVar()
+        simetrichnoPoYValue = IntVar()
+        centralenFiksValue = IntVar()
+        
+        xLabel = Label(paramFixLabelBox, text=otstoqniePoXLabelText)
+        xLabel.grid(row=1, sticky=W)
+        xEntry = Entry(paramFixLabelBox, textvariable=xeValue)
+        xEntry.grid(row=1, column=1, padx = 2, pady = 2, sticky=E)
+        yLabel = Label(paramFixLabelBox, text=otstoqniePoYLabelText)
+        yLabel.grid(row=2, sticky=W)
+        yEntry = Entry(paramFixLabelBox, textvariable=yeValue)
+        yEntry.grid(row=2, column=1, padx = 2, pady = 2, sticky=E)
+        diamXLabel = Label(paramFixLabelBox, text=diameturPoXLabelText)
+        diamXLabel.grid(row=3, sticky=W)
+        diamXEntry = Entry(paramFixLabelBox, textvariable=dimXValue)
+        diamXEntry.grid(row=3, column=1, padx = 2, pady = 2, sticky=E)       
+        dulbXLabel = Label(paramFixLabelBox, text=dulbochinaPoXLabelText)
+        dulbXLabel.grid(row=4, sticky=W)
+        dulbXEntry = Entry(paramFixLabelBox, textvariable=dulbXValue)
+        dulbXEntry.grid(row=4, column=1, padx = 2, pady = 2, sticky=E)
+        diamYLabel = Label(paramFixLabelBox, text=diameturPoYLabelText)
+        diamYLabel.grid(row=5, sticky=W)
+        diamYEntry = Entry(paramFixLabelBox, textvariable=dimYValue)
+        diamYEntry.grid(row=5, column=1, padx = 2, pady = 2, sticky=E)
+        dulbYLabel = Label(paramFixLabelBox, text=dulbochinaPoYLabelText)
+        dulbYLabel.grid(row=6, sticky=W)
+        dulbYEntry = Entry(paramFixLabelBox, textvariable=dulbYValue)
+        dulbYEntry.grid(row=6, column=1, padx = 2, pady = 2, sticky=E)
+        
+        copyPoXCheckBox = Checkbutton(frame1, text=kopiraiPoXSimetrichnoLabelText, variable=simetrichnoPoXValue)
+        copyPoXCheckBox.grid(row=1, sticky=W)
+        copyPoYCheckBox = Checkbutton(frame1, text=kopiraiPoYSimetrichnoLabelText, variable=simetrichnoPoYValue)
+        copyPoYCheckBox.grid(row=2, sticky=W)
+        centralenFiksCheckBox = Checkbutton(frame1, text=centralenFixLabelText, variable=centralenFiksValue)
+        centralenFiksCheckBox.grid(row=3, sticky=W)
+        
+        postaviFixButton = Button(frame1, text=postaviFixLabelText, width=20)
+        postaviFixButton.grid(row=4, padx = 5, pady = 5, sticky=E)
+        otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20)
+        otkajiFixButton.grid(row=5, padx = 5, pady = 5, sticky=E)
+        izchistiFixButton = Button(frame1, text=izchistiFixoveLabelText, width=20)
+        izchistiFixButton.grid(row=6, padx = 5, pady = 5, sticky=E)
+        zapaziiFixButton = Button(frame1, text=zapaziFixoveLabelText, width=20)
+        zapaziiFixButton.grid(row=7, padx = 5, pady = 5, sticky=E)
+         
     rtoolbar = Frame(ramka, bg="honeydew")
     rtoolbar.grid(row=0, columnspan=2, sticky=W+E)
     dLabel = Label(rtoolbar, text=detailTitleText)
@@ -1073,78 +1157,26 @@ def pokaji_redaktirai_window():
     iLabel = Label(rtoolbar, text='')
     iLabel.grid(row=0, column=1, pady=5, sticky=W)
     
+    buttonFrame = Frame(ramka)
+    buttonFrame.grid(row=1, columnspan=2, sticky=W)
+    fixButton = Button(buttonFrame, text=dobaviFixLabelText, command=fiksUI)
+    fixButton.grid(row=0, padx = 2, pady = 2, sticky=W)
+    verikalenOtvorButton = Button(buttonFrame, text=dobaviVerOtvorLabelText, command=verikalenOtvorUI)
+    verikalenOtvorButton.grid(row=0, column=1, padx = 2, pady = 2,sticky=W)
+    horizontalenOtvorButton = Button(buttonFrame, text=dobaviHorOtvorLabelText, command=verikalenOtvorUI)
+    horizontalenOtvorButton.grid(row=0, column=2, padx = 2, pady = 2, sticky=W)
+    pantaButton = Button(buttonFrame, text=dobaviPantaLabelText, command=verikalenOtvorUI)
+    pantaButton.grid(row=0, column=3, padx = 2, pady = 2, sticky=W)
+    zavurtiButton = Button(buttonFrame, text=rotateButtonText, bg="lightblue")
+    zavurtiButton.grid(row=0, column=4, padx = 2, pady = 2, sticky=W)
+    
     frame1 = Frame(ramka)
-    frame1.grid(row=1, sticky=N+S)
+    frame1.grid(row=2, sticky=N+S)
+    label1 = Label(frame1, text=izbereteOpciaLabelText, width= 50)
+    label1.grid(row=0, pady = 20)
     
-    # ===== Dobavi FIKS =====
-    dqsnoValue = IntVar()
-    centerValue = IntVar()
-    lqvoValue = IntVar()
-    dulbochinaValue = StringVar()
-    
-    dobaviFixLabelBox = LabelFrame(frame1, text=dobaviFixLabelText)
-    dobaviFixLabelBox.grid(row=0, padx=5, pady=5, sticky=W+E)
-    leftCheckBox = Checkbutton(dobaviFixLabelBox, text=leftFixLabelText, variable=lqvoValue)
-    leftCheckBox.grid(row=0, padx=3, pady=2, sticky=W)
-    centerCheckBox = Checkbutton(dobaviFixLabelBox, text=centerFixLabelText, variable=centerValue)
-    centerCheckBox.grid(row=0, column=1, padx=3, pady=2, sticky=W)
-    rightCheckBox = Checkbutton(dobaviFixLabelBox, text=rightFixLabelText, variable=dqsnoValue)
-    rightCheckBox.grid(row=0, column=2, padx=3, pady=2, sticky=W)
-    dulbochinaLabel = Label(dobaviFixLabelBox, text=dulbochinaFixLabelText)
-    dulbochinaLabel.grid(row=1, columnspan=2, pady=2, sticky=W)
-    dulbochinaEntry = Entry(dobaviFixLabelBox, textvariable=dulbochinaValue)
-    dulbochinaEntry.grid(row=1, column=2, padx=3, pady=2, sticky=E)
-    dobaviFixButton = Button(dobaviFixLabelBox, text=dobaviButtonText, bg="greenyellow")
-    dobaviFixButton.grid(row=2, column=2, padx=2, pady=2, sticky=E)
-    
-    # ===== Dobavi otvor =====
-    vertikalenValue = IntVar()
-    horizontalenValue = IntVar()
-    xeValue = StringVar()
-    yeValue = StringVar()
-    dimValue = StringVar()
-    dulbValue = StringVar()
-    
-    dobaviOtvorLabelBox = LabelFrame(frame1, text=dobaviOtvorLabelText)
-    dobaviOtvorLabelBox.grid(row=1, padx=5, pady=5, sticky=W+E)
-    vertikalenCheckBox = Checkbutton(dobaviOtvorLabelBox, text=vertikalenLabelText, variable=vertikalenValue)
-    vertikalenCheckBox.grid(row=0, padx=3, pady=2, sticky=W)
-    horizontalenCheckBox = Checkbutton(dobaviOtvorLabelBox, text=horizontalenLabelText, variable=horizontalenValue)
-    horizontalenCheckBox.grid(row=0, column=1, padx=3, pady=2, sticky=W)
-    xLabel = Label(dobaviOtvorLabelBox, text=otstoqniePoXLabelText)
-    xLabel.grid(row=1, sticky=W)
-    xEntry = Entry(dobaviOtvorLabelBox, textvariable=xeValue)
-    xEntry.grid(row=1, column=1, padx = 2, pady = 2, sticky=E)
-    yLabel = Label(dobaviOtvorLabelBox, text=otstoqniePoYLabelText)
-    yLabel.grid(row=2, sticky=W)
-    yEntry = Entry(dobaviOtvorLabelBox, textvariable=yeValue)
-    yEntry.grid(row=2, column=1, padx = 2, pady = 2, sticky=E)
-    diamLabel = Label(dobaviOtvorLabelBox, text=diameturLabelText)
-    diamLabel.grid(row=3, sticky=W)
-    diamEntry = Entry(dobaviOtvorLabelBox, textvariable=dimValue)
-    diamEntry.grid(row=3, column=1, padx = 2, pady = 2, sticky=E)
-    dulbLabel = Label(dobaviOtvorLabelBox, text=dulbochinaLabelText)
-    dulbLabel.grid(row=4, sticky=W)
-    dulbEntry = Entry(dobaviOtvorLabelBox, textvariable=dulbValue)
-    dulbEntry.grid(row=4, column=1, padx = 2, pady = 2, sticky=E)
-    dobaviOtvorButton = Button(dobaviOtvorLabelBox, text=dobaviButtonText, bg="greenyellow")
-    dobaviOtvorButton.grid(row=5, column=1, padx=2, pady=2, sticky=E)
-
-    # ===== Dobavi panta =====
-    dobaviPantaLabelBox = LabelFrame(frame1, text=dobaviPantaLabelText)
-    dobaviPantaLabelBox.grid(row=2, padx=5, pady=5, sticky=W+E)
-    dopDetailiLabel = Label(dobaviPantaLabelBox, text=u'Тук ще има допълнителни компоненти')
-    dopDetailiLabel.grid(row=0, columnspan=3)
-    
-    # ===== List za dobavenite dupki =====
-    listbox = Listbox(frame1)
-    listbox.grid(row=3, padx=5, pady=5, sticky=W+E+N+S)
-    removeDButton = Button(frame1, text=iztriiButtonText)
-    removeDButton.grid(row=4, sticky=E)
-
-
     rcanvas = Canvas(ramka, width=1000, heigh=700, bg="grey")
-    rcanvas.grid(row=1, column=1, padx=20, sticky=W+E+N+S)
+    rcanvas.grid(row=2, column=1, padx=20, sticky=W+E+N+S)
     
        
 print ('*** BEGIN PROGRAM *************************')
