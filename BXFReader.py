@@ -104,6 +104,7 @@ elementi_za_dupchene = {}
 #    ako e grub   (Y,Z ot BXF), Y->Y(masata) Z->X(masata)
 # Currently selected elements (izbranite v momenta elementi)
 izbrani_elementi = {}
+izbranElementZaRedakciaInd = ''
 
 #Dupki za g-code
 dupki_za_gcode = []
@@ -609,7 +610,7 @@ def zaredi_file_info():
 
     #Reset
     canvas.delete(ALL)
-    masa = canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
+    canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
     
 def izberi_element_za_dupchene(side):
       
@@ -630,12 +631,12 @@ def izberi_element_za_dupchene(side):
         #Sloji elementa v lista i purvonachalnata orientacia
         izbrani_elementi['L'] = izbranElement
         izbrani_elementi['LO'] = 0
-        narisuvai_element_na_plota(izbranElement, 0, 'L')
+        narisuvai_element_na_plota(izbranElement, 0, 'L', canvas)
     elif side == 'R':
         #Sloji elementa v lista i purvonachalnata orientacia
         izbrani_elementi['R'] = izbranElement
         izbrani_elementi['RO'] = 0
-        narisuvai_element_na_plota(izbranElement, 0, 'R')
+        narisuvai_element_na_plota(izbranElement, 0, 'R', canvas)
 
 def izberi_element_za_lqva_strana():
     izberi_element_za_dupchene('L')
@@ -643,18 +644,18 @@ def izberi_element_za_lqva_strana():
 def izberi_element_za_dqsna_strana():
     izberi_element_za_dupchene('R')
 
-def narisuvai_strana_na_plota(shirina, duljina, side):
+def narisuvai_strana_na_plota(shirina, duljina, side, canvestodrawon):
     if side == 'L':
         global leftRectangle
-        leftRectangle = canvas.create_rectangle(30, 30, shirina*mashtab+30, duljina*mashtab+30, fill="lightblue")
+        leftRectangle = canvestodrawon.create_rectangle(30, 30, shirina*mashtab+30, duljina*mashtab+30, fill="lightblue")
     elif side == 'R':
         nachalenX = PLOT_NA_MACHINA_X*mashtab+10 - shirina*mashtab
         kraenX = nachalenX + shirina*mashtab
         
         global rightRectangle
-        rightRectangle = canvas.create_rectangle(nachalenX, 30, kraenX, duljina*mashtab+30, fill="lightgreen")
+        rightRectangle = canvestodrawon.create_rectangle(nachalenX, 30, kraenX, duljina*mashtab+30, fill="lightgreen")
 
-def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius, eIzvunPlota, side):
+def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius, eIzvunPlota, side, canvestodrawon):
     if side == 'L':
         nachalo_x = 30 + (xcoordinata - radius)*mashtab
         krai_x = 30 + (xcoordinata + radius)*mashtab
@@ -666,9 +667,9 @@ def narisuvai_dupka_na_plota(xcoordinata, ycoordinata, radius, eIzvunPlota, side
     krai_y = 30 + (ycoordinata + radius)*mashtab
 
     if eIzvunPlota == 1:
-        ov = canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon")
+        ov = canvestodrawon.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon")
     else:
-        ov = canvas.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
+        ov = canvestodrawon.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
     
     if side == 'L':    
         leftOvals.append(ov)
@@ -696,12 +697,12 @@ def mahni_element_ot_dqsna_baza():
     del izbrani_elementi['RO']
 
 def rotate_element_lqva_baza():
-    rotate_element('L')
+    rotate_element('L', canvas)
     
 def rotate_element_dqsna_baza():
-    rotate_element('R')
+    rotate_element('R', canvas)
         
-def rotate_element(side):
+def rotate_element(side, ccanvas):
     #Nameri izbrania element
     if side == 'L':
         izbranElement = izbrani_elementi['L']
@@ -717,10 +718,10 @@ def rotate_element(side):
     
     if side == 'L':   
         izbrani_elementi['LO'] = newOrientation
-        narisuvai_element_na_plota(izbranElement, newOrientation, 'L')
+        narisuvai_element_na_plota(izbranElement, newOrientation, 'L', ccanvas)
     elif side == 'R':
         izbrani_elementi['RO'] = newOrientation
-        narisuvai_element_na_plota(izbranElement, newOrientation, 'R')
+        narisuvai_element_na_plota(izbranElement, newOrientation, 'R', ccanvas)
         
 def ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_za_proverka, rotation, element_x, element_y):
     poneEdnaDupkaIzlizaPoX = 0
@@ -785,16 +786,16 @@ def ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_za_proverka, rotation
     
     return dupkiIzvunPlota
                 
-def narisuvai_element_na_plota(izbranElement, rotation, side):
+def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon):
     #Reset
     if side == 'L':
-        canvas.delete(leftRectangle)
+        canvestodrawon.delete(leftRectangle)
         for ov in leftOvals:
-            canvas.delete(ov)
+            canvestodrawon.delete(ov)
     elif side == 'R':
-        canvas.delete(rightRectangle)
+        canvestodrawon.delete(rightRectangle)
         for ov in rightOvals:
-            canvas.delete(ov)
+            canvestodrawon.delete(ov)
     del dupki_za_gcode[:]
     
     #Vzemi razmerite na stranata
@@ -822,7 +823,7 @@ def narisuvai_element_na_plota(izbranElement, rotation, side):
             element_y = float(razmeri_na_elementa['y'])
         
     #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(element_x, element_y, side)
+    narisuvai_strana_na_plota(element_x, element_y, side, canvestodrawon)
 
     # Izliza li elementa ot plota na machinata?
     izlizaPoX = 0
@@ -896,9 +897,9 @@ def narisuvai_element_na_plota(izbranElement, rotation, side):
             dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r}
             dupki_za_gcode.append(dupka_za_gcode)
             
-            narisuvai_dupka_na_plota(d_x, d_y, d_r, 0, side)
+            narisuvai_dupka_na_plota(d_x, d_y, d_r, 0, side, canvestodrawon)
         else:
-            narisuvai_dupka_na_plota(d_x, d_y, d_r, 1, side)        
+            narisuvai_dupka_na_plota(d_x, d_y, d_r, 1, side, canvestodrawon)        
 
 def instrument_za_dupka(diametur):
     if diametur == 35:
@@ -1058,15 +1059,16 @@ def pokaji_suzdai_detail_window():
     debelinaEntry.grid(row=2, column=1, padx = 5, pady = 2, sticky=E)
     
     def zapazi_nov_detail():
-        dupki_blank = {}
+        dupki_blank = []
+        # Narochno sa oburnati X,Y zashtoto orientacia xy ot BXF oznachva oburnati X,Y ...Taka che ne promenqi tuk!
         razmer_x = float(duljinaValue.get())
         razmer_y = float(shirinaValue.get())
         razmer_z = float(debelinaValue.get())
-        razmeri_map = {"orientation" : "xy", "x" : razmer_x, "y": razmer_y, "z":razmer_z}
+        razmeri_map = {"orientation" : "xy", "x" : razmer_y, "y": razmer_x, "z":razmer_z}
         detail = ElementZaDupchene(imeValue.get(), razmeri_map, dupki_blank)
         ekey = 'customdetail'+imeValue.get()
         elementi_za_dupchene[ekey] = detail
-        prevod_za_elemnti_v_list[ekey] = u'Въведен детайл: '+imeValue.get()+'..... '+str(razmer_x)+' x '+str(razmer_y)
+        prevod_za_elemnti_v_list[ekey] = u'Въведен детайл: '+imeValue.get()+'..... '+str(razmer_y)+' x '+str(razmer_x)
         
         prevod = prevod_za_elemnti_v_list[ekey]
         listbox.insert(END, prevod)
@@ -1077,10 +1079,35 @@ def pokaji_suzdai_detail_window():
     okbutton.grid(row=2, padx = 10, pady = 10, sticky = W)
     cancelButton = Button(top, text=cancelButtonText, command=top.destroy)
     cancelButton.grid(row=2, column=1, pady = 10, sticky=W)
+       
+def reset_canvas():
+    canvas.delete(ALL)
+    canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
+    for side in izbrani_elementi.keys():
+        if side == 'L':
+            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas)
+      
+        if side == 'R':
+            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas)
+            
+def redaktirai_lqv_detail():
+    global izbranElementZaRedakciaInd
+    izbranElementZaRedakciaInd = 'L'
+    pokaji_redaktirai_window('L')
     
-def pokaji_redaktirai_window():
-    ramka = Toplevel()
-    ramka.title(editButtonText)
+def redaktirai_desen_detail():
+    global izbranElementZaRedakciaInd
+    izbranElementZaRedakciaInd = 'R'
+    pokaji_redaktirai_window('R')
+        
+def pokaji_redaktirai_window(side):
+
+    def on_closing():
+        ramka.destroy()
+        reset_canvas()
+        
+    def rotate_element_za_redakcia():
+        rotate_element(side, rcanvas)
 
     def verikalenOtvorUI():
         for wid in frame1.grid_slaves():
@@ -1099,39 +1126,29 @@ def pokaji_redaktirai_window():
         paramFixLabelBox = LabelFrame(frame1, text=paramFixLabelText)
         paramFixLabelBox.grid(row=0, padx=5, pady=15, sticky=W+E)
         
-        xeValue = StringVar()
-        yeValue = StringVar()
-        dimXValue = StringVar()
-        dulbXValue = StringVar()
-        dimYValue = StringVar()
-        dulbYValue = StringVar()
-        simetrichnoPoXValue = IntVar()
-        simetrichnoPoYValue = IntVar()
-        centralenFiksValue = IntVar()
-        
         xLabel = Label(paramFixLabelBox, text=otstoqniePoXLabelText)
         xLabel.grid(row=1, sticky=W)
-        xEntry = Entry(paramFixLabelBox, textvariable=xeValue)
+        xEntry = Entry(paramFixLabelBox, textvariable=fiksXValue)
         xEntry.grid(row=1, column=1, padx = 2, pady = 2, sticky=E)
         yLabel = Label(paramFixLabelBox, text=otstoqniePoYLabelText)
         yLabel.grid(row=2, sticky=W)
-        yEntry = Entry(paramFixLabelBox, textvariable=yeValue)
+        yEntry = Entry(paramFixLabelBox, textvariable=fixYValue)
         yEntry.grid(row=2, column=1, padx = 2, pady = 2, sticky=E)
         diamXLabel = Label(paramFixLabelBox, text=diameturPoXLabelText)
         diamXLabel.grid(row=3, sticky=W)
-        diamXEntry = Entry(paramFixLabelBox, textvariable=dimXValue)
+        diamXEntry = Entry(paramFixLabelBox, textvariable=fiksDiamturXValue)
         diamXEntry.grid(row=3, column=1, padx = 2, pady = 2, sticky=E)       
         dulbXLabel = Label(paramFixLabelBox, text=dulbochinaPoXLabelText)
         dulbXLabel.grid(row=4, sticky=W)
-        dulbXEntry = Entry(paramFixLabelBox, textvariable=dulbXValue)
+        dulbXEntry = Entry(paramFixLabelBox, textvariable=fiksDulbochinaXValue)
         dulbXEntry.grid(row=4, column=1, padx = 2, pady = 2, sticky=E)
         diamYLabel = Label(paramFixLabelBox, text=diameturPoYLabelText)
         diamYLabel.grid(row=5, sticky=W)
-        diamYEntry = Entry(paramFixLabelBox, textvariable=dimYValue)
+        diamYEntry = Entry(paramFixLabelBox, textvariable=fiksDiamturYValue)
         diamYEntry.grid(row=5, column=1, padx = 2, pady = 2, sticky=E)
         dulbYLabel = Label(paramFixLabelBox, text=dulbochinaPoYLabelText)
         dulbYLabel.grid(row=6, sticky=W)
-        dulbYEntry = Entry(paramFixLabelBox, textvariable=dulbYValue)
+        dulbYEntry = Entry(paramFixLabelBox, textvariable=fiksDulbochinaYValue)
         dulbYEntry.grid(row=6, column=1, padx = 2, pady = 2, sticky=E)
         
         copyPoXCheckBox = Checkbutton(frame1, text=kopiraiPoXSimetrichnoLabelText, variable=simetrichnoPoXValue)
@@ -1141,7 +1158,7 @@ def pokaji_redaktirai_window():
         centralenFiksCheckBox = Checkbutton(frame1, text=centralenFixLabelText, variable=centralenFiksValue)
         centralenFiksCheckBox.grid(row=3, sticky=W)
         
-        postaviFixButton = Button(frame1, text=postaviFixLabelText, width=20)
+        postaviFixButton = Button(frame1, text=postaviFixLabelText, width=20, command=postavi_fiks)
         postaviFixButton.grid(row=4, padx = 5, pady = 5, sticky=E)
         otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20)
         otkajiFixButton.grid(row=5, padx = 5, pady = 5, sticky=E)
@@ -1149,6 +1166,26 @@ def pokaji_redaktirai_window():
         izchistiFixButton.grid(row=6, padx = 5, pady = 5, sticky=E)
         zapaziiFixButton = Button(frame1, text=zapaziFixoveLabelText, width=20)
         zapaziiFixButton.grid(row=7, padx = 5, pady = 5, sticky=E)
+    
+    def postavi_fiks():
+        zyl_pos_x = float(fiksXValue.get())
+        zyl_pos_y = float(fixYValue.get())
+        zyl_pos_z = 0
+        zyl_h = float(fiksDulbochinaXValue.get())
+        zyl_r = float(fiksDiamturXValue.get())/2.0
+         
+        dupka = {"x" : zyl_pos_y, "y": zyl_pos_x, "z":zyl_pos_z, "h" : zyl_h, "r" : zyl_r}
+        izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
+        dupki_na_elementa = izbranElement.dupki
+        dupki_na_elementa.append(dupka)
+        
+        # Narisuvai
+        rcanvas.delete(ALL)
+        narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas)
+        
+    ramka = Toplevel()
+    ramka.title(editButtonText)
+    ramka.protocol("WM_DELETE_WINDOW", on_closing)
          
     rtoolbar = Frame(ramka, bg="honeydew")
     rtoolbar.grid(row=0, columnspan=2, sticky=W+E)
@@ -1167,7 +1204,7 @@ def pokaji_redaktirai_window():
     horizontalenOtvorButton.grid(row=0, column=2, padx = 2, pady = 2, sticky=W)
     pantaButton = Button(buttonFrame, text=dobaviPantaLabelText, command=verikalenOtvorUI)
     pantaButton.grid(row=0, column=3, padx = 2, pady = 2, sticky=W)
-    zavurtiButton = Button(buttonFrame, text=rotateButtonText, bg="lightblue")
+    zavurtiButton = Button(buttonFrame, text=rotateButtonText, bg="lightblue", command=rotate_element_za_redakcia)
     zavurtiButton.grid(row=0, column=4, padx = 2, pady = 2, sticky=W)
     
     frame1 = Frame(ramka)
@@ -1178,6 +1215,8 @@ def pokaji_redaktirai_window():
     rcanvas = Canvas(ramka, width=1000, heigh=700, bg="grey")
     rcanvas.grid(row=2, column=1, padx=20, sticky=W+E+N+S)
     
+    # Narisuvai elementa na plota
+    narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, rcanvas)
        
 print ('*** BEGIN PROGRAM *************************')
 mainframe = Tk()
@@ -1212,6 +1251,28 @@ instrument4EntrySkorostValue.set('1500')
 instrument5EntryDiaValue.set('2.5')
 instrument5EntrySkorostValue.set('1500')
 
+''' ***************************************************************************
+*** Variables za stoinosti na fiksovete
+*************************************************************************** '''
+fiksXValue = StringVar()
+fixYValue = StringVar()
+fiksDiamturXValue = StringVar()
+fiksDulbochinaXValue = StringVar()
+fiksDiamturYValue = StringVar()
+fiksDulbochinaYValue = StringVar()
+simetrichnoPoXValue = IntVar()
+simetrichnoPoYValue = IntVar()
+centralenFiksValue = IntVar()
+
+# Default values (she doidat posle of file)
+fiksXValue.set('100')
+fixYValue.set('34')
+fiksDiamturXValue.set('15')
+fiksDulbochinaXValue.set('14')
+fiksDiamturYValue.set('8')
+fiksDulbochinaYValue.set('28')
+        
+        
 # ********** File Menu *************
 mainMenu = Menu(mainframe)
 mainframe.config(menu=mainMenu)
@@ -1240,7 +1301,7 @@ rotateButtonLeftBaza = Button(leftBazaLabelBox, text=rotateButtonText, bg="light
 rotateButtonLeftBaza.grid(row=0, sticky=W, padx=2, pady=2)
 removeElementButtonLeftBaza = Button(leftBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_lqva_baza)
 removeElementButtonLeftBaza.grid(row=0, column=1, sticky=W, padx=2, pady=2)
-editButtonLeftBaza = Button(leftBazaLabelBox, text=editButtonText, bg="lightblue", command=pokaji_redaktirai_window)
+editButtonLeftBaza = Button(leftBazaLabelBox, text=editButtonText, bg="lightblue", command=redaktirai_lqv_detail)
 editButtonLeftBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
 rightBazaLabelBox = LabelFrame(mainframe, text=rightBazaGrouperText)
@@ -1249,7 +1310,7 @@ rotateButtonRightBaza = Button(rightBazaLabelBox, text=rotateButtonText, bg="lig
 rotateButtonRightBaza.grid(row=0, sticky=W, padx=2, pady=2)
 removeElementButtonRightBaza = Button(rightBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_dqsna_baza)
 removeElementButtonRightBaza.grid(row=0, column=1, sticky=W, padx=2, pady=2)
-editButtonRightBaza = Button(rightBazaLabelBox, text=editButtonText, bg="lightblue", command=pokaji_redaktirai_window)
+editButtonRightBaza = Button(rightBazaLabelBox, text=editButtonText, bg="lightblue", command=redaktirai_desen_detail)
 editButtonRightBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
 # ********** Listbox *************
