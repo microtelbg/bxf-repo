@@ -61,9 +61,10 @@ dulbochinaPoXLabelText = u'Хоризонтален отвор - Дълбочи�
 dulbochinaPoYLabelText = u'Вертикален отвор - Дълбочина'
 diameturPoXLabelText = u'Хоризонтален отвор - Диаметър'
 diameturPoYLabelText = u'Вертикален отвор - Диаметър'
-kopiraiPoXSimetrichnoLabelText = u'Постави фикс симетрично по ХОРИЗОНТАЛ'
-kopiraiPoYSimetrichnoLabelText = u'Постави фикс симетрично по ВЕРТИКАЛ'
+kopiraiPoXSimetrichnoLabelText = u'Добави фикс симетрично по ХОРИЗОНТАЛ'
+kopiraiPoYSimetrichnoLabelText = u'Добави фикс симетрично по ВЕРТИКАЛ'
 centralenFixLabelText = u'Постави централен фикс'
+copyCentralenFixLabelText = u'Добави огледален централен фикс'
 postaviFixLabelText = u'Постави фикс'
 stupkaNazadLabelText = u'Стъпка назад'
 izchistiFixoveLabelText = u'Изчисти фиксове' 
@@ -631,12 +632,12 @@ def izberi_element_za_dupchene(side):
         #Sloji elementa v lista i purvonachalnata orientacia
         izbrani_elementi['L'] = izbranElement
         izbrani_elementi['LO'] = 0
-        narisuvai_element_na_plota(izbranElement, 0, 'L', canvas)
+        narisuvai_element_na_plota(izbranElement, 0, 'L', canvas, 1)
     elif side == 'R':
         #Sloji elementa v lista i purvonachalnata orientacia
         izbrani_elementi['R'] = izbranElement
         izbrani_elementi['RO'] = 0
-        narisuvai_element_na_plota(izbranElement, 0, 'R', canvas)
+        narisuvai_element_na_plota(izbranElement, 0, 'R', canvas, 1)
 
 def izberi_element_za_lqva_strana():
     izberi_element_za_dupchene('L')
@@ -718,10 +719,10 @@ def rotate_element(side, ccanvas):
     
     if side == 'L':   
         izbrani_elementi['LO'] = newOrientation
-        narisuvai_element_na_plota(izbranElement, newOrientation, 'L', ccanvas)
+        narisuvai_element_na_plota(izbranElement, newOrientation, 'L', ccanvas, 1)
     elif side == 'R':
         izbrani_elementi['RO'] = newOrientation
-        narisuvai_element_na_plota(izbranElement, newOrientation, 'R', ccanvas)
+        narisuvai_element_na_plota(izbranElement, newOrientation, 'R', ccanvas, 1)
         
 def ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_za_proverka, rotation, element_x, element_y):
     poneEdnaDupkaIzlizaPoX = 0
@@ -786,16 +787,17 @@ def ima_li_dupki_izvun_plota(orientacia_na_elementa, dupki_za_proverka, rotation
     
     return dupkiIzvunPlota
                 
-def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon):
+def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, resetCanvasInd):
     #Reset
-    if side == 'L':
-        canvestodrawon.delete(leftRectangle)
-        for ov in leftOvals:
-            canvestodrawon.delete(ov)
-    elif side == 'R':
-        canvestodrawon.delete(rightRectangle)
-        for ov in rightOvals:
-            canvestodrawon.delete(ov)
+    if resetCanvasInd == 1:
+        if side == 'L':
+            canvestodrawon.delete(leftRectangle)
+            for ov in leftOvals:
+                canvestodrawon.delete(ov)
+        elif side == 'R':
+            canvestodrawon.delete(rightRectangle)
+            for ov in rightOvals:
+                canvestodrawon.delete(ov)
     del dupki_za_gcode[:]
     
     #Vzemi razmerite na stranata
@@ -1068,7 +1070,7 @@ def pokaji_suzdai_detail_window():
         detail = ElementZaDupchene(imeValue.get(), razmeri_map, dupki_blank)
         ekey = 'customdetail'+imeValue.get()
         elementi_za_dupchene[ekey] = detail
-        prevod_za_elemnti_v_list[ekey] = u'Въведен детайл: '+imeValue.get()+'..... '+str(razmer_y)+' x '+str(razmer_x)
+        prevod_za_elemnti_v_list[ekey] = u'Въведен детайл: '+imeValue.get()+'..... '+str(razmer_x)+' x '+str(razmer_y)
         
         prevod = prevod_za_elemnti_v_list[ekey]
         listbox.insert(END, prevod)
@@ -1085,10 +1087,10 @@ def reset_canvas():
     canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
     for side in izbrani_elementi.keys():
         if side == 'L':
-            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas)
-      
+            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas, 0)
+       
         if side == 'R':
-            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas)
+            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas, 0)
             
 def redaktirai_lqv_detail():
     global izbranElementZaRedakciaInd
@@ -1157,31 +1159,252 @@ def pokaji_redaktirai_window(side):
         copyPoYCheckBox.grid(row=2, sticky=W)
         centralenFiksCheckBox = Checkbutton(frame1, text=centralenFixLabelText, variable=centralenFiksValue)
         centralenFiksCheckBox.grid(row=3, sticky=W)
+        copyCentralenFiksCheckBox = Checkbutton(frame1, text=copyCentralenFixLabelText, variable=copyCentralenFixValue)
+        copyCentralenFiksCheckBox.grid(row=4, sticky=W)
         
         postaviFixButton = Button(frame1, text=postaviFixLabelText, width=20, command=postavi_fiks)
-        postaviFixButton.grid(row=4, padx = 5, pady = 5, sticky=E)
+        postaviFixButton.grid(row=5, padx = 5, pady = 5, sticky=E)
         otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20)
-        otkajiFixButton.grid(row=5, padx = 5, pady = 5, sticky=E)
+        otkajiFixButton.grid(row=6, padx = 5, pady = 5, sticky=E)
         izchistiFixButton = Button(frame1, text=izchistiFixoveLabelText, width=20)
-        izchistiFixButton.grid(row=6, padx = 5, pady = 5, sticky=E)
+        izchistiFixButton.grid(row=7, padx = 5, pady = 5, sticky=E)
         zapaziiFixButton = Button(frame1, text=zapaziFixoveLabelText, width=20)
-        zapaziiFixButton.grid(row=7, padx = 5, pady = 5, sticky=E)
+        zapaziiFixButton.grid(row=8, padx = 5, pady = 5, sticky=E)
     
     def postavi_fiks():
+        
+        # TODO: PROVERKA DALI VECHE IMA TAKAVA DUPKA. DA NE SE DOBAVQ EDNA I SUSHTA DUPKA V LISTA!!!
+        
         zyl_pos_x = float(fiksXValue.get())
         zyl_pos_y = float(fixYValue.get())
-        zyl_pos_z = 0
+
         zyl_h = float(fiksDulbochinaXValue.get())
         zyl_r = float(fiksDiamturXValue.get())/2.0
-         
-        dupka = {"x" : zyl_pos_y, "y": zyl_pos_x, "z":zyl_pos_z, "h" : zyl_h, "r" : zyl_r}
-        izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
-        dupki_na_elementa = izbranElement.dupki
-        dupki_na_elementa.append(dupka)
         
+        simPoX = simetrichnoPoXValue.get()
+        simPoY = simetrichnoPoYValue.get()
+        centFix = centralenFiksValue.get()
+        copyCentFix = copyCentralenFixValue.get()
+        
+        izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
+        rotation = izbrani_elementi[izbranElementZaRedakciaInd+'O']
+        
+        dupki_na_elementa = izbranElement.dupki
+        razmeri_na_elementa = izbranElement.razmeri
+        orientacia_na_elementa = razmeri_na_elementa['orientation']
+        if rotation == 0 or rotation == 2:
+            if orientacia_na_elementa == 'xz':
+                element_x = float(razmeri_na_elementa['z'])
+                element_y = float(razmeri_na_elementa['x'])
+            elif orientacia_na_elementa == 'yz':
+                element_x = float(razmeri_na_elementa['y'])
+                element_y = float(razmeri_na_elementa['z'])
+            elif orientacia_na_elementa == 'xy':
+                element_x = float(razmeri_na_elementa['y'])
+                element_y = float(razmeri_na_elementa['x'])
+        else:
+            if orientacia_na_elementa == 'xz':
+                element_x = float(razmeri_na_elementa['x'])
+                element_y = float(razmeri_na_elementa['z'])
+            elif orientacia_na_elementa == 'yz':
+                element_x = float(razmeri_na_elementa['z'])
+                element_y = float(razmeri_na_elementa['y'])
+            elif orientacia_na_elementa == 'xy':
+                element_x = float(razmeri_na_elementa['x'])
+                element_y = float(razmeri_na_elementa['y'])
+        
+        # Purvate dupka (obiknoveno 100 x 34) 
+        # Ne se dobavq SAMO AKO edinstventa otmetka izbrana e Centralen Fix 
+        if (simPoX == 0 and simPoY == 0 and centFix == 0 and copyCentFix == 0) or simPoX == 1 or simPoY == 1:
+            if orientacia_na_elementa == 'xz':
+                if rotation == 0:
+                    dupka1 = {"x" : zyl_pos_y, "y": 0, "z":zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka1 = {"x" : element_x-zyl_pos_x, "y": 0, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka1 = {"x" : element_y-zyl_pos_y, "y": 0, "z":element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka1 = {"x" : zyl_pos_x, "y": 0, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'yz':
+                if rotation == 0:
+                    dupka1 = {"x" : 0, "y": zyl_pos_x, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka1 = {"x" : 0, "y": zyl_pos_y, "z":element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka1 = {"x" : 0, "y": element_x-zyl_pos_x, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka1 = {"x" : 0, "y": element_y-zyl_pos_y, "z":zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'xy':   
+                if rotation == 0:
+                    dupka1 = {"x" : zyl_pos_y, "y": zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka1 = {"x" : element_x-zyl_pos_x, "y": zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka1 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka1 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+            dupki_na_elementa.append(dupka1)
+        
+        if simPoX == 1:
+            # Vtorata dupka po X (ogledalna na dupka)
+            if orientacia_na_elementa == 'xz':
+                if rotation == 0:
+                    dupka2 = {"x" : zyl_pos_y, "y": 0, "z":element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka2 = {"x" : zyl_pos_x, "y": 0, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka2 = {"x" : element_y-zyl_pos_y, "y": 0, "z":zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka2 = {"x" : element_x-zyl_pos_x, "y": 0, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'yz':
+                if rotation == 0:
+                    dupka2 = {"x" : 0, "y": element_x-zyl_pos_x, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka2 = {"x" : 0, "y": zyl_pos_y, "z":zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka2 = {"x" : 0, "y": zyl_pos_x, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka2 = {"x" : 0, "y": element_y-zyl_pos_y, "z":element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'xy': 
+                if rotation == 0:
+                    dupka2 = {"x" : zyl_pos_y, "y": element_x-zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka2 = {"x" : zyl_pos_x, "y": zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka2 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka2 = {"x" : element_x-zyl_pos_x, "y": element_y-zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+            dupki_na_elementa.append(dupka2)
+        
+        if simPoY == 1:
+            # Vtorata dupka po Y (ogledalna na dupka)
+            if orientacia_na_elementa == 'xz':
+                if rotation == 0:
+                    dupka3 = {"x" : element_y-zyl_pos_y, "y": 0, "z":zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka3 = {"x" : element_x-zyl_pos_x, "y": 0, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka3 = {"x" : zyl_pos_y, "y": 0, "z":element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka3 = {"x" : zyl_pos_x, "y": 0, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'yz':
+                if rotation == 0:
+                    dupka3 = {"x" : 0, "y": zyl_pos_x, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka3 = {"x" : 0, "y": element_y-zyl_pos_y, "z":element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka3 = {"x" : 0, "y": element_x-zyl_pos_x, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka3 = {"x" : 0, "y": zyl_pos_y, "z":zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'xy': 
+                if rotation == 0:
+                    dupka3 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka3 = {"x" : element_x-zyl_pos_x, "y": element_y-zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka3 = {"x" : zyl_pos_y, "y": element_x-zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka3 = {"x" : zyl_pos_x, "y": zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+            dupki_na_elementa.append(dupka3)
+            
+        if simPoX == 1 and simPoY == 1:
+            if orientacia_na_elementa == 'xz':
+                if rotation == 0:
+                    dupka4 =  {"x" : element_y-zyl_pos_y, "y": 0, "z":element_x- zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka4 = {"x" : zyl_pos_x, "y": 0, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka4 = {"x" : zyl_pos_y, "y": 0, "z":zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka4 = {"x" : element_x-zyl_pos_x, "y": 0, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'yz':
+                if rotation == 0:
+                    dupka4 =  {"x" : 0, "y": element_x- zyl_pos_x, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka4 = {"x" : 0, "y": element_y-zyl_pos_y, "z":zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka4 = {"x" : 0, "y": zyl_pos_x, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka4 = {"x" : 0, "y": zyl_pos_y, "z":element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'xy': 
+                if rotation == 0:
+                    dupka4 =  {"x" : element_y-zyl_pos_y, "y": element_x- zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka4 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka4 = {"x" : zyl_pos_y, "y": zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka4 = {"x" : element_x-zyl_pos_x, "y": zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+            dupki_na_elementa.append(dupka4)
+
+        if centFix == 1:
+            center_zyl_pos_x = element_x/2
+            
+            if orientacia_na_elementa == 'xz':
+                if rotation == 0:
+                    dupka5 = {"x" : zyl_pos_y, "y": 0, "z":center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka5 = {"x" : element_x-center_zyl_pos_x, "y": 0, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka5 = {"x" : element_y-zyl_pos_y, "y": 0, "z":element_x-center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka5 = {"x" : center_zyl_pos_x, "y": 0, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'yz':
+                if rotation == 0:
+                    dupka5 = {"x" : 0, "y": center_zyl_pos_x, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka5 = {"x" : 0, "y": zyl_pos_y, "z":element_x-center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka5 = {"x" : 0, "y": element_x-center_zyl_pos_x, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka5 = {"x" : 0, "y": element_y-zyl_pos_y, "z":center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'xy':   
+                if rotation == 0:
+                    dupka5 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka5 = {"x" : element_x-center_zyl_pos_x, "y": zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka5 = {"x" : element_y-zyl_pos_y, "y": element_x-center_zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka5 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}            
+            dupki_na_elementa.append(dupka5) 
+        
+        if copyCentFix == 1:
+            center_zyl_pos_x = element_x/2
+            
+            if orientacia_na_elementa == 'xz':
+                if rotation == 0:
+                    dupka6 = {"x" : element_y-zyl_pos_y, "y": 0, "z":center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka6 = {"x" : element_x-center_zyl_pos_x, "y": 0, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka6 = {"x" : zyl_pos_y, "y": 0, "z":element_x-center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka6 = {"x" : center_zyl_pos_x, "y": 0, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'yz':
+                if rotation == 0:
+                    dupka6 = {"x" : 0, "y": center_zyl_pos_x, "z":element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka6 = {"x" : 0, "y": element_y-zyl_pos_y, "z":element_x-center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka6 = {"x" : 0, "y": element_x-center_zyl_pos_x, "z":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka6 = {"x" : 0, "y": zyl_pos_y, "z":center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+            elif orientacia_na_elementa == 'xy': 
+                if rotation == 0:
+                    dupka6 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 1:
+                    dupka6 = {"x" : element_x-center_zyl_pos_x, "y": element_y-zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 2:
+                    dupka6 = {"x" : zyl_pos_y, "y": element_x-center_zyl_pos_x, "z":0, "h" : zyl_h, "r" : zyl_r}
+                elif rotation == 3:
+                    dupka6 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "z":0, "h" : zyl_h, "r" : zyl_r}  
+                dupki_na_elementa.append(dupka6) 
+
+        print dupki_na_elementa
         # Narisuvai
         rcanvas.delete(ALL)
-        narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas)
+        narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0)
         
     ramka = Toplevel()
     ramka.title(editButtonText)
@@ -1216,7 +1439,7 @@ def pokaji_redaktirai_window(side):
     rcanvas.grid(row=2, column=1, padx=20, sticky=W+E+N+S)
     
     # Narisuvai elementa na plota
-    narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, rcanvas)
+    narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, rcanvas, 0)
        
 print ('*** BEGIN PROGRAM *************************')
 mainframe = Tk()
@@ -1263,6 +1486,7 @@ fiksDulbochinaYValue = StringVar()
 simetrichnoPoXValue = IntVar()
 simetrichnoPoYValue = IntVar()
 centralenFiksValue = IntVar()
+copyCentralenFixValue = IntVar()
 
 # Default values (she doidat posle of file)
 fiksXValue.set('100')
