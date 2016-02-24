@@ -672,18 +672,41 @@ def narisuvai_strana_na_plota(x, y, side, canvestodrawon, rotation):
         
         canvestodrawon.create_rectangle(nachalenX, 30, kraenX, y*mashtab+30, fill="lightgreen", tags="rightRec")
 
-def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochina, radius, eIzvunPlota, side, canvestodrawon):
+def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochina, radius, eIzvunPlota, side, canvestodrawon, onX, onY):
     if side == 'L':
-        nachalo_x = 30 + (xcoordinata - radius)*mashtab
-        krai_x = 30 + (xcoordinata + radius)*mashtab
+        if isHorizontDupka == 1:
+            if ycoordinata == 0:
+                nachalo_x = 30 + (xcoordinata - radius)*mashtab
+                krai_x = 30 + (xcoordinata + radius)*mashtab
+                nachalo_y = 30
+                krai_y = 30 + dulbochina*mashtab
+ 
+            if xcoordinata == 0:
+                nachalo_x = 30
+                krai_x = 30 + dulbochina*mashtab
+                nachalo_y = 30 + (ycoordinata- radius)*mashtab
+                krai_y = 30 + (ycoordinata + radius)*mashtab
+                
+            if onY == 1:
+                nachalo_x = 30 + (xcoordinata - radius)*mashtab
+                krai_x = 30 + (xcoordinata + radius)*mashtab
+                nachalo_y = 30 + ycoordinata*mashtab
+                krai_y = 30 + (ycoordinata - dulbochina)*mashtab
+               
+            if onX == 1:    
+                nachalo_x = 30 + (xcoordinata - dulbochina)*mashtab
+                krai_x = 30 + (xcoordinata)*mashtab
+                nachalo_y = 30 + (ycoordinata - radius)*mashtab
+                krai_y = 30 + (ycoordinata + radius)*mashtab
+        else:
+            nachalo_x = 30 + (xcoordinata - radius)*mashtab
+            krai_x = 30 + (xcoordinata + radius)*mashtab 
+            nachalo_y = 30 + (ycoordinata - radius)*mashtab
+            krai_y = 30 + (ycoordinata + radius)*mashtab
+
     elif side == 'R':
         nachalo_x = 10 + (PLOT_NA_MACHINA_X - xcoordinata - radius)*mashtab
         krai_x = 10 + (PLOT_NA_MACHINA_X - xcoordinata + radius)*mashtab
-    
-    if isHorizontDupka == 1:
-        nachalo_y = 30
-        krai_y = 30 + dulbochina*mashtab
-    else:     
         nachalo_y = 30 + (ycoordinata - radius)*mashtab
         krai_y = 30 + (ycoordinata + radius)*mashtab
 
@@ -869,6 +892,13 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
         if dupkaIzvunY == 1:
             if d_y > element_y/2:
                 izlizaPoY = 1
+         
+        katoDuljPoX = 0
+        katoDuljPoY = 0        
+        if element_x == d_x:
+            katoDuljPoX = 1
+        if element_y == d_y:
+            katoDuljPoY = 1
         
         horizontOtvor = 0
         if dupka.has_key('t'):
@@ -880,9 +910,9 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
             dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor}
             dupki_za_gcode.append(dupka_za_gcode)
             
-            narisuvai_dupka_na_plota(horizontOtvor, d_x, d_y, dulbochina, d_r, 0, side, canvestodrawon)
+            narisuvai_dupka_na_plota(horizontOtvor, d_x, d_y, dulbochina, d_r, 0, side, canvestodrawon, katoDuljPoX, katoDuljPoY)
         else:
-            narisuvai_dupka_na_plota(horizontOtvor, d_x, d_y, dulbochina, d_r, 1, side, canvestodrawon)        
+            narisuvai_dupka_na_plota(horizontOtvor, d_x, d_y, dulbochina, d_r, 1, side, canvestodrawon, katoDuljPoX, katoDuljPoY)        
 
 def instrument_za_dupka(diametur):
     if diametur == 35:
@@ -1157,11 +1187,12 @@ def pokaji_redaktirai_window(side):
         # TODO: PROVERKA DALI VECHE IMA TAKAVA DUPKA. DA NE SE DOBAVQ EDNA I SUSHTA DUPKA V LISTA!!!
         zyl_pos_x = float(fiksXValue.get())
         zyl_pos_y = float(fixYValue.get())
-
         zyl_h = float(fiksDulbochinaVerikalenOValue.get())
         zyl_r = float(fiksDiamturVerikalenOValue.get())/2.0
         zyl_h_hor = float(fiksDulbochinaHorizontOValue.get())
         zyl_r_hor = float(fiksDiamturHorizontOValue.get())/2.0
+        
+        raztoqnie = 32
         
         simPoX = simetrichnoPoXValue.get()
         simPoY = simetrichnoPoYValue.get()
@@ -1185,79 +1216,140 @@ def pokaji_redaktirai_window(side):
         if (simPoX == 0 and simPoY == 0 and centFix == 0 and copyCentFix == 0) or simPoX == 1 or simPoY == 1: 
             if rotation == 0:
                 dupka1  = {"x" : zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                #dupka1a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                #dupka1b  = {"x" : zyl_pos_x+32, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1b  = {"x" : zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 1:
                 dupka1 = {"x" : zyl_pos_y, "y": element_x - zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka1a  = {"x" : 0, "y": element_x - zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1b  = {"x" : 0, "y": element_x - zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 2:
                 dupka1 = {"x" : element_x-zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka1a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 3:
                 dupka1 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka1a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1b  = {"x" : element_y, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
     
             dupki_na_elementa.append(dupka1)
-            #dupki_na_elementa.append(dupka1a)
-            #dupki_na_elementa.append(dupka1b)
+            dupki_na_elementa.append(dupka1a)
+            dupki_na_elementa.append(dupka1b)
         
         if simPoX == 1:
             # Vtorata dupka po X (ogledalna na dupka)
             if rotation == 0:
                 dupka2 = {"x" : element_x-zyl_pos_x, "y":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka2a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka2b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 1:
                 dupka2 = {"x" : zyl_pos_y, "y": zyl_pos_x,  "h" : zyl_h, "r" : zyl_r}
+                dupka2a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka2b  = {"x" : 0, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 2:
                 dupka2 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka2a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka2b  = {"x" : zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 3:
                 dupka2 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka2a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka2b  = {"x" : element_y, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                             
             dupki_na_elementa.append(dupka2)
+            dupki_na_elementa.append(dupka2a)
+            dupki_na_elementa.append(dupka2b)
         
         if simPoY == 1:
             # Vtorata dupka po Y (ogledalna na dupka)
             if rotation == 0:
                 dupka3 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka3a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka3b  = {"x" : zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 1:
                 dupka3 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka3a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka3b  = {"x" : element_y, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 2:
                 dupka3 = {"x" : element_x-zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka3a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka3b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 3:
                 dupka3 = {"x" : zyl_pos_y, "y": zyl_pos_x,  "h" : zyl_h, "r" : zyl_r}
+                dupka3a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka3b  = {"x" : 0, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                
             dupki_na_elementa.append(dupka3)
+            dupki_na_elementa.append(dupka3a)
+            dupki_na_elementa.append(dupka3b)
             
         if simPoX == 1 and simPoY == 1:
             if rotation == 0:
                 dupka4 =  {"x" : element_x-zyl_pos_x, "y": element_y- zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka4a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka4b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 1:
                 dupka4 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka4a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka4b  = {"x" : element_y, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 2:
                 dupka4 = {"x" : zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka4a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka4b  = {"x" : zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 3:
                 dupka4 = {"x" : zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka4a  = {"x" : 0, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka4b  = {"x" : 0, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                
             dupki_na_elementa.append(dupka4)
-
+            dupki_na_elementa.append(dupka4a)
+            dupki_na_elementa.append(dupka4b)
+            
         if centFix == 1:
             center_zyl_pos_x = element_x/2
              
             if rotation == 0:
                 dupka5 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka5a  = {"x" : center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka5b  = {"x" : center_zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 1:
                 dupka5 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka5a  = {"x" : 0, "y": element_x - center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka5b  = {"x" : 0, "y": element_x - center_zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 2:
                 dupka5 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka5a  = {"x" : element_x-center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka5b  = {"x" : element_x-center_zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 3:
-                dupka5 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}            
+                dupka5 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka5a  = {"x" : element_y, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka5b  = {"x" : element_y, "y": center_zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                            
             dupki_na_elementa.append(dupka5) 
-        
+            dupki_na_elementa.append(dupka5a) 
+            dupki_na_elementa.append(dupka5b) 
+            
         if copyCentFix == 1:
             center_zyl_pos_x = element_x/2
             
             if rotation == 0:
                 dupka6 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka6a  = {"x" : center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka6b  = {"x" : center_zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 1:
                 dupka6 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                dupka6a  = {"x" : element_y, "y": element_x-center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka6b  = {"x" : element_y, "y": element_x-center_zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 2:
                 dupka6 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
+                dupka6a  = {"x" : element_x-center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka6b  = {"x" : element_x-center_zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
             elif rotation == 3:
                 dupka6 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}  
+                dupka6a  = {"x" : 0, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka6b  = {"x" : 0, "y": center_zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                
             dupki_na_elementa.append(dupka6) 
+            dupki_na_elementa.append(dupka6a) 
+            dupki_na_elementa.append(dupka6b) 
 
         print dupki_na_elementa
         # Narisuvai
