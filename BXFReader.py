@@ -17,6 +17,7 @@ except ImportError:
 rotateButtonText = u'Завърти'
 removeButtonText = u'Премахни'
 editButtonText = u'Редактирай'
+pripluzniButtonText = u'<-- Приплъзни -->'
 orLabelText = u' или '
 openBXFFileButtonText = u'Отвори BXF файл'
 createButtonText = u'Създай елемент'
@@ -617,7 +618,7 @@ def zaredi_file_info():
     canvas.delete(ALL)
     canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
     
-def izberi_element_za_dupchene(side):
+def izberi_element_za_dupchene(side, orienation):
       
     #Nameri izbrania element
     itemIndex = int(listbox.curselection()[0])
@@ -635,78 +636,98 @@ def izberi_element_za_dupchene(side):
     if side == 'L':
         #Sloji elementa v lista i purvonachalnata orientacia
         izbrani_elementi['L'] = izbranElement
-        izbrani_elementi['LO'] = 0
-        narisuvai_element_na_plota(izbranElement, 0, 'L', canvas, 1)
+        izbrani_elementi['LO'] = orienation
+        narisuvai_element_na_plota(izbranElement, orienation, 'L', canvas, 1)
     elif side == 'R':
         #Sloji elementa v lista i purvonachalnata orientacia
         izbrani_elementi['R'] = izbranElement
-        izbrani_elementi['RO'] = 0
-        narisuvai_element_na_plota(izbranElement, 0, 'R', canvas, 1)
+        izbrani_elementi['RO'] = orienation
+        narisuvai_element_na_plota(izbranElement, orienation, 'R', canvas, 1)
 
 def izberi_element_za_lqva_strana():
-    izberi_element_za_dupchene('L')
+    izberi_element_za_dupchene('L', 0)
+    pripluzniButton.config(state="normal")
 
 def izberi_element_za_dqsna_strana():
-    izberi_element_za_dupchene('R')
+    izberi_element_za_dupchene('R', 0)
+    pripluzniButton.config(state="normal")
 
-def narisuvai_strana_na_plota(x, y, side, canvestodrawon, rotation):
+def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotation):
     if side == 'L':
-        canvestodrawon.create_rectangle(30, 30, x*mashtab+30, y*mashtab+30, fill="lightblue", tags="leftRec")
+        canvestodrawon.create_rectangle(30, 30, stranaPoX*mashtab+30, stranaPoY*mashtab+30, fill="lightblue", tags="leftRec")
         
         if rotation == 0:
-            canvestodrawon.create_line(30, 28, x*mashtab/2+30, 28, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(28, 30, 28, y*mashtab/2+30, fill="purple", width = 2, tags="border2")
+            canvestodrawon.create_line(30, 28, stranaPoX*mashtab/2+30, 28, fill="purple", width=2, tags="border1")
+            canvestodrawon.create_line(28, 30, 28, stranaPoY*mashtab/2+30, fill="purple", width = 2, tags="border2")
         elif rotation == 1:
-            canvestodrawon.create_line(x*mashtab/2+30, 28, x*mashtab+30, 28, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(x*mashtab+32, 30, x*mashtab+32, y*mashtab/2+30, fill="purple",  width=2,tags="border2")
+            canvestodrawon.create_line(stranaPoX*mashtab/2+30, 28, stranaPoX*mashtab+30, 28, fill="purple", width=2, tags="border1")
+            canvestodrawon.create_line(stranaPoX*mashtab+32, 30, stranaPoX*mashtab+32, stranaPoY*mashtab/2+30, fill="purple",  width=2,tags="border2")
         elif rotation == 2:
-            canvestodrawon.create_line(x*mashtab+32, y*mashtab/2+30, x*mashtab+32, y*mashtab+30, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(x*mashtab/2+30, y*mashtab+32, x*mashtab+30, y*mashtab+32, fill="purple", width=2, tags="border2")
+            canvestodrawon.create_line(stranaPoX*mashtab+32, stranaPoY*mashtab/2+30, stranaPoX*mashtab+32, stranaPoY*mashtab+30, fill="purple", width=2, tags="border1")
+            canvestodrawon.create_line(stranaPoX*mashtab/2+30, stranaPoY*mashtab+32, stranaPoX*mashtab+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border2")
         elif rotation == 3:
-            canvestodrawon.create_line(28, y*mashtab/2+30, 28, y*mashtab+30, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(30, y*mashtab+32, x*mashtab/2+30, y*mashtab+32, fill="purple", width=2, tags="border2")    
+            canvestodrawon.create_line(28, stranaPoY*mashtab/2+30, 28, stranaPoY*mashtab+30, fill="purple", width=2, tags="border1")
+            canvestodrawon.create_line(30, stranaPoY*mashtab+32, stranaPoX*mashtab/2+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border2")    
             
     elif side == 'R':
-        nachalenX = PLOT_NA_MACHINA_X*mashtab+10 - x*mashtab
-        kraenX = nachalenX + x*mashtab
+        nachalenX = PLOT_NA_MACHINA_X*mashtab+10 - stranaPoX*mashtab
+        kraenX = nachalenX + stranaPoX*mashtab
         
-        canvestodrawon.create_rectangle(nachalenX, 30, kraenX, y*mashtab+30, fill="lightgreen", tags="rightRec")
+        canvestodrawon.create_rectangle(nachalenX, 30, kraenX, stranaPoY*mashtab+30, fill="lightgreen", tags="rightRec")
+        
+        if rotation == 0:
+            canvestodrawon.create_line(nachalenX+stranaPoX*mashtab/2, 28, nachalenX+stranaPoX*mashtab, 28, fill="purple", width=2, tags="border3")
+            canvestodrawon.create_line(kraenX+2, 32, kraenX+2, stranaPoY*mashtab/2+30, fill="purple", width = 2, tags="border4")
+        elif rotation == 1:
+            canvestodrawon.create_line(kraenX+2, stranaPoY*mashtab+30-stranaPoY*mashtab/2, kraenX+2, stranaPoY*mashtab+32, fill="purple", width=2, tags="border3")
+            canvestodrawon.create_line(kraenX-stranaPoX*mashtab/2,stranaPoY*mashtab+32,kraenX+2, stranaPoY*mashtab+32, fill="purple",  width=2,tags="border4")
+        elif rotation == 2:
+            canvestodrawon.create_line(nachalenX-2, stranaPoY*mashtab/2+30, nachalenX-2, stranaPoY*mashtab+30, fill="purple", width=2, tags="border3")
+            canvestodrawon.create_line(nachalenX-2, stranaPoY*mashtab+30, nachalenX+stranaPoX*mashtab/2, stranaPoY*mashtab+30,fill="purple", width=2, tags="border4")
+        elif rotation == 3:
+            canvestodrawon.create_line(nachalenX-2, 28, nachalenX+stranaPoX*mashtab/2, 28, fill="purple", width=2, tags="border3")
+            canvestodrawon.create_line(nachalenX-2, 28, nachalenX-2, stranaPoY*mashtab/2+30,  fill="purple", width=2, tags="border4")   
 
-def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochina, radius, eIzvunPlota, side, canvestodrawon, onX, onY):
+def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochina, radius, eIzvunPlota, side, canvestodrawon, stranaX, stranaY):
+    onX = 0
+    onY = 0
+    if stranaX == xcoordinata:
+        onX = 1
+    if stranaY == ycoordinata:
+        onY = 1
+    
     if side == 'L':
-        if isHorizontDupka == 1:
-            if ycoordinata == 0:
-                nachalo_x = 30 + (xcoordinata - radius)*mashtab
-                krai_x = 30 + (xcoordinata + radius)*mashtab
-                nachalo_y = 30
-                krai_y = 30 + dulbochina*mashtab
- 
-            if xcoordinata == 0:
-                nachalo_x = 30
-                krai_x = 30 + dulbochina*mashtab
-                nachalo_y = 30 + (ycoordinata- radius)*mashtab
-                krai_y = 30 + (ycoordinata + radius)*mashtab
-                
-            if onY == 1:
-                nachalo_x = 30 + (xcoordinata - radius)*mashtab
-                krai_x = 30 + (xcoordinata + radius)*mashtab
-                nachalo_y = 30 + ycoordinata*mashtab
-                krai_y = 30 + (ycoordinata - dulbochina)*mashtab
-               
-            if onX == 1:    
-                nachalo_x = 30 + (xcoordinata - dulbochina)*mashtab
-                krai_x = 30 + (xcoordinata)*mashtab
-                nachalo_y = 30 + (ycoordinata - radius)*mashtab
-                krai_y = 30 + (ycoordinata + radius)*mashtab
-        else:
-            nachalo_x = 30 + (xcoordinata - radius)*mashtab
-            krai_x = 30 + (xcoordinata + radius)*mashtab 
+        zeroCoordinate = 30
+    elif side == 'R':
+        zeroCoordinate = (PLOT_NA_MACHINA_X-stranaX)*mashtab+10
+
+    if isHorizontDupka == 1:
+        if ycoordinata == 0:
+            nachalo_x = zeroCoordinate + (xcoordinata - radius)*mashtab
+            krai_x = zeroCoordinate + (xcoordinata + radius)*mashtab
+            nachalo_y = 30
+            krai_y = 30 + dulbochina*mashtab
+
+        if xcoordinata == 0:
+            nachalo_x = zeroCoordinate
+            krai_x = zeroCoordinate + dulbochina*mashtab
+            nachalo_y = 30 + (ycoordinata- radius)*mashtab
+            krai_y = 30 + (ycoordinata + radius)*mashtab
+           
+        if onY == 1:
+            nachalo_x = zeroCoordinate + (xcoordinata - radius)*mashtab
+            krai_x = zeroCoordinate + (xcoordinata + radius)*mashtab
+            nachalo_y = 30 + ycoordinata*mashtab
+            krai_y = 30 + (ycoordinata - dulbochina)*mashtab
+          
+        if onX == 1:    
+            nachalo_x = zeroCoordinate + (xcoordinata - dulbochina)*mashtab
+            krai_x = zeroCoordinate + (xcoordinata)*mashtab
             nachalo_y = 30 + (ycoordinata - radius)*mashtab
             krai_y = 30 + (ycoordinata + radius)*mashtab
-
-    elif side == 'R':
-        nachalo_x = 10 + (PLOT_NA_MACHINA_X - xcoordinata - radius)*mashtab
-        krai_x = 10 + (PLOT_NA_MACHINA_X - xcoordinata + radius)*mashtab
+    else:
+        nachalo_x = zeroCoordinate + (xcoordinata - radius)*mashtab
+        krai_x = zeroCoordinate + (xcoordinata + radius)*mashtab 
         nachalo_y = 30 + (ycoordinata - radius)*mashtab
         krai_y = 30 + (ycoordinata + radius)*mashtab
 
@@ -717,7 +738,7 @@ def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochi
             ov = canvestodrawon.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon")
     else:
         if isHorizontDupka == 1:
-            ov =  canvestodrawon.create_rectangle(nachalo_x, nachalo_y, krai_x, krai_y, fill="red")
+            ov =  canvestodrawon.create_rectangle(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
         else: 
             ov = canvestodrawon.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
     
@@ -729,6 +750,8 @@ def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochi
 
 def mahni_element_ot_lqva_baza():
     canvas.delete("leftRec")
+    canvas.delete("border1")
+    canvas.delete("border2")
     for ov in leftOvals:
         canvas.delete(ov)
     
@@ -739,6 +762,8 @@ def mahni_element_ot_lqva_baza():
 
 def mahni_element_ot_dqsna_baza():
     canvas.delete("rightRec")
+    canvas.delete("border3")
+    canvas.delete("border4")
     for ov in rightOvals:
         canvas.delete(ov)
     
@@ -774,7 +799,7 @@ def rotate_element(side, ccanvas):
         izbrani_elementi['RO'] = newOrientation
         narisuvai_element_na_plota(izbranElement, newOrientation, 'R', ccanvas, 1)
         
-def ima_li_dupki_izvun_plota(dupki_za_proverka, rotation, element_x, element_y):
+def ima_li_dupki_izvun_plota(dupki_za_proverka, rotation, side, element_x, element_y):
     poneEdnaDupkaIzlizaPoX = 0
     poneEdnaDupkaIzlizaPoY = 0
     
@@ -782,34 +807,41 @@ def ima_li_dupki_izvun_plota(dupki_za_proverka, rotation, element_x, element_y):
         if rotation == 0 or rotation == 2:
             d_x = float(dupka['x'])
             d_y = float(dupka['y'])
+            if side == 'R':
+                d_x = d_x + (PLOT_NA_MACHINA_X-element_x)
+                print "D x e:", d_x
         else:
             d_x = float(dupka['y'])
             d_y = float(dupka['x'])
-            
-        
+            if side == 'R':
+                d_y = d_y + (PLOT_NA_MACHINA_X-element_y)
+                print "D x e:", d_x
+
         d_r = float(dupka['r'])
         
-        if rotation == 1:
-            d_x = element_x - d_x
+        if rotation == 0:
+            d_x1 = d_x
+            d_y1 = d_y
+        elif rotation == 1:
+            d_y1 = d_y
+            d_x1 = element_x - d_x
         elif rotation == 2:
-            d_x = element_x - d_x
-            d_y = element_y - d_y
+            d_x1 = element_x - d_x
+            d_y1 = element_y - d_y
         elif rotation == 3:
-            d_y = element_y - d_y
+            d_x1 = d_x
+            d_y1 = element_y - d_y
         
         # Dobavi radiusa za da imame nai krainata tochka
-        d_x = d_x + d_r
-        d_y = d_y + d_r
-        
-        print 'd_x:', d_x
-        print 'd_y:', d_y
+        d_x1 = d_x1 + d_r
+        d_y1 = d_y1 + d_r
                
         if poneEdnaDupkaIzlizaPoX == 0:
-            if d_x > PLOT_NA_MACHINA_X:
+            if d_x1 > PLOT_NA_MACHINA_X or d_x1 < 0:
                 poneEdnaDupkaIzlizaPoX = 1
             
         if poneEdnaDupkaIzlizaPoY == 0:
-            if d_y > PLOT_NA_MACHINA_Y:
+            if d_y1 > PLOT_NA_MACHINA_Y:
                 poneEdnaDupkaIzlizaPoY = 1    
         
     dupkiIzvunPlota = {}
@@ -829,6 +861,8 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
                 canvestodrawon.delete(ov)
         elif side == 'R':
             canvestodrawon.delete("rightRec")
+            canvestodrawon.delete("border3")
+            canvestodrawon.delete("border4")
             for ov in rightOvals:
                 canvestodrawon.delete(ov)
     del dupki_za_gcode[:]
@@ -858,7 +892,7 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
     dupkaIzvunX = 0
     dupkaIzvunY = 0
     if izlizaPoX == 1 or izlizaPoY == 1:
-        dupkiIzvunPlot = ima_li_dupki_izvun_plota(dupki_na_elementa, rotation, element_x, element_y)
+        dupkiIzvunPlot = ima_li_dupki_izvun_plota(dupki_na_elementa, rotation, side, element_x, element_y)
         dupkaIzvunX = dupkiIzvunPlot['IzvunX']
         dupkaIzvunY = dupkiIzvunPlot['IzvunY']
             
@@ -886,19 +920,12 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
         izlizaPoX = 0
         izlizaPoY = 0
         if dupkaIzvunX == 1:
-            if d_x > element_x/2:
+            if (side == 'L'and d_x > element_x/2) or (side == 'R' and d_x < element_x/2):
                 izlizaPoX = 1
         
         if dupkaIzvunY == 1:
             if d_y > element_y/2:
                 izlizaPoY = 1
-         
-        katoDuljPoX = 0
-        katoDuljPoY = 0        
-        if element_x == d_x:
-            katoDuljPoX = 1
-        if element_y == d_y:
-            katoDuljPoY = 1
         
         horizontOtvor = 0
         if dupka.has_key('t'):
@@ -910,9 +937,22 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
             dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor}
             dupki_za_gcode.append(dupka_za_gcode)
             
-            narisuvai_dupka_na_plota(horizontOtvor, d_x, d_y, dulbochina, d_r, 0, side, canvestodrawon, katoDuljPoX, katoDuljPoY)
+            narisuvai_dupka_na_plota(horizontOtvor, d_x, d_y, dulbochina, d_r, 0, side, canvestodrawon, element_x, element_y)
         else:
-            narisuvai_dupka_na_plota(horizontOtvor, d_x, d_y, dulbochina, d_r, 1, side, canvestodrawon, katoDuljPoX, katoDuljPoY)        
+            narisuvai_dupka_na_plota(horizontOtvor, d_x, d_y, dulbochina, d_r, 1, side, canvestodrawon, element_x, element_y)        
+
+def pripluzni_element():
+    rotation = 0
+    if izbrani_elementi.has_key('L'):
+        rotation = izbrani_elementi['LO']
+        mahni_element_ot_lqva_baza()
+        izberi_element_za_dupchene('R', rotation)
+        izbrani_elementi['RO'] = rotation
+    elif izbrani_elementi.has_key('R'):
+        rotation = izbrani_elementi['RO']
+        mahni_element_ot_dqsna_baza()
+        izberi_element_za_dupchene('L', rotation)
+        izbrani_elementi['LO'] = rotation
 
 def instrument_za_dupka(diametur):
     if diametur == 35:
@@ -1114,6 +1154,8 @@ def redaktirai_desen_detail():
     pokaji_redaktirai_window('R')
         
 def pokaji_redaktirai_window(side):
+    
+    listOfFiksove = []
 
     def on_closing():
         ramka.destroy()
@@ -1175,12 +1217,41 @@ def pokaji_redaktirai_window(side):
         
         postaviFixButton = Button(frame1, text=postaviFixLabelText, width=20, command=postavi_fiks)
         postaviFixButton.grid(row=5, padx = 5, pady = 5, sticky=E)
-        otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20)
+        otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20, command=iztrii_posleden_fiks)
         otkajiFixButton.grid(row=6, padx = 5, pady = 5, sticky=E)
-        izchistiFixButton = Button(frame1, text=izchistiFixoveLabelText, width=20)
+        izchistiFixButton = Button(frame1, text=izchistiFixoveLabelText, width=20, command=iztrii_vsichki_fiksove)
         izchistiFixButton.grid(row=7, padx = 5, pady = 5, sticky=E)
-        zapaziiFixButton = Button(frame1, text=zapaziFixoveLabelText, width=20)
+        zapaziiFixButton = Button(frame1, text=zapaziFixoveLabelText, width=20, command=on_closing)
         zapaziiFixButton.grid(row=8, padx = 5, pady = 5, sticky=E)
+    
+    def iztrii_vsichki_fiksove():
+        izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
+        dupki_na_elementa = izbranElement.dupki
+            
+        fiksCnt = len(listOfFiksove)
+        while fiksCnt > 0:
+            listOfFiksove.pop()
+            dupki_na_elementa.pop()
+            fiksCnt = fiksCnt-1
+            
+        rcanvas.delete(ALL)
+        narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0)
+    
+    def iztrii_posleden_fiks():
+        if len(listOfFiksove) > 0:
+            d1 = listOfFiksove.pop()
+            d2 = listOfFiksove.pop()
+            d3 = listOfFiksove.pop()
+            
+            izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
+            dupki_na_elementa = izbranElement.dupki
+            
+            dupki_na_elementa.remove(d1)
+            dupki_na_elementa.remove(d2)
+            dupki_na_elementa.remove(d3)
+            
+            rcanvas.delete(ALL)
+            narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0)
     
     def postavi_fiks():
         
@@ -1234,6 +1305,10 @@ def pokaji_redaktirai_window(side):
             dupki_na_elementa.append(dupka1)
             dupki_na_elementa.append(dupka1a)
             dupki_na_elementa.append(dupka1b)
+            
+            listOfFiksove.append(dupka1)
+            listOfFiksove.append(dupka1a)
+            listOfFiksove.append(dupka1b)
         
         if simPoX == 1:
             # Vtorata dupka po X (ogledalna na dupka)
@@ -1257,6 +1332,10 @@ def pokaji_redaktirai_window(side):
             dupki_na_elementa.append(dupka2)
             dupki_na_elementa.append(dupka2a)
             dupki_na_elementa.append(dupka2b)
+            
+            listOfFiksove.append(dupka2)
+            listOfFiksove.append(dupka2a)
+            listOfFiksove.append(dupka2b)
         
         if simPoY == 1:
             # Vtorata dupka po Y (ogledalna na dupka)
@@ -1281,6 +1360,10 @@ def pokaji_redaktirai_window(side):
             dupki_na_elementa.append(dupka3a)
             dupki_na_elementa.append(dupka3b)
             
+            listOfFiksove.append(dupka3)
+            listOfFiksove.append(dupka3a)
+            listOfFiksove.append(dupka3b)
+            
         if simPoX == 1 and simPoY == 1:
             if rotation == 0:
                 dupka4 =  {"x" : element_x-zyl_pos_x, "y": element_y- zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
@@ -1302,6 +1385,10 @@ def pokaji_redaktirai_window(side):
             dupki_na_elementa.append(dupka4)
             dupki_na_elementa.append(dupka4a)
             dupki_na_elementa.append(dupka4b)
+            
+            listOfFiksove.append(dupka4)
+            listOfFiksove.append(dupka4a)
+            listOfFiksove.append(dupka4b)
             
         if centFix == 1:
             center_zyl_pos_x = element_x/2
@@ -1327,6 +1414,10 @@ def pokaji_redaktirai_window(side):
             dupki_na_elementa.append(dupka5a) 
             dupki_na_elementa.append(dupka5b) 
             
+            listOfFiksove.append(dupka5)
+            listOfFiksove.append(dupka5a)
+            listOfFiksove.append(dupka5b)
+            
         if copyCentFix == 1:
             center_zyl_pos_x = element_x/2
             
@@ -1350,6 +1441,10 @@ def pokaji_redaktirai_window(side):
             dupki_na_elementa.append(dupka6) 
             dupki_na_elementa.append(dupka6a) 
             dupki_na_elementa.append(dupka6b) 
+            
+            listOfFiksove.append(dupka6)
+            listOfFiksove.append(dupka6a)
+            listOfFiksove.append(dupka6b)
 
         print dupki_na_elementa
         # Narisuvai
@@ -1467,10 +1562,12 @@ createButton.grid(row=0, column=2, padx=10, pady=2,  sticky=W)
 fileNameLabel = Label(toolbar, text="")
 fileNameLabel.grid(row=0, column=3, padx=10, pady=2,  sticky=W)
 
+# ********** Buttons za masata *************
+buttonsZaMasataFrame = Frame(mainframe)
+buttonsZaMasataFrame.grid(row=1, column=2, columnspan=2, sticky=W+E)
 
-# ********** Rotate Button *************
-leftBazaLabelBox = LabelFrame(mainframe, text=leftBazaGrouperText)
-leftBazaLabelBox.grid(row=1, column=2, sticky=W, padx=20, pady=2)
+leftBazaLabelBox = LabelFrame(buttonsZaMasataFrame, text=leftBazaGrouperText)
+leftBazaLabelBox.grid(row=0, sticky=W, padx=20, pady=2)
 rotateButtonLeftBaza = Button(leftBazaLabelBox, text=rotateButtonText, bg="lightblue", command=rotate_element_lqva_baza)
 rotateButtonLeftBaza.grid(row=0, sticky=W, padx=2, pady=2)
 removeElementButtonLeftBaza = Button(leftBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_lqva_baza)
@@ -1478,8 +1575,11 @@ removeElementButtonLeftBaza.grid(row=0, column=1, sticky=W, padx=2, pady=2)
 editButtonLeftBaza = Button(leftBazaLabelBox, text=editButtonText, bg="lightblue", command=redaktirai_lqv_detail)
 editButtonLeftBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
-rightBazaLabelBox = LabelFrame(mainframe, text=rightBazaGrouperText)
-rightBazaLabelBox.grid(row=1, column=3, sticky=W, padx=20, pady=2)
+pripluzniButton = Button(buttonsZaMasataFrame, text=pripluzniButtonText, bg="lightblue", state=DISABLED, command=pripluzni_element)
+pripluzniButton.grid(row=0, column=1, padx=100, pady =5, sticky=S)
+
+rightBazaLabelBox = LabelFrame(buttonsZaMasataFrame, text=rightBazaGrouperText)
+rightBazaLabelBox.grid(row=0, column=2, sticky=E, padx=20, pady=2)
 rotateButtonRightBaza = Button(rightBazaLabelBox, text=rotateButtonText, bg="lightblue", command=rotate_element_dqsna_baza)
 rotateButtonRightBaza.grid(row=0, sticky=W, padx=2, pady=2)
 removeElementButtonRightBaza = Button(rightBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_dqsna_baza)
