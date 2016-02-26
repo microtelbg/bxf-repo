@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import time
+import time, os, sys
 ## dd/mm/yyyy format
 
 from Tkinter import *
@@ -25,6 +25,9 @@ placeOnMachineButtonText = u'Постави на ЛЯВА база'
 placeOnMachineRightButtonText = u'Постави на ДЯСНА база'
 leftBazaGrouperText = u'ЛЯВА база'
 rightBazaGrouperText = u'ДЯСНА база'
+nastroikaInstrumentButtonText = u'Настройка на инструменти'
+vertikalnaGlavaText =  u'Вертикална глава'
+horizontalnaGlavaText =  u'Хоризонтална глава'
 instrument1LabelText = u'Инструмент 1'
 instrument2LabelText = u'Инструмент 2'
 instrument3LabelText = u'Инструмент 3'
@@ -32,8 +35,13 @@ instrument4LabelText = u'Инструмент 4'
 instrument5LabelText = u'Инструмент 5'
 diameturLabelText = u'Диаметър (мм)'
 skorostText = u'Скорост (мм/мин)'
-generateGCodeButtonText = u'Генериране на G код'
-
+generateGCodeLabelText =  u'Генериране на G код'
+generateGCodeButtonText = u'Генерирай G код'
+zapisGCodeButtonText =  u'Запиши G кода'
+genHorizontOtvoriButtonText = u'Добави код за хоризонталните отвори'
+genVertikalOtvoriButtonText = u'Добави код за вертикалните отвори'
+pauseMejduDetailiButtonText = u'Постави пауза между левия и десния детайл'
+ciklichnoPrezarejdaneButtonText = u'Презареди кода циклично'
 detailTitleText = u'Детайл'
 detailImeText = u'Име на детайла: '
 detailRazmeriText = u'Размери '
@@ -807,15 +815,9 @@ def ima_li_dupki_izvun_plota(dupki_za_proverka, rotation, side, element_x, eleme
         if rotation == 0 or rotation == 2:
             d_x = float(dupka['x'])
             d_y = float(dupka['y'])
-            if side == 'R':
-                d_x = d_x + (PLOT_NA_MACHINA_X-element_x)
-                print "D x e:", d_x
         else:
             d_x = float(dupka['y'])
             d_y = float(dupka['x'])
-            if side == 'R':
-                d_y = d_y + (PLOT_NA_MACHINA_X-element_y)
-                print "D x e:", d_x
 
         d_r = float(dupka['r'])
         
@@ -835,6 +837,9 @@ def ima_li_dupki_izvun_plota(dupki_za_proverka, rotation, side, element_x, eleme
         # Dobavi radiusa za da imame nai krainata tochka
         d_x1 = d_x1 + d_r
         d_y1 = d_y1 + d_r
+        
+        if side == 'R':
+            d_x1 = d_x1 + (PLOT_NA_MACHINA_X-element_x)
                
         if poneEdnaDupkaIzlizaPoX == 0:
             if d_x1 > PLOT_NA_MACHINA_X or d_x1 < 0:
@@ -954,6 +959,126 @@ def pripluzni_element():
         izberi_element_za_dupchene('L', rotation)
         izbrani_elementi['LO'] = rotation
 
+def nastroika_na_instrumenti():
+    top = Toplevel()
+    top.title(nastroikaInstrumentButtonText)
+    
+    frame1 = LabelFrame(top, text=vertikalnaGlavaText)
+    frame1.grid(row=0, padx = 20, pady=10)
+    frame2 = LabelFrame(top, text=horizontalnaGlavaText)
+    frame2.grid(row=0, column=1, padx = 20, pady=10)
+    
+    instr1LabelBox = LabelFrame(frame1, text=instrument1LabelText)
+    instr1LabelBox.grid(row=1, columnspan=2, pady=10)
+    dia1Label = Label(instr1LabelBox, text=diameturLabelText)
+    dia1Label.grid(row=0, sticky=W)
+    dia1Entry = Entry(instr1LabelBox, textvariable=vginstrument1EntryDiaValue)
+    dia1Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost1Label = Label(instr1LabelBox, text=skorostText)
+    skorost1Label.grid(row=1, sticky=W)
+    skorost1Entry = Entry(instr1LabelBox, textvariable=vginstrument1EntrySkorostValue)
+    skorost1Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    instr2LabelBox = LabelFrame(frame1, text=instrument2LabelText)
+    instr2LabelBox.grid(row=2, columnspan=2, pady=10)
+    dia2Label = Label(instr2LabelBox, text=diameturLabelText)
+    dia2Label.grid(row=0, sticky=W)
+    dia2Entry = Entry(instr2LabelBox, textvariable=vginstrument2EntryDiaValue)
+    dia2Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost2Label = Label(instr2LabelBox, text=skorostText)
+    skorost2Label.grid(row=1, sticky=W)
+    skorost2Entry = Entry(instr2LabelBox, textvariable=vginstrument2EntrySkorostValue)
+    skorost2Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    instr3LabelBox = LabelFrame(frame1, text=instrument3LabelText)
+    instr3LabelBox.grid(row=3, columnspan=2, pady=10)
+    dia3Label = Label(instr3LabelBox, text=diameturLabelText)
+    dia3Label.grid(row=0, sticky=W)
+    dia3Entry = Entry(instr3LabelBox, textvariable=vginstrument3EntryDiaValue)
+    dia3Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost3Label = Label(instr3LabelBox, text=skorostText)
+    skorost3Label.grid(row=1, sticky=W)
+    skorost3Entry = Entry(instr3LabelBox, textvariable=vginstrument3EntrySkorostValue)
+    skorost3Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    instr4LabelBox = LabelFrame(frame1, text=instrument4LabelText)
+    instr4LabelBox.grid(row=4, columnspan=2, pady=10)
+    dia4Label = Label(instr4LabelBox, text=diameturLabelText)
+    dia4Label.grid(row=0, sticky=W)
+    dia4Entry = Entry(instr4LabelBox, textvariable=vginstrument4EntryDiaValue)
+    dia4Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost4Label = Label(instr4LabelBox, text=skorostText)
+    skorost4Label.grid(row=1, sticky=W)
+    skorost4Entry = Entry(instr4LabelBox, textvariable=vginstrument4EntrySkorostValue)
+    skorost4Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    instr5LabelBox = LabelFrame(frame1, text=instrument5LabelText)
+    instr5LabelBox.grid(row=5, columnspan=2, pady=10)
+    dia5Label = Label(instr5LabelBox, text=diameturLabelText)
+    dia5Label.grid(row=0, sticky=W)
+    dia5Entry = Entry(instr5LabelBox, textvariable=vginstrument5EntryDiaValue)
+    dia5Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost5Label = Label(instr5LabelBox, text=skorostText)
+    skorost5Label.grid(row=1, sticky=W)
+    skorost5Entry = Entry(instr5LabelBox, textvariable=vginstrument5EntrySkorostValue)
+    skorost5Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    # Horizontalni instrumenti
+    instr1LabelBox = LabelFrame(frame2, text=instrument1LabelText)
+    instr1LabelBox.grid(row=1, columnspan=2, pady=10)
+    dia1Label = Label(instr1LabelBox, text=diameturLabelText)
+    dia1Label.grid(row=0, sticky=W)
+    dia1Entry = Entry(instr1LabelBox, textvariable=hginstrument1EntryDiaValue)
+    dia1Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost1Label = Label(instr1LabelBox, text=skorostText)
+    skorost1Label.grid(row=1, sticky=W)
+    skorost1Entry = Entry(instr1LabelBox, textvariable=hginstrument1EntrySkorostValue)
+    skorost1Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    instr2LabelBox = LabelFrame(frame2, text=instrument2LabelText)
+    instr2LabelBox.grid(row=2, columnspan=2, pady=10)
+    dia2Label = Label(instr2LabelBox, text=diameturLabelText)
+    dia2Label.grid(row=0, sticky=W)
+    dia2Entry = Entry(instr2LabelBox, textvariable=hginstrument2EntryDiaValue)
+    dia2Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost2Label = Label(instr2LabelBox, text=skorostText)
+    skorost2Label.grid(row=1, sticky=W)
+    skorost2Entry = Entry(instr2LabelBox, textvariable=hginstrument2EntrySkorostValue)
+    skorost2Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    instr3LabelBox = LabelFrame(frame2, text=instrument3LabelText)
+    instr3LabelBox.grid(row=3, columnspan=2, pady=10)
+    dia3Label = Label(instr3LabelBox, text=diameturLabelText)
+    dia3Label.grid(row=0, sticky=W)
+    dia3Entry = Entry(instr3LabelBox, textvariable=hginstrument3EntryDiaValue)
+    dia3Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost3Label = Label(instr3LabelBox, text=skorostText)
+    skorost3Label.grid(row=1, sticky=W)
+    skorost3Entry = Entry(instr3LabelBox, textvariable=hginstrument3EntrySkorostValue)
+    skorost3Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    instr4LabelBox = LabelFrame(frame2, text=instrument4LabelText)
+    instr4LabelBox.grid(row=4, columnspan=2, pady=10)
+    dia4Label = Label(instr4LabelBox, text=diameturLabelText)
+    dia4Label.grid(row=0, sticky=W)
+    dia4Entry = Entry(instr4LabelBox, textvariable=hginstrument4EntryDiaValue)
+    dia4Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost4Label = Label(instr4LabelBox, text=skorostText)
+    skorost4Label.grid(row=1, sticky=W)
+    skorost4Entry = Entry(instr4LabelBox, textvariable=hginstrument4EntrySkorostValue)
+    skorost4Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    instr5LabelBox = LabelFrame(frame2, text=instrument5LabelText)
+    instr5LabelBox.grid(row=5, columnspan=2, pady=10)
+    dia5Label = Label(instr5LabelBox, text=diameturLabelText)
+    dia5Label.grid(row=0, sticky=W)
+    dia5Entry = Entry(instr5LabelBox, textvariable=hginstrument5EntryDiaValue)
+    dia5Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
+    skorost5Label = Label(instr5LabelBox, text=skorostText)
+    skorost5Label.grid(row=1, sticky=W)
+    skorost5Entry = Entry(instr5LabelBox, textvariable=hginstrument5EntrySkorostValue)
+    skorost5Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
 def instrument_za_dupka(diametur):
     if diametur == 35:
         return 'T1'
@@ -970,18 +1095,31 @@ def instrument_za_dupka(diametur):
 
 def skorost_za_dupka(instrument):
     if instrument == 'T1':
-        return float(instrument1EntrySkorostValue.get())
+        return float(vginstrument1EntrySkorostValue.get())
     elif instrument == 'T2':
-        return float(instrument2EntrySkorostValue.get())
+        return float(vginstrument2EntrySkorostValue.get())
     elif instrument == 'T3':
-        return float(instrument3EntrySkorostValue.get())
+        return float(vginstrument3EntrySkorostValue.get())
     elif instrument == 'T4':
-        return float(instrument4EntrySkorostValue.get())
+        return float(vginstrument4EntrySkorostValue.get())
     elif instrument == 'T5':
-        return float(instrument5EntrySkorostValue.get())
+        return float(vginstrument5EntrySkorostValue.get())
     else:
         return -1
+
+def zapishi_gcode_file():
+    tempFile = open("sample123.txt", "r")
+    gCodeFile = open("gcode.txt", "w")
     
+    for line in tempFile:
+        gCodeFile.write(line)
+        
+    tempFile.close()
+    gCodeFile.close()
+    
+    #Delete Temp file:
+    os.remove("sample123.txt")
+        
 def suzdai_gcode_file():  
     # Line iterator
     n10 = 30
@@ -991,13 +1129,13 @@ def suzdai_gcode_file():
     
     # Stoinosti na instrumentite
     dateTimeLine = '('+time.strftime("%d/%m/%Y")+')\n'
-    instr1Value = '(Instrument 1: Diametur:'+ instrument1EntryDiaValue.get()+', Skorost:'+ instrument1EntrySkorostValue.get()+ ')\n'
-    instr2Value = '(Instrument 2: Diametur:'+ instrument2EntryDiaValue.get()+', Skorost:'+ instrument2EntrySkorostValue.get()+ ')\n'
-    instr3Value = '(Instrument 3: Diametur:'+ instrument3EntryDiaValue.get()+', Skorost:'+ instrument3EntrySkorostValue.get()+ ')\n'
-    instr4Value = '(Instrument 4: Diametur:'+ instrument4EntryDiaValue.get()+', Skorost:'+ instrument4EntrySkorostValue.get()+ ')\n'
-    instr5Value = '(Instrument 5: Diametur:'+ instrument5EntryDiaValue.get()+', Skorost:'+ instrument5EntrySkorostValue.get()+ ')\n'
+    instr1Value = '(Instrument 1: Diametur:'+ vginstrument1EntryDiaValue.get()+', Skorost:'+ vginstrument1EntrySkorostValue.get()+ ')\n'
+    instr2Value = '(Instrument 2: Diametur:'+ vginstrument2EntryDiaValue.get()+', Skorost:'+ vginstrument2EntrySkorostValue.get()+ ')\n'
+    instr3Value = '(Instrument 3: Diametur:'+ vginstrument3EntryDiaValue.get()+', Skorost:'+ vginstrument3EntrySkorostValue.get()+ ')\n'
+    instr4Value = '(Instrument 4: Diametur:'+ vginstrument4EntryDiaValue.get()+', Skorost:'+ vginstrument4EntrySkorostValue.get()+ ')\n'
+    instr5Value = '(Instrument 5: Diametur:'+ vginstrument5EntryDiaValue.get()+', Skorost:'+ vginstrument5EntrySkorostValue.get()+ ')\n'
          
-    fw = open("sample123.txt", "w")
+    fw = open("sample123.txt", "a")
     fw.write("(Imeto na file)\n")
     fw.write(dateTimeLine)
     fw.write(instr1Value)
@@ -1493,31 +1631,60 @@ mainframe = Tk()
 ''' ***************************************************************************
 *** Variables za stoinosti na instrumentite
 *************************************************************************** '''
-instrument1EntryDiaValue = StringVar()
-instrument1EntrySkorostValue = StringVar()
-instrument2EntryDiaValue = StringVar()
-instrument2EntrySkorostValue = StringVar()
-instrument3EntryDiaValue = StringVar()
-instrument3EntrySkorostValue = StringVar()
-instrument4EntryDiaValue = StringVar()
-instrument4EntrySkorostValue = StringVar()
-instrument5EntryDiaValue = StringVar()
-instrument5EntrySkorostValue = StringVar()
+# VERTIKALNA GLAVA -vg
+vginstrument1EntryDiaValue = StringVar()
+vginstrument1EntrySkorostValue = StringVar()
+vginstrument2EntryDiaValue = StringVar()
+vginstrument2EntrySkorostValue = StringVar()
+vginstrument3EntryDiaValue = StringVar()
+vginstrument3EntrySkorostValue = StringVar()
+vginstrument4EntryDiaValue = StringVar()
+vginstrument4EntrySkorostValue = StringVar()
+vginstrument5EntryDiaValue = StringVar()
+vginstrument5EntrySkorostValue = StringVar()
+
+# HORIZONTALNA GLAVA -vg
+hginstrument1EntryDiaValue = StringVar()
+hginstrument1EntrySkorostValue = StringVar()
+hginstrument2EntryDiaValue = StringVar()
+hginstrument2EntrySkorostValue = StringVar()
+hginstrument3EntryDiaValue = StringVar()
+hginstrument3EntrySkorostValue = StringVar()
+hginstrument4EntryDiaValue = StringVar()
+hginstrument4EntrySkorostValue = StringVar()
+hginstrument5EntryDiaValue = StringVar()
+hginstrument5EntrySkorostValue = StringVar()
+
+# Default values (she doidat posle of file)
+vginstrument1EntryDiaValue.set('35')
+vginstrument1EntrySkorostValue.set('800')
+vginstrument2EntryDiaValue.set('15')
+vginstrument2EntrySkorostValue.set('1000')
+vginstrument3EntryDiaValue.set('8')
+vginstrument3EntrySkorostValue.set('1200')
+vginstrument4EntryDiaValue.set('5')
+vginstrument4EntrySkorostValue.set('1500')
+vginstrument5EntryDiaValue.set('2.5')
+vginstrument5EntrySkorostValue.set('1500')
+
+hginstrument1EntryDiaValue.set('35')
+hginstrument1EntrySkorostValue.set('800')
+hginstrument2EntryDiaValue.set('15')
+hginstrument2EntrySkorostValue.set('1000')
+hginstrument3EntryDiaValue.set('8')
+hginstrument3EntrySkorostValue.set('1200')
+hginstrument4EntryDiaValue.set('5')
+hginstrument4EntrySkorostValue.set('1500')
+hginstrument5EntryDiaValue.set('2.5')
+hginstrument5EntrySkorostValue.set('1500')
+
+genHorizontOtvoriGCodeValue = IntVar()
+genVertikalOtvoriGCodeValue = IntVar()
+pauseMejduDetailiGCodeValue = IntVar()
+ciklichnoPrezarejdaneGCodeValue = IntVar()
 
 leftBazaCheckBox = IntVar()
 rightBazaCheckBox = IntVar()
-
-# Default values (she doidat posle of file)
-instrument1EntryDiaValue.set('35')
-instrument1EntrySkorostValue.set('800')
-instrument2EntryDiaValue.set('15')
-instrument2EntrySkorostValue.set('1000')
-instrument3EntryDiaValue.set('8')
-instrument3EntrySkorostValue.set('1200')
-instrument4EntryDiaValue.set('5')
-instrument4EntrySkorostValue.set('1500')
-instrument5EntryDiaValue.set('2.5')
-instrument5EntrySkorostValue.set('1500')
 
 ''' ***************************************************************************
 *** Variables za stoinosti na fiksovete
@@ -1603,65 +1770,26 @@ slojiDqsnaBazaButton = Button(frame, text=placeOnMachineRightButtonText, bg="bis
 slojiDqsnaBazaButton.grid(row=0, column=1, padx = 3, sticky=N)
 
 # ********** Instrumenti *************
-instr1LabelBox = LabelFrame(frame, text=instrument1LabelText)
-instr1LabelBox.grid(row=1, columnspan=2, pady=10)
-dia1Label = Label(instr1LabelBox, text=diameturLabelText)
-dia1Label.grid(row=0, sticky=W)
-dia1Entry = Entry(instr1LabelBox, textvariable=instrument1EntryDiaValue)
-dia1Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
-skorost1Label = Label(instr1LabelBox, text=skorostText)
-skorost1Label.grid(row=1, sticky=W)
-skorost1Entry = Entry(instr1LabelBox, textvariable=instrument1EntrySkorostValue)
-skorost1Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
-
-instr2LabelBox = LabelFrame(frame, text=instrument2LabelText)
-instr2LabelBox.grid(row=2, columnspan=2, pady=10)
-dia2Label = Label(instr2LabelBox, text=diameturLabelText)
-dia2Label.grid(row=0, sticky=W)
-dia2Entry = Entry(instr2LabelBox, textvariable=instrument2EntryDiaValue)
-dia2Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
-skorost2Label = Label(instr2LabelBox, text=skorostText)
-skorost2Label.grid(row=1, sticky=W)
-skorost2Entry = Entry(instr2LabelBox, textvariable=instrument2EntrySkorostValue)
-skorost2Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
-
-instr3LabelBox = LabelFrame(frame, text=instrument3LabelText)
-instr3LabelBox.grid(row=3, columnspan=2, pady=10)
-dia3Label = Label(instr3LabelBox, text=diameturLabelText)
-dia3Label.grid(row=0, sticky=W)
-dia3Entry = Entry(instr3LabelBox, textvariable=instrument3EntryDiaValue)
-dia3Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
-skorost3Label = Label(instr3LabelBox, text=skorostText)
-skorost3Label.grid(row=1, sticky=W)
-skorost3Entry = Entry(instr3LabelBox, textvariable=instrument3EntrySkorostValue)
-skorost3Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
-
-instr4LabelBox = LabelFrame(frame, text=instrument4LabelText)
-instr4LabelBox.grid(row=4, columnspan=2, pady=10)
-dia4Label = Label(instr4LabelBox, text=diameturLabelText)
-dia4Label.grid(row=0, sticky=W)
-dia4Entry = Entry(instr4LabelBox, textvariable=instrument4EntryDiaValue)
-dia4Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
-skorost4Label = Label(instr4LabelBox, text=skorostText)
-skorost4Label.grid(row=1, sticky=W)
-skorost4Entry = Entry(instr4LabelBox, textvariable=instrument4EntrySkorostValue)
-skorost4Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
-
-instr5LabelBox = LabelFrame(frame, text=instrument5LabelText)
-instr5LabelBox.grid(row=5, columnspan=2, pady=10)
-dia5Label = Label(instr5LabelBox, text=diameturLabelText)
-dia5Label.grid(row=0, sticky=W)
-dia5Entry = Entry(instr5LabelBox, textvariable=instrument5EntryDiaValue)
-dia5Entry.grid(row=0, column=1, padx = 5, pady = 2, sticky=E)
-skorost5Label = Label(instr5LabelBox, text=skorostText)
-skorost5Label.grid(row=1, sticky=W)
-skorost5Entry = Entry(instr5LabelBox, textvariable=instrument5EntrySkorostValue)
-skorost5Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
-
+nastorikaNaInstrButton = Button(frame, text=nastroikaInstrumentButtonText, command=nastroika_na_instrumenti)
+nastorikaNaInstrButton.grid(row=1, columnspan=2, padx=3, pady=30)
 
 # ********** Generate G-Code Button *************
-generateGCodeButton = Button(frame, text=generateGCodeButtonText, bg="tomato", command=suzdai_gcode_file)
-generateGCodeButton.grid(row=7, columnspan=2, pady = 20, sticky=N)
+gCodeLableBox = LabelFrame(frame, text=generateGCodeLabelText)
+gCodeLableBox.grid(row=2, columnspan=2, padx = 20, sticky=N+S+W+E)
+
+genHorOtvoriButton= Checkbutton(gCodeLableBox, text=genHorizontOtvoriButtonText, variable=genHorizontOtvoriGCodeValue)
+genHorOtvoriButton.grid(row=1, sticky=W)
+genVerOtvoriButton= Checkbutton(gCodeLableBox, text=genVertikalOtvoriButtonText, variable=genVertikalOtvoriGCodeValue)
+genVerOtvoriButton.grid(row=2, sticky=W)
+pauseButton= Checkbutton(gCodeLableBox, text=pauseMejduDetailiButtonText, variable=pauseMejduDetailiGCodeValue)
+pauseButton.grid(row=3, sticky=W)
+ciklichnoButton= Checkbutton(gCodeLableBox, text=ciklichnoPrezarejdaneButtonText, variable=ciklichnoPrezarejdaneGCodeValue)
+ciklichnoButton.grid(row=4, sticky=W)
+
+generateGCodeButton = Button(gCodeLableBox, text=generateGCodeButtonText, bg="tomato", command=suzdai_gcode_file)
+generateGCodeButton.grid(row=5, padx= 3, pady = 10, sticky=W)
+zapisGCodeButton = Button(gCodeLableBox, text=zapisGCodeButtonText, bg="tomato", command=zapishi_gcode_file)
+zapisGCodeButton.grid(row=5, column=1, padx = 3, pady = 10, sticky=E)
 
 # ********** Canvas *************
 canvas = Canvas(mainframe, width=1100, heigh=700, bg="grey")
