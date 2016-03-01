@@ -4,7 +4,7 @@ import time, os, sys
 ## dd/mm/yyyy format
 
 from Tkinter import *
-from tkFileDialog import askopenfilename
+from tkFileDialog import askopenfilename,asksaveasfilename
 
 try:
     import xml.etree.cElementTree as ET
@@ -37,7 +37,8 @@ diameturLabelText = u'Диаметър (мм)'
 skorostText = u'Скорост (мм/мин)'
 generateGCodeLabelText =  u'Генериране на G код'
 generateGCodeButtonText = u'Генерирай G код'
-zapisGCodeButtonText =  u'Запиши G кода'
+iztriiGCodeButtonText = u'Изтрий G код'
+zapisGCodeButtonText =  u'Запиши G код'
 genHorizontOtvoriButtonText = u'Добави код за хоризонталните отвори'
 genVertikalOtvoriButtonText = u'Добави код за вертикалните отвори'
 pauseMejduDetailiButtonText = u'Постави пауза между левия и десния детайл'
@@ -948,7 +949,14 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
         
         if izlizaPoX == 0 and izlizaPoY == 0:     
             # Zapazi tochnite koordinati na dupkite za g-code
-            dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor}
+            if horizontOtvor == 1:
+                if dupka.has_key('f'):
+                    dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor, "f" : dupka['f']}
+                else:
+                    dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor}
+            else:   
+                dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor}
+                
             if side == 'L':
                 dupki_za_gcode_left.append(dupka_za_gcode)
             elif side == 'R':
@@ -1090,36 +1098,47 @@ def nastroika_na_instrumenti():
     skorost5Label.grid(row=1, sticky=W)
     skorost5Entry = Entry(instr5LabelBox, textvariable=hginstrument5EntrySkorostValue)
     skorost5Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+
+def iztrii_temp_gcode_file():
+    if os.path.isfile("sample123.txt"):
+        os.remove("sample123.txt")
+    global gcodeInProgress
+    gcodeInProgress = 0
     
 def zapishi_gcode_file():
     global n10
     global gcodeInProgress
+    
+    saveFileName = asksaveasfilename(filetypes=(("GCode files", "*.txt"), ("All files", "*.*")))
+    if not saveFileName.endswith('.txt'):
+        saveFileName = saveFileName + u'.txt'
+    
     tempFile = open("sample123.txt", "r")
-    gCodeFile = open("gcode.txt", "w")
+    gCodeFile = open(saveFileName, "w")
     
     for line in tempFile:
         gCodeFile.write(line)
-        
+         
     tempFile.close()
-    
+     
     ciklichnoPrezarejdane = ciklichnoPrezarejdaneGCodeValue.get()
-    
+     
     #Sloji krai na G-Code
     if ciklichnoPrezarejdane == 1:
         krai ='N'+str(n10)+'M47\n'
         n10 = n10 + 10
-        
+         
         gCodeFile.write(krai)
     else:    
         krai1 = 'N'+str(n10)+'G00Z'+str(bezopasno_z)+'\n'
         n10 = n10 + 10
-        krai2 = 'N'+str(n10)+'G00X0.000Y0.000\n'
+        krai2 = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(PLOT_NA_MACHINA_X/2))+'Y0.000\n'
         n10 = n10 + 10
         krai3 = 'N'+str(n10)+'M09\n'
         n10 = n10 + 10
         krai4 ='N'+str(n10)+'M30\n'
         n10 = n10 + 10
-        
+         
         gCodeFile.write(krai1)
         gCodeFile.write(krai2)
         gCodeFile.write(krai3)
@@ -1162,7 +1181,7 @@ def definirai_skorosti():
     t9Skorost = float(hginstrument4EntrySkorostValue.get())
     t10Skorost = float(hginstrument5EntrySkorostValue.get())
     
-    return {'T1':t1Skorost,'T2':t2Skorost,'T3':t3Skorost,'T4':t4Skorost,'T5':t5Skorost,'T6':t6Skorost,'T7':t7Skorost,'T8':t8Skorost,'T9':t9Skorost,'T10':t10Skorost}
+    return {'T1':t1Skorost,'T2':t2Skorost,'T3':t3Skorost,'T4':t4Skorost,'T5':t5Skorost,'T6':t6Skorost,'T7':t7Skorost,'T8':t8Skorost,'T9':t9Skorost,'T10':t10Skorost,'T11':t6Skorost}
 
 def izberi_skorost(skorostMap, instrument):
     skorost = 0
@@ -1172,12 +1191,19 @@ def izberi_skorost(skorostMap, instrument):
             break
     return skorost
         
-def izberi_instrument(instrMap, diametur):    
+def izberi_instrument(instrMap, diametur, zaFiks):    
     instT = 'INVALID'
-    for k,v in instrMap.iteritems():
-        if v == diametur:
-            instT = k
-            break
+    
+    # Ako probivame fiksove i diameturka na T6 i T7 sa ravni, izberi T11 (2 instrumenta zaedno)
+    if zaFiks == 1:
+        if instrMap['T6'] == instrMap['T7']:
+            instT = 'T11'
+    
+    if instT == 'INVALID':
+        for k,v in instrMap.iteritems():
+            if v == diametur:
+                instT = k
+                break
     return instT
 
 def napravi_comment_za_polojenieto(side):
@@ -1201,7 +1227,6 @@ def suzdai_gcode_file():
     global TT 
     global gcodeInProgress    
     bezopasno_z = "{0:.3f}".format(50.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
-    debelinaMaterial = 18.0
     instrumentiZaVerGlava = definirai_instrumenti('V')
     instrumentiZaHorizGlava = definirai_instrumenti('H')
     skorostZaInstrumenti = definirai_skorosti()
@@ -1313,9 +1338,14 @@ def suzdai_gcode_file():
     if gcodeInProgress == 0 or TT=='':    
         # Logika za liniite na g-coda
         if typeHiliV == 'V':
-            TT = izberi_instrument(instrumentiZaVerGlava, razmerNachalnaDupka)
+            TT = izberi_instrument(instrumentiZaVerGlava, razmerNachalnaDupka, 0)
         else:
-            TT = izberi_instrument(instrumentiZaHorizGlava, razmerNachalnaDupka)
+            zaFiks = 0
+            if dup.has_key('f'):
+                if dup['f'] == 1:
+                    zaFiks = 1
+            TT = izberi_instrument(instrumentiZaHorizGlava, razmerNachalnaDupka, zaFiks)
+            
         HT = 'H'+TT[1]
         vzemiInstrument = 'N'+str(n10)+TT+'M06\n'
         n10 = n10 + 10
@@ -1334,18 +1364,23 @@ def suzdai_gcode_file():
         fw.write(zavurtiNaMaxOboroti)
         fw.write(prediNachalnoPozicionirane)
     
-    def gcode_lines_za_dupka(dupka, typeHiliV):  
+    def gcode_lines_za_dupka(dupka, typeHiliV, baza):  
         global TT       
         global n10 
-        purvonachaloZ = "{0:.3f}".format(debelinaMaterial + 5)
+        debelinaMaterial = 18.0
         SD = "{0:.1f}".format(izberi_skorost(skorostZaInstrumenti, TT))
         
         # Vij kakuv instrument triabva da polzvash
         if typeHiliV == 'V':
-            instrZaDupka = izberi_instrument(instrumentiZaVerGlava, dupka['r']*2)
+            instrZaDupka = izberi_instrument(instrumentiZaVerGlava, dupka['r']*2, 0)
         else:
-            instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2)
-            
+            if dupka.has_key('f'):
+                instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 1)
+            else:
+                instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 0)
+            debelinaMaterial = 0
+        
+        purvonachaloZ = "{0:.3f}".format(debelinaMaterial + 5)    
         if instrZaDupka != TT:  
             # Smeni instrumenta
             TT = instrZaDupka
@@ -1360,21 +1395,25 @@ def suzdai_gcode_file():
             zavurtiNaMaxOboroti = 'N'+str(n10)+'S6000M03\n'
             n10 = n10 + 10
             fw.write(zavurtiNaMaxOboroti)
+        
+        xKoordinata = dupka['x']
+        if baza == 'R':
+            xKoordinata = PLOT_NA_MACHINA_X - dupka['x']
             
-        d1Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(dupka['x']))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
+        d1Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
         n10 = n10 + 10
         fw.write(d1Line)
         krainoZ = "{0:.3f}".format(debelinaMaterial - dupka['h'])
-        d2Line = 'N'+str(n10)+'G1X'+str("{0:.3f}".format(dupka['x']))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(krainoZ)+'F'+SD+'\n'
+        d2Line = 'N'+str(n10)+'G1X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(krainoZ)+'F'+SD+'\n'
         n10 = n10 + 10
         fw.write(d2Line)   
-        d3Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(dupka['x']))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
+        d3Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
         n10 = n10 + 10
         fw.write(d3Line)
     
     def postavi_pauza(bezopasno_z):
         global n10
-        fw.write('N'+str(n10)+'G00X'+str("{0:.3f}".format(PLOT_NA_MACHINA_X/2))+'Y0.000'+str(bezopasno_z)+'\n')
+        fw.write('N'+str(n10)+'G00X'+str("{0:.3f}".format(PLOT_NA_MACHINA_X/2))+'Y0.000Z'+str(bezopasno_z)+'\n')
         n10 = n10 + 10
         fw.write('N'+str(n10)+'M1')
         n10 = n10 + 10
@@ -1382,22 +1421,30 @@ def suzdai_gcode_file():
     if napraviHorizontalniOtvori == 1:
         #Dupki - LQVA BAZA, HORIZONTAL
         for dupka in leftHorizontDupki:
-            gcode_lines_za_dupka(dupka, 'H')
+            if dupka.has_key('f'):
+                if dupka['f'] == 1:
+                    gcode_lines_za_dupka(dupka, 'H', 'L')
+            else:
+                gcode_lines_za_dupka(dupka, 'H', 'L')
             
     if napraviVertiklaniOtvori == 1:
         #Dupki - LQVA BAZA, VERTIKAL
         for dupka in leftVertikalDupki:
-            gcode_lines_za_dupka(dupka, 'V')
+            gcode_lines_za_dupka(dupka, 'V', 'L')
         
     if napraviHorizontalniOtvori == 1:
         #Dupki - DQSNA BAZA, HORIZONTAL
         for dupka in rightHorizontDupki:
-            gcode_lines_za_dupka(dupka, 'H')
+            if dupka.has_key('f'):
+                if  dupka['f'] == 1:
+                    gcode_lines_za_dupka(dupka, 'H', 'R')
+            else:
+                gcode_lines_za_dupka(dupka, 'H', 'R')
         
     if napraviVertiklaniOtvori == 1:   
         #Dupki - DQSNA BAZA, VERTIKAL    
         for dupka in rightVertikalDupki:
-            gcode_lines_za_dupka(dupka, 'V')
+            gcode_lines_za_dupka(dupka, 'V', 'R')
     
     if postaviPausa == 1:
         postavi_pauza(bezopasno_z)
@@ -1612,20 +1659,20 @@ def pokaji_redaktirai_window(side):
         if (simPoX == 0 and simPoY == 0 and centFix == 0 and copyCentFix == 0) or simPoX == 1 or simPoY == 1: 
             if rotation == 0:
                 dupka1  = {"x" : zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka1a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka1b  = {"x" : zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka1b  = {"x" : zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 1:
                 dupka1 = {"x" : zyl_pos_y, "y": element_x - zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka1a  = {"x" : 0, "y": element_x - zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka1b  = {"x" : 0, "y": element_x - zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1a  = {"x" : 0, "y": element_x - zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka1b  = {"x" : 0, "y": element_x - zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 2:
                 dupka1 = {"x" : element_x-zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka1a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka1b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka1b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 3:
                 dupka1 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka1a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka1b  = {"x" : element_y, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka1a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka1b  = {"x" : element_y, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
     
             dupki_na_elementa.append(dupka1)
             dupki_na_elementa.append(dupka1a)
@@ -1639,20 +1686,20 @@ def pokaji_redaktirai_window(side):
             # Vtorata dupka po X (ogledalna na dupka)
             if rotation == 0:
                 dupka2 = {"x" : element_x-zyl_pos_x, "y":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka2a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka2b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka2a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka2b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 1:
                 dupka2 = {"x" : zyl_pos_y, "y": zyl_pos_x,  "h" : zyl_h, "r" : zyl_r}
-                dupka2a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka2b  = {"x" : 0, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka2a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka2b  = {"x" : 0, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 2:
                 dupka2 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka2a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka2b  = {"x" : zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka2a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka2b  = {"x" : zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 3:
                 dupka2 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka2a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka2b  = {"x" : element_y, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka2a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka2b  = {"x" : element_y, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
                              
             dupki_na_elementa.append(dupka2)
             dupki_na_elementa.append(dupka2a)
@@ -1666,20 +1713,20 @@ def pokaji_redaktirai_window(side):
             # Vtorata dupka po Y (ogledalna na dupka)
             if rotation == 0:
                 dupka3 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka3a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka3b  = {"x" : zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka3a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka3b  = {"x" : zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 1:
                 dupka3 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka3a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka3b  = {"x" : element_y, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka3a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka3b  = {"x" : element_y, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 2:
                 dupka3 = {"x" : element_x-zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka3a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka3b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka3a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka3b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 3:
                 dupka3 = {"x" : zyl_pos_y, "y": zyl_pos_x,  "h" : zyl_h, "r" : zyl_r}
-                dupka3a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka3b  = {"x" : 0, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka3a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka3b  = {"x" : 0, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
                 
             dupki_na_elementa.append(dupka3)
             dupki_na_elementa.append(dupka3a)
@@ -1692,20 +1739,20 @@ def pokaji_redaktirai_window(side):
         if simPoX == 1 and simPoY == 1:
             if rotation == 0:
                 dupka4 =  {"x" : element_x-zyl_pos_x, "y": element_y- zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka4a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka4b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka4a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka4b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 1:
                 dupka4 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka4a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka4b  = {"x" : element_y, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka4a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka4b  = {"x" : element_y, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 2:
                 dupka4 = {"x" : zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka4a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka4b  = {"x" : zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka4a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka4b  = {"x" : zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 3:
                 dupka4 = {"x" : zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka4a  = {"x" : 0, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka4b  = {"x" : 0, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka4a  = {"x" : 0, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka4b  = {"x" : 0, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
                 
             dupki_na_elementa.append(dupka4)
             dupki_na_elementa.append(dupka4a)
@@ -1720,20 +1767,20 @@ def pokaji_redaktirai_window(side):
              
             if rotation == 0:
                 dupka5 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka5a  = {"x" : center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka5b  = {"x" : center_zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka5a  = {"x" : center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka5b  = {"x" : center_zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 1:
                 dupka5 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka5a  = {"x" : 0, "y": element_x - center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka5b  = {"x" : 0, "y": element_x - center_zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka5a  = {"x" : 0, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka5b  = {"x" : 0, "y": center_zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 2:
                 dupka5 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka5a  = {"x" : element_x-center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka5b  = {"x" : element_x-center_zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka5a  = {"x" : center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka5b  = {"x" : center_zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
             elif rotation == 3:
                 dupka5 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka5a  = {"x" : element_y, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka5b  = {"x" : element_y, "y": center_zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka5a  = {"x" : element_y, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka5b  = {"x" : element_y, "y": center_zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
                             
             dupki_na_elementa.append(dupka5) 
             dupki_na_elementa.append(dupka5a) 
@@ -1748,20 +1795,20 @@ def pokaji_redaktirai_window(side):
             
             if rotation == 0:
                 dupka6 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka6a  = {"x" : center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka6b  = {"x" : center_zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka6a  = {"x" : center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka6b  = {"x" : center_zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 1:
                 dupka6 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka6a  = {"x" : element_y, "y": element_x-center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka6b  = {"x" : element_y, "y": element_x-center_zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka6a  = {"x" : element_y, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka6b  = {"x" : element_y, "y": center_zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 2:
                 dupka6 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka6a  = {"x" : element_x-center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka6b  = {"x" : element_x-center_zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka6a  = {"x" : center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka6b  = {"x" : center_zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
             elif rotation == 3:
                 dupka6 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}  
-                dupka6a  = {"x" : 0, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
-                dupka6b  = {"x" : 0, "y": center_zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                dupka6a  = {"x" : 0, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka6b  = {"x" : 0, "y": center_zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
                 
             dupki_na_elementa.append(dupka6) 
             dupki_na_elementa.append(dupka6a) 
@@ -1812,6 +1859,8 @@ def pokaji_redaktirai_window(side):
     narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, rcanvas, 0)
        
 print ('*** BEGIN PROGRAM *************************')
+iztrii_temp_gcode_file()
+
 mainframe = Tk()
 #mainframe.geometry('450x450+500+300') - Use that for window size
 
@@ -1965,7 +2014,7 @@ nastorikaNaInstrButton.grid(row=1, columnspan=2, padx=3, pady=30)
 
 # ********** Generate G-Code Button *************
 gCodeLableBox = LabelFrame(frame, text=generateGCodeLabelText)
-gCodeLableBox.grid(row=2, columnspan=2, padx = 20, sticky=N+S+W+E)
+gCodeLableBox.grid(row=2, columnspan=3, padx = 20, sticky=N+S+W+E)
 
 genHorOtvoriButton= Checkbutton(gCodeLableBox, text=genHorizontOtvoriButtonText, variable=genHorizontOtvoriGCodeValue)
 genHorOtvoriButton.grid(row=1, sticky=W)
@@ -1976,10 +2025,14 @@ pauseButton.grid(row=3, sticky=W)
 ciklichnoButton= Checkbutton(gCodeLableBox, text=ciklichnoPrezarejdaneButtonText, variable=ciklichnoPrezarejdaneGCodeValue)
 ciklichnoButton.grid(row=4, sticky=W)
 
-generateGCodeButton = Button(gCodeLableBox, text=generateGCodeButtonText, bg="tomato", command=suzdai_gcode_file)
-generateGCodeButton.grid(row=5, padx= 3, pady = 10, sticky=W)
-zapisGCodeButton = Button(gCodeLableBox, text=zapisGCodeButtonText, bg="tomato", command=zapishi_gcode_file)
-zapisGCodeButton.grid(row=5, column=1, padx = 3, pady = 10, sticky=E)
+buttonBar = Frame(gCodeLableBox)
+buttonBar.grid(row=5)
+generateGCodeButton = Button(buttonBar, text=generateGCodeButtonText, bg="tomato", command=suzdai_gcode_file)
+generateGCodeButton.grid(row=0, padx= 3, pady = 10, sticky=W)
+iztriiGCodeButton = Button(buttonBar, text=iztriiGCodeButtonText, bg="tomato", command=iztrii_temp_gcode_file())
+iztriiGCodeButton.grid(row=0, column=1,padx = 3, pady = 10)
+zapisGCodeButton = Button(buttonBar, text=zapisGCodeButtonText, bg="tomato", command=zapishi_gcode_file)
+zapisGCodeButton.grid(row=0, column=2, padx = 3, pady = 10, sticky=E)
 
 # ********** Canvas *************
 canvas = Canvas(mainframe, width=1100, heigh=700, bg="grey")
