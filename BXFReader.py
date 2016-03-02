@@ -763,6 +763,11 @@ def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochi
     
 
 def mahni_element_ot_lqva_baza():
+    
+    print 'here'
+    print canvas.coords('border1')
+    print canvas.coords('border2')
+    
     canvas.delete("leftRec")
     canvas.delete("border1")
     canvas.delete("border2")
@@ -1230,6 +1235,9 @@ def suzdai_gcode_file():
     instrumentiZaVerGlava = definirai_instrumenti('V')
     instrumentiZaHorizGlava = definirai_instrumenti('H')
     skorostZaInstrumenti = definirai_skorosti()
+    t11instrument = 0
+    if hginstrument1EntryDiaValue.get() == hginstrument2EntryDiaValue.get():
+        t11instrument = 1
 
     # Stoinosti na g-code (horizontalni otvori, vertikalni, pause, ciklichno)
     napraviHorizontalniOtvori = genHorizontOtvoriGCodeValue.get()
@@ -1415,18 +1423,21 @@ def suzdai_gcode_file():
         global n10
         fw.write('N'+str(n10)+'G00X'+str("{0:.3f}".format(PLOT_NA_MACHINA_X/2))+'Y0.000Z'+str(bezopasno_z)+'\n')
         n10 = n10 + 10
-        fw.write('N'+str(n10)+'M1')
+        fw.write('N'+str(n10)+'M1\n')
         n10 = n10 + 10
         
     if napraviHorizontalniOtvori == 1:
         #Dupki - LQVA BAZA, HORIZONTAL
         for dupka in leftHorizontDupki:
-            if dupka.has_key('f'):
-                if dupka['f'] == 1:
-                    gcode_lines_za_dupka(dupka, 'H', 'L')
-            else:
+            if t11instrument == 0:
                 gcode_lines_za_dupka(dupka, 'H', 'L')
-            
+            else:
+                if dupka.has_key('f'):
+                    if dupka['f'] == 1:
+                        gcode_lines_za_dupka(dupka, 'H', 'L')
+                else:
+                    gcode_lines_za_dupka(dupka, 'H', 'L')
+                       
     if napraviVertiklaniOtvori == 1:
         #Dupki - LQVA BAZA, VERTIKAL
         for dupka in leftVertikalDupki:
@@ -1435,11 +1446,14 @@ def suzdai_gcode_file():
     if napraviHorizontalniOtvori == 1:
         #Dupki - DQSNA BAZA, HORIZONTAL
         for dupka in rightHorizontDupki:
-            if dupka.has_key('f'):
-                if  dupka['f'] == 1:
-                    gcode_lines_za_dupka(dupka, 'H', 'R')
-            else:
+            if t11instrument == 0:
                 gcode_lines_za_dupka(dupka, 'H', 'R')
+            else:
+                if dupka.has_key('f'):
+                    if dupka['f'] == 1:
+                        gcode_lines_za_dupka(dupka, 'H', 'R')
+                else:
+                    gcode_lines_za_dupka(dupka, 'H', 'R')
         
     if napraviVertiklaniOtvori == 1:   
         #Dupki - DQSNA BAZA, VERTIKAL    
@@ -2029,7 +2043,7 @@ buttonBar = Frame(gCodeLableBox)
 buttonBar.grid(row=5)
 generateGCodeButton = Button(buttonBar, text=generateGCodeButtonText, bg="tomato", command=suzdai_gcode_file)
 generateGCodeButton.grid(row=0, padx= 3, pady = 10, sticky=W)
-iztriiGCodeButton = Button(buttonBar, text=iztriiGCodeButtonText, bg="tomato", command=iztrii_temp_gcode_file())
+iztriiGCodeButton = Button(buttonBar, text=iztriiGCodeButtonText, bg="tomato", command=iztrii_temp_gcode_file)
 iztriiGCodeButton.grid(row=0, column=1,padx = 3, pady = 10)
 zapisGCodeButton = Button(buttonBar, text=zapisGCodeButtonText, bg="tomato", command=zapishi_gcode_file)
 zapisGCodeButton.grid(row=0, column=2, padx = 3, pady = 10, sticky=E)
