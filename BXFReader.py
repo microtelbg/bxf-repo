@@ -656,6 +656,7 @@ def izberi_element_za_dupchene(side, orienation, pripluzvane):
                 break
     
         izbranElement = elementi_za_dupchene[iValue]
+        izbranElement.purvonachalnoPolojenie = ''
         
         if side == 'L':
             #Sloji elementa v lista i purvonachalnata orientacia
@@ -681,7 +682,12 @@ def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotati
     borderLength = 30
     
     if side == 'L':
-        canvestodrawon.create_rectangle(30, 30, stranaPoX*mashtab+30, stranaPoY*mashtab+30, fill="lightblue", tags="leftRec")
+        detail = izbrani_elementi['L']
+        color = "lightblue"
+        if detail.purvonachalnoPolojenie == 'R':
+            color = "lightgreen"
+            
+        canvestodrawon.create_rectangle(30, 30, stranaPoX*mashtab+30, stranaPoY*mashtab+30, fill=color, tags="leftRec")
                 
         if pripluzvaneInd == 1:   
             b1Coord = izbrani_elementi['LB1'] 
@@ -722,11 +728,15 @@ def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotati
                 canvestodrawon.create_line(30, stranaPoY*mashtab+32, borderLength+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border1")    
             
     elif side == 'R':
-        
+        detail = izbrani_elementi['R']
+        color = "lightgreen"
+        if detail.purvonachalnoPolojenie == 'L':
+            color = "lightblue"
+            
         nachalenX = PLOT_NA_MACHINA_X*mashtab+10 - stranaPoX*mashtab
         kraenX = nachalenX + stranaPoX*mashtab
         
-        canvestodrawon.create_rectangle(nachalenX, 30, kraenX, stranaPoY*mashtab+30, fill="lightgreen", tags="rightRec")
+        canvestodrawon.create_rectangle(nachalenX, 30, kraenX, stranaPoY*mashtab+30, fill=color, tags="rightRec")
             
         if pripluzvaneInd == 1:   
             b1Coord = izbrani_elementi['RB1'] 
@@ -834,6 +844,9 @@ def mahni_element_ot_lqva_baza():
     del dupki_za_gcode_left[:]
     del izbrani_elementi['L']
     del izbrani_elementi['LO']
+    if izbrani_elementi.has_key('LB1'):
+        del izbrani_elementi['LB1']
+        del izbrani_elementi['LB2']
 
 def mahni_element_ot_dqsna_baza():
     canvas.delete("rightRec")
@@ -846,6 +859,9 @@ def mahni_element_ot_dqsna_baza():
     del dupki_za_gcode_right[:]
     del izbrani_elementi['R']
     del izbrani_elementi['RO']
+    if izbrani_elementi.has_key('RB1'):
+        del izbrani_elementi['RB1']
+        del izbrani_elementi['RB2']
 
 def rotate_element_lqva_baza():
     rotate_element('L', canvas)
@@ -907,10 +923,13 @@ def ima_li_dupki_izvun_plota(dupki_za_proverka, rotation, side, element_x, eleme
             d_y1 = element_y - d_y
         
         # Dobavi radiusa za da imame nai krainata tochka
-        d_x1 = d_x1 + d_r
         d_y1 = d_y1 + d_r
         
+        if side == 'L':
+            d_x1 = d_x1 + d_r
+        
         if side == 'R':
+            d_x1 = d_x1 - d_r
             d_x1 = d_x1 + (PLOT_NA_MACHINA_X-element_x)
                
         if poneEdnaDupkaIzlizaPoX == 0:
@@ -1001,11 +1020,11 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
         izlizaPoX = 0
         izlizaPoY = 0
         if dupkaIzvunX == 1:
-            if (side == 'L'and d_x > element_x/2) or (side == 'R' and d_x < element_x/2):
+            if (side == 'L'and d_x > element_x/2+35) or (side == 'R' and d_x < element_x/2+35):
                 izlizaPoX = 1
         
         if dupkaIzvunY == 1:
-            if d_y > element_y/2:
+            if d_y > element_y/2 or d_y > PLOT_NA_MACHINA_Y:
                 izlizaPoY = 1
         
         horizontOtvor = 0
