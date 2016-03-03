@@ -130,7 +130,11 @@ class ElementZaDupchene(object):
         self.ime = ime
         self.razmeri = razmeri
         self.dupki = dupki
+        self.purvonachalnoPolojenie = ''
 
+    def set_purvonachalno_polojenie(self, purvonachalnoPolojenie):
+        self.purvonachalnoPolojenie = purvonachalnoPolojenie
+        
     def opisanie(self):
         print "-----------------------------------------------------------------------------------"
         print "Ime:", self.ime
@@ -632,75 +636,132 @@ def zaredi_file_info():
     canvas.delete(ALL)
     canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
     
-def izberi_element_za_dupchene(side, orienation):
-      
-    #Nameri izbrania element
-    itemIndex = int(listbox.curselection()[0])
-    itemValue = listbox.get(itemIndex)
-    iValue = itemValue
+def izberi_element_za_dupchene(side, orienation, pripluzvane):
     
-    for eng, bg in prevod_za_elemnti_v_list.iteritems():
-        if itemValue == bg:
-            iValue = eng
-            break
-
-    izbranElement = elementi_za_dupchene[iValue]
-    print izbranElement.opisanie()
+    if pripluzvane == 1:
+        if side == 'L':
+            narisuvai_element_na_plota(izbrani_elementi['L'], orienation, 'L', canvas, 1, 1)
+        else:
+            narisuvai_element_na_plota(izbrani_elementi['R'], orienation, 'R', canvas, 1, 1)
+        
+    else:
+        #Nameri izbrania element
+        itemIndex = int(listbox.curselection()[0])
+        itemValue = listbox.get(itemIndex)
+        iValue = itemValue
+        
+        for eng, bg in prevod_za_elemnti_v_list.iteritems():
+            if itemValue == bg:
+                iValue = eng
+                break
     
-    if side == 'L':
-        #Sloji elementa v lista i purvonachalnata orientacia
-        izbrani_elementi['L'] = izbranElement
-        izbrani_elementi['LO'] = orienation
-        narisuvai_element_na_plota(izbranElement, orienation, 'L', canvas, 1)
-    elif side == 'R':
-        #Sloji elementa v lista i purvonachalnata orientacia
-        izbrani_elementi['R'] = izbranElement
-        izbrani_elementi['RO'] = orienation
-        narisuvai_element_na_plota(izbranElement, orienation, 'R', canvas, 1)
+        izbranElement = elementi_za_dupchene[iValue]
+        
+        if side == 'L':
+            #Sloji elementa v lista i purvonachalnata orientacia
+            izbrani_elementi['L'] = izbranElement
+            izbrani_elementi['LO'] = orienation
+            narisuvai_element_na_plota(izbranElement, orienation, 'L', canvas, 1, 0)
+        elif side == 'R':
+            #Sloji elementa v lista i purvonachalnata orientacia
+            izbrani_elementi['R'] = izbranElement
+            izbrani_elementi['RO'] = orienation
+            narisuvai_element_na_plota(izbranElement, orienation, 'R', canvas, 1, 0)
 
 def izberi_element_za_lqva_strana():
-    izberi_element_za_dupchene('L', 0)
+    izberi_element_za_dupchene('L', 0, 0)
     pripluzniButton.config(state="normal")
 
 def izberi_element_za_dqsna_strana():
-    izberi_element_za_dupchene('R', 0)
+    izberi_element_za_dupchene('R', 0, 0)
     pripluzniButton.config(state="normal")
 
-def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotation):
+def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotation, pripluzvaneInd):
+    
+    borderLength = 30
+    
     if side == 'L':
         canvestodrawon.create_rectangle(30, 30, stranaPoX*mashtab+30, stranaPoY*mashtab+30, fill="lightblue", tags="leftRec")
+                
+        if pripluzvaneInd == 1:   
+            b1Coord = izbrani_elementi['LB1'] 
+            b1_x1 = b1Coord[0]
+            b1_y1 = b1Coord[1]
+            b1_x2 = b1Coord[2]
+            b1_y2 = b1Coord[3]
+            
+            b2Coord =  izbrani_elementi['LB2'] 
+            b2_x1 = b2Coord[0]
+            b2_y1 = b2Coord[1]
+            b2_x2 = b2Coord[2]
+            b2_y2 = b2Coord[3]
+            
+            #nachalenX = PLOT_NA_MACHINA_X*mashtab + stranaPoX*mashtab
+            kraenX = stranaPoX*mashtab+20
+            
+            b1_x1 = kraenX - (PLOT_NA_MACHINA_X*mashtab- b1_x1) #nachalenX - b1_x1 - 18
+            b1_x2 = b1_x1 + borderLength
+            b2_x1 = kraenX - (PLOT_NA_MACHINA_X*mashtab- b2_x1)
+            b2_x2 = b2_x1
+            
+            canvestodrawon.create_line(b1_x1, b1_y1, b1_x2, b1_y2, fill="purple", width=2, tags="border1")
+            canvestodrawon.create_line(b2_x1, b2_y1, b2_x2, b2_y2, fill="purple", width=2, tags="border2")
         
-        if rotation == 0:
-            canvestodrawon.create_line(30, 28, stranaPoX*mashtab/2+30, 28, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(28, 30, 28, stranaPoY*mashtab/2+30, fill="purple", width = 2, tags="border2")
-        elif rotation == 1:
-            canvestodrawon.create_line(stranaPoX*mashtab/2+30, 28, stranaPoX*mashtab+30, 28, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(stranaPoX*mashtab+32, 30, stranaPoX*mashtab+32, stranaPoY*mashtab/2+30, fill="purple",  width=2,tags="border2")
-        elif rotation == 2:
-            canvestodrawon.create_line(stranaPoX*mashtab+32, stranaPoY*mashtab/2+30, stranaPoX*mashtab+32, stranaPoY*mashtab+30, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(stranaPoX*mashtab/2+30, stranaPoY*mashtab+32, stranaPoX*mashtab+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border2")
-        elif rotation == 3:
-            canvestodrawon.create_line(28, stranaPoY*mashtab/2+30, 28, stranaPoY*mashtab+30, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(30, stranaPoY*mashtab+32, stranaPoX*mashtab/2+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border2")    
+        else:
+            if rotation == 0:
+                canvestodrawon.create_line(30, 28, borderLength+30, 28, fill="purple", width=2, tags="border1")
+                canvestodrawon.create_line(28, 30, 28, borderLength+30, fill="purple", width = 2, tags="border2")
+            elif rotation == 1:
+                canvestodrawon.create_line(stranaPoX*mashtab, 28, stranaPoX*mashtab+30, 28, fill="purple", width=2, tags="border1")
+                canvestodrawon.create_line(stranaPoX*mashtab+32, 30, stranaPoX*mashtab+32, borderLength+30, fill="purple",  width=2,tags="border2")
+            elif rotation == 2:
+                canvestodrawon.create_line(stranaPoX*mashtab+32, stranaPoY*mashtab, stranaPoX*mashtab+32, stranaPoY*mashtab+30, fill="purple", width=2, tags="border2")
+                canvestodrawon.create_line(stranaPoX*mashtab, stranaPoY*mashtab+32, stranaPoX*mashtab+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border1")
+            elif rotation == 3:
+                canvestodrawon.create_line(28, stranaPoY*mashtab, 28, stranaPoY*mashtab+30, fill="purple", width=2, tags="border2")
+                canvestodrawon.create_line(30, stranaPoY*mashtab+32, borderLength+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border1")    
             
     elif side == 'R':
+        
         nachalenX = PLOT_NA_MACHINA_X*mashtab+10 - stranaPoX*mashtab
         kraenX = nachalenX + stranaPoX*mashtab
         
         canvestodrawon.create_rectangle(nachalenX, 30, kraenX, stranaPoY*mashtab+30, fill="lightgreen", tags="rightRec")
+            
+        if pripluzvaneInd == 1:   
+            b1Coord = izbrani_elementi['RB1'] 
+            b1_x1 = b1Coord[0]
+            b1_y1 = b1Coord[1]
+            b1_x2 = b1Coord[2]
+            b1_y2 = b1Coord[3]
+            
+            b2Coord =  izbrani_elementi['RB2'] 
+            b2_x1 = b2Coord[0]
+            b2_y1 = b2Coord[1]
+            b2_x2 = b2Coord[2]
+            b2_y2 = b2Coord[3]
+            
+            b1_x1 = nachalenX + b1_x1 - 30
+            b1_x2 = b1_x1 + borderLength
+            b2_x1 = nachalenX + b2_x1 - 30
+            b2_x2 = b2_x1
+            
+            canvestodrawon.create_line(b1_x1, b1_y1, b1_x2, b1_y2, fill="purple", width=2, tags="border3")
+            canvestodrawon.create_line(b2_x1, b2_y1, b2_x2, b2_y2, fill="purple", width=2, tags="border4")
         
-        if rotation == 0:
-            canvestodrawon.create_line(nachalenX+stranaPoX*mashtab/2, 28, nachalenX+stranaPoX*mashtab, 28, fill="purple", width=2, tags="border3")
-            canvestodrawon.create_line(kraenX+2, 32, kraenX+2, stranaPoY*mashtab/2+30, fill="purple", width = 2, tags="border4")
-        elif rotation == 1:
-            canvestodrawon.create_line(kraenX+2, stranaPoY*mashtab+30-stranaPoY*mashtab/2, kraenX+2, stranaPoY*mashtab+32, fill="purple", width=2, tags="border3")
-            canvestodrawon.create_line(kraenX-stranaPoX*mashtab/2,stranaPoY*mashtab+32,kraenX+2, stranaPoY*mashtab+32, fill="purple",  width=2,tags="border4")
-        elif rotation == 2:
-            canvestodrawon.create_line(nachalenX-2, stranaPoY*mashtab/2+30, nachalenX-2, stranaPoY*mashtab+30, fill="purple", width=2, tags="border3")
-            canvestodrawon.create_line(nachalenX-2, stranaPoY*mashtab+30, nachalenX+stranaPoX*mashtab/2, stranaPoY*mashtab+30,fill="purple", width=2, tags="border4")
-        elif rotation == 3:
-            canvestodrawon.create_line(nachalenX-2, 28, nachalenX+stranaPoX*mashtab/2, 28, fill="purple", width=2, tags="border3")
-            canvestodrawon.create_line(nachalenX-2, 28, nachalenX-2, stranaPoY*mashtab/2+30,  fill="purple", width=2, tags="border4")   
+        else:
+            if rotation == 0:
+                canvestodrawon.create_line(PLOT_NA_MACHINA_X*mashtab+10-borderLength, 28, PLOT_NA_MACHINA_X*mashtab+10, 28, fill="purple", width=2, tags="border3")
+                canvestodrawon.create_line(kraenX+2, 32, kraenX+2, borderLength+30, fill="purple", width = 2, tags="border4")
+            elif rotation == 1:
+                canvestodrawon.create_line(kraenX+2, stranaPoY*mashtab+30-borderLength, kraenX+2, stranaPoY*mashtab+32, fill="purple", width=2, tags="border4")
+                canvestodrawon.create_line(kraenX-borderLength,stranaPoY*mashtab+32,kraenX+2, stranaPoY*mashtab+32, fill="purple",  width=2,tags="border3")
+            elif rotation == 2:
+                canvestodrawon.create_line(nachalenX-2, stranaPoY*mashtab, nachalenX-2, stranaPoY*mashtab+30, fill="purple", width=2, tags="border4")
+                canvestodrawon.create_line(nachalenX-2, stranaPoY*mashtab+30, nachalenX+borderLength, stranaPoY*mashtab+30,fill="purple", width=2, tags="border3")
+            elif rotation == 3:
+                canvestodrawon.create_line(nachalenX-2, 28, nachalenX+borderLength, 28, fill="purple", width=2, tags="border3")
+                canvestodrawon.create_line(nachalenX-2, 28, nachalenX-2, borderLength+30,  fill="purple", width=2, tags="border4")   
 
 def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochina, radius, eIzvunPlota, side, canvestodrawon, stranaX, stranaY):
     onX = 0
@@ -763,11 +824,6 @@ def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochi
     
 
 def mahni_element_ot_lqva_baza():
-    
-    print 'here'
-    print canvas.coords('border1')
-    print canvas.coords('border2')
-    
     canvas.delete("leftRec")
     canvas.delete("border1")
     canvas.delete("border2")
@@ -811,12 +867,17 @@ def rotate_element(side, ccanvas):
     else:
         newOrientation = currentOrienatation + 1
     
+    pripluzniInd = 0
     if side == 'L':   
         izbrani_elementi['LO'] = newOrientation
-        narisuvai_element_na_plota(izbranElement, newOrientation, 'L', ccanvas, 1)
+        if izbrani_elementi.has_key('LB1'):
+            pripluzniInd = 1
+        narisuvai_element_na_plota(izbranElement, newOrientation, 'L', ccanvas, 1, pripluzniInd)
     elif side == 'R':
         izbrani_elementi['RO'] = newOrientation
-        narisuvai_element_na_plota(izbranElement, newOrientation, 'R', ccanvas, 1)
+        if izbrani_elementi.has_key('RB1'):
+            pripluzniInd = 1
+        narisuvai_element_na_plota(izbranElement, newOrientation, 'R', ccanvas, 1, pripluzniInd)
         
 def ima_li_dupki_izvun_plota(dupki_za_proverka, rotation, side, element_x, element_y):
     poneEdnaDupkaIzlizaPoX = 0
@@ -866,7 +927,7 @@ def ima_li_dupki_izvun_plota(dupki_za_proverka, rotation, side, element_x, eleme
     
     return dupkiIzvunPlota
                 
-def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, resetCanvasInd):
+def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, resetCanvasInd, pripluzvaneInd):
     if side == 'L':
         del dupki_za_gcode_left[:]
     elif side == 'R':
@@ -897,7 +958,7 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
         element_y = float(razmeri_na_elementa['x'])
         
     #Nachertai elementa vurhu plota na machinata
-    narisuvai_strana_na_plota(element_x, element_y, side, canvestodrawon, rotation)
+    narisuvai_strana_na_plota(element_x, element_y, side, canvestodrawon, rotation, pripluzvaneInd)
 
     # Izliza li elementa ot plota na machinata?
     izlizaPoX = 0
@@ -974,15 +1035,37 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
 def pripluzni_element():
     rotation = 0
     if izbrani_elementi.has_key('L'):
+        detail =  izbrani_elementi['L']
         rotation = izbrani_elementi['LO']
-        mahni_element_ot_lqva_baza()
-        izberi_element_za_dupchene('R', rotation)
+        border1Coord = canvas.coords('border1')
+        border2Coord = canvas.coords('border2')
+        
+        if detail.purvonachalnoPolojenie == '':
+            detail.purvonachalnoPolojenie = 'L'
+        
+        izbrani_elementi['R'] = detail
         izbrani_elementi['RO'] = rotation
+        izbrani_elementi['RB1'] = border1Coord
+        izbrani_elementi['RB2'] = border2Coord
+        
+        mahni_element_ot_lqva_baza()
+        izberi_element_za_dupchene('R', rotation, 1)
     elif izbrani_elementi.has_key('R'):
+        detail = izbrani_elementi['R']
         rotation = izbrani_elementi['RO']
-        mahni_element_ot_dqsna_baza()
-        izberi_element_za_dupchene('L', rotation)
+        border3Coord = canvas.coords('border3')
+        border4Coord = canvas.coords('border4')
+        
+        if detail.purvonachalnoPolojenie == '':
+            detail.purvonachalnoPolojenie = 'R'
+        
+        izbrani_elementi['L'] = detail
         izbrani_elementi['LO'] = rotation
+        izbrani_elementi['LB1'] = border3Coord
+        izbrani_elementi['LB2'] = border4Coord
+        
+        mahni_element_ot_dqsna_baza()
+        izberi_element_za_dupchene('L', rotation, 1)
 
 def nastroika_na_instrumenti():
     top = Toplevel()
@@ -1524,10 +1607,10 @@ def reset_canvas():
     canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
     for side in izbrani_elementi.keys():
         if side == 'L':
-            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas, 0)
+            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas, 0, 0)
        
         if side == 'R':
-            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas, 0)
+            narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, canvas, 0, 0)
             
 def redaktirai_lqv_detail():
     global izbranElementZaRedakciaInd
@@ -1621,7 +1704,7 @@ def pokaji_redaktirai_window(side):
             fiksCnt = fiksCnt-1
             
         rcanvas.delete(ALL)
-        narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0)
+        narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
     
     def iztrii_posleden_fiks():
         if len(listOfFiksove) > 0:
@@ -1637,7 +1720,7 @@ def pokaji_redaktirai_window(side):
             dupki_na_elementa.remove(d3)
             
             rcanvas.delete(ALL)
-            narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0)
+            narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
     
     def postavi_fiks():
         
@@ -1835,7 +1918,7 @@ def pokaji_redaktirai_window(side):
         print dupki_na_elementa
         # Narisuvai
         rcanvas.delete(ALL)
-        narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0)
+        narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
         
     ramka = Toplevel()
     ramka.title(editButtonText)
@@ -1870,7 +1953,7 @@ def pokaji_redaktirai_window(side):
     rcanvas.grid(row=2, column=1, padx=20, sticky=W+E+N+S)
     
     # Narisuvai elementa na plota
-    narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, rcanvas, 0)
+    narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, rcanvas, 0, 0)
        
 print ('*** BEGIN PROGRAM *************************')
 iztrii_temp_gcode_file()
