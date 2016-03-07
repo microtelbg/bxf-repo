@@ -89,7 +89,7 @@ iztriiButtonText = u'Изтрий'
 *** Constants
 *************************************************************************** '''
 ns = {'blum' : 'http://www.blum.com/bxf'}
-mashtab = 0.5
+mashtab = 0.45
 
 PLOT_NA_MACHINA_X = 1504
 PLOT_NA_MACHINA_Y = 600
@@ -97,6 +97,7 @@ PLOT_NA_MACHINA_Y = 600
 ''' ***************************************************************************
 *** Global Variables
 *************************************************************************** '''
+debelinaMaterial = 18.0 # Smeni sus debelinata koqto e v BXF ili koqto 
 bezopasno_z = "{0:.3f}".format(50.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
 TT = '' # instrumenta v momenta T1, T2, etc.
 n10 = 30
@@ -131,6 +132,10 @@ class ElementZaDupchene(object):
         self.razmeri = razmeri
         self.dupki = dupki
         self.purvonachalnoPolojenie = ''
+#         if debelina <= 0.0:
+#             self.debelina = 18.0
+#         else:
+#             self.debelina = debelina
 
     def set_purvonachalno_polojenie(self, purvonachalnoPolojenie):
         self.purvonachalnoPolojenie = purvonachalnoPolojenie
@@ -151,6 +156,8 @@ def cheti_bxf_file(filename1):
     #Reset
     elementi_za_dupchene.clear()
 
+    procheti_debelina_ot_bxf(myroot, 'Korpusdaten')
+
     suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Oberboden')
     suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Unterboden')
     suzdai_element_strana(myroot, elementi_za_dupchene, 'LinkeSeitenwand')
@@ -160,46 +167,20 @@ def cheti_bxf_file(filename1):
     suzdai_element_shkafche(myroot, elementi_za_dupchene, 'Aussenschubkasten')
     suzdai_element_vrata(myroot, elementi_za_dupchene, 'Klappensystem')
     
-    # Da se dobavi oshte: 
-
-def suzdai_element(root, elements, name):
+def procheti_debelina_ot_bxf(root, name):
     parenttag = 'blum:'+name
-    print parenttag
-    parent = root.find(parenttag, ns) #TODO: has to be findall
+    
+    parent = root.find(parenttag, ns)
     if parent is not None:
-        strana = parent.findall('.//blum:Quader', ns)
-        print len(strana)
-        if strana is not None:
-            visochina = strana[0].find('blum:Hoehe', ns)
-            if visochina is not None:
-                s_y = visochina.text
-            else:
-                s_y = 0
-                print 'Hoehe tag ne e namer za Quader za ', parenttag
-            shirina = strana[0].find('blum:Position', ns)
+        debelinaRazmeri = parent.find('blum:Plattendicken', ns)
+        if debelinaRazmeri is not None:
+            debelina = debelinaRazmeri.attrib['Oben']
 
-            if shirina is not None:
-                s_pos_x = shirina.attrib['X']
-            else:
-                s_pos_x = 0
-                print 'Position tag ne e namer za Quader/LinkeSeitenwand'
-            s_pointc = strana[0].find('blum:PunktC', ns)
-
-            if s_pointc is not None:
-                s_pointc_x = s_pointc.attrib['X']
-            else:
-                s_pointc_x = 0
-                print 'PunktC tag ne e namer za Quader/LinkeSeitenwand'
-            s_x = float(s_pointc_x) - float(s_pos_x)
-        else:
-            print 'Quader tag ne e namer za LinkeSeitenwand'
-
-        print 'x:', s_x
-        print 'y:', s_y
-
-
-    else:
-        print 'LinkeSeitenwand ne e nameren takuv tag'
+    if debelina > 0.0:
+        global debelinaMaterial
+        debelinaMaterial = debelina
+        
+        
 
 ''' ***************************************************************************
 **** Izpolzvai tazi funkcia za:
@@ -684,12 +665,14 @@ def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotati
     if side == 'L':
         detail = izbrani_elementi['L']
         color = "lightblue"
+        purPol = 'L'
         if detail.purvonachalnoPolojenie == 'R':
             color = "lightgreen"
+            purPol = 'R'
             
         canvestodrawon.create_rectangle(30, 30, stranaPoX*mashtab+30, stranaPoY*mashtab+30, fill=color, tags="leftRec")
                 
-        if pripluzvaneInd == 1:   
+        if pripluzvaneInd == 1 and purPol == 'R':   
             b1Coord = izbrani_elementi['LB1'] 
             b1_x1 = b1Coord[0]
             b1_y1 = b1Coord[1]
@@ -705,13 +688,27 @@ def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotati
             #nachalenX = PLOT_NA_MACHINA_X*mashtab + stranaPoX*mashtab
             kraenX = stranaPoX*mashtab+20
             
-            b1_x1 = kraenX - (PLOT_NA_MACHINA_X*mashtab- b1_x1) #nachalenX - b1_x1 - 18
-            b1_x2 = b1_x1 + borderLength
-            b2_x1 = kraenX - (PLOT_NA_MACHINA_X*mashtab- b2_x1)
-            b2_x2 = b2_x1
-            
-            canvestodrawon.create_line(b1_x1, b1_y1, b1_x2, b1_y2, fill="purple", width=2, tags="border1")
-            canvestodrawon.create_line(b2_x1, b2_y1, b2_x2, b2_y2, fill="purple", width=2, tags="border2")
+            if rotation == 0:
+                canvestodrawon.create_line(stranaPoX*mashtab, 28, stranaPoX*mashtab+30, 28, fill="purple", width=2, tags="border1")
+                canvestodrawon.create_line(stranaPoX*mashtab+32, 30, stranaPoX*mashtab+32, borderLength+30, fill="purple",  width=2,tags="border2")
+            elif rotation == 1:
+                canvestodrawon.create_line(stranaPoX*mashtab+32, stranaPoY*mashtab, stranaPoX*mashtab+32, stranaPoY*mashtab+30, fill="purple", width=2, tags="border2")
+                canvestodrawon.create_line(stranaPoX*mashtab, stranaPoY*mashtab+32, stranaPoX*mashtab+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border1")
+            elif rotation == 2:
+                canvestodrawon.create_line(28, stranaPoY*mashtab, 28, stranaPoY*mashtab+30, fill="purple", width=2, tags="border2")
+                canvestodrawon.create_line(30, stranaPoY*mashtab+32, borderLength+30, stranaPoY*mashtab+32, fill="purple", width=2, tags="border1")  
+            elif rotation == 3:
+                canvestodrawon.create_line(30, 28, borderLength+30, 28, fill="purple", width=2, tags="border1")
+                canvestodrawon.create_line(28, 30, 28, borderLength+30, fill="purple", width = 2, tags="border2")
+                
+                
+#                 b1_x1 = kraenX - (PLOT_NA_MACHINA_X*mashtab- b1_x1) #nachalenX - b1_x1 - 18
+#                 b1_x2 = b1_x1 + borderLength
+#                 b2_x1 = kraenX - (PLOT_NA_MACHINA_X*mashtab- b2_x1)
+#                 b2_x2 = b2_x1
+#             
+#                 canvestodrawon.create_line(b1_x1, b1_y1, b1_x2, b1_y2, fill="purple", width=2, tags="border1")
+#                 canvestodrawon.create_line(b2_x1, b2_y1, b2_x2, b2_y2, fill="purple", width=2, tags="border2")
         
         else:
             if rotation == 0:
@@ -730,15 +727,17 @@ def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotati
     elif side == 'R':
         detail = izbrani_elementi['R']
         color = "lightgreen"
+        purPol = 'R'
         if detail.purvonachalnoPolojenie == 'L':
             color = "lightblue"
+            purPol = 'L'
             
         nachalenX = PLOT_NA_MACHINA_X*mashtab+10 - stranaPoX*mashtab
         kraenX = nachalenX + stranaPoX*mashtab
         
         canvestodrawon.create_rectangle(nachalenX, 30, kraenX, stranaPoY*mashtab+30, fill=color, tags="rightRec")
             
-        if pripluzvaneInd == 1:   
+        if pripluzvaneInd == 1 and purPol == 'L':   
             b1Coord = izbrani_elementi['RB1'] 
             b1_x1 = b1Coord[0]
             b1_y1 = b1Coord[1]
@@ -751,13 +750,26 @@ def narisuvai_strana_na_plota(stranaPoX, stranaPoY, side, canvestodrawon, rotati
             b2_x2 = b2Coord[2]
             b2_y2 = b2Coord[3]
             
-            b1_x1 = nachalenX + b1_x1 - 30
-            b1_x2 = b1_x1 + borderLength
-            b2_x1 = nachalenX + b2_x1 - 30
-            b2_x2 = b2_x1
+            if rotation == 0:
+                canvestodrawon.create_line(nachalenX-2, 28, nachalenX+borderLength, 28, fill="purple", width=2, tags="border3")
+                canvestodrawon.create_line(nachalenX-2, 28, nachalenX-2, borderLength+30,  fill="purple", width=2, tags="border4")  
+            elif rotation == 1:
+                b1_x1 = nachalenX + b1_x1 - 30
+                b1_x2 = b1_x1 + borderLength
+                b2_x1 = nachalenX + b2_x1 - 30
+                b2_x2 = b2_x1
+                
+                canvestodrawon.create_line(PLOT_NA_MACHINA_X*mashtab+10-borderLength, 28, PLOT_NA_MACHINA_X*mashtab+10, 28, fill="purple", width=2, tags="border3")
+                canvestodrawon.create_line(kraenX+2, 32, kraenX+2, borderLength+30, fill="purple", width = 2, tags="border4")
+            elif rotation == 2:
+                canvestodrawon.create_line(kraenX+2, stranaPoY*mashtab+30-borderLength, kraenX+2, stranaPoY*mashtab+32, fill="purple", width=2, tags="border4")
+                canvestodrawon.create_line(kraenX-borderLength,stranaPoY*mashtab+32,kraenX+2, stranaPoY*mashtab+32, fill="purple",  width=2,tags="border3")
+            elif rotation == 3:
+                canvestodrawon.create_line(nachalenX-2, stranaPoY*mashtab, nachalenX-2, stranaPoY*mashtab+30, fill="purple", width=2, tags="border4")
+                canvestodrawon.create_line(nachalenX-2, stranaPoY*mashtab+30, nachalenX+borderLength, stranaPoY*mashtab+30,fill="purple", width=2, tags="border3")
             
-            canvestodrawon.create_line(b1_x1, b1_y1, b1_x2, b1_y2, fill="purple", width=2, tags="border3")
-            canvestodrawon.create_line(b2_x1, b2_y1, b2_x2, b2_y2, fill="purple", width=2, tags="border4")
+            #canvestodrawon.create_line(b1_x1, b1_y1, b1_x2, b1_y2, fill="purple", width=2, tags="border3")
+            #canvestodrawon.create_line(b2_x1, b2_y1, b2_x2, b2_y2, fill="purple", width=2, tags="border4")
         
         else:
             if rotation == 0:
@@ -1477,7 +1489,9 @@ def suzdai_gcode_file():
     def gcode_lines_za_dupka(dupka, typeHiliV, baza):  
         global TT       
         global n10 
-        debelinaMaterial = 18.0
+        
+        locDebelinaMaterial = float(debelinaMaterial)
+        
         SD = "{0:.1f}".format(izberi_skorost(skorostZaInstrumenti, TT))
         
         # Vij kakuv instrument triabva da polzvash
@@ -1488,9 +1502,9 @@ def suzdai_gcode_file():
                 instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 1)
             else:
                 instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 0)
-            debelinaMaterial = 0
+            locDebelinaMaterial = 0
         
-        purvonachaloZ = "{0:.3f}".format(debelinaMaterial + 5)    
+        purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 5)    
         if instrZaDupka != TT:  
             # Smeni instrumenta
             TT = instrZaDupka
@@ -1513,7 +1527,7 @@ def suzdai_gcode_file():
         d1Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
         n10 = n10 + 10
         fw.write(d1Line)
-        krainoZ = "{0:.3f}".format(debelinaMaterial - dupka['h'])
+        krainoZ = "{0:.3f}".format(locDebelinaMaterial - dupka['h'])
         d2Line = 'N'+str(n10)+'G1X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(krainoZ)+'F'+SD+'\n'
         n10 = n10 + 10
         fw.write(d2Line)   
@@ -1968,7 +1982,7 @@ def pokaji_redaktirai_window(side):
     label1 = Label(frame1, text=izbereteOpciaLabelText, width= 50)
     label1.grid(row=0, pady = 20)
     
-    rcanvas = Canvas(ramka, width=1000, heigh=700, bg="grey")
+    rcanvas = Canvas(ramka, width=canvasW, heigh=canvasH, bg="grey")
     rcanvas.grid(row=2, column=1, padx=20, sticky=W+E+N+S)
     
     # Narisuvai elementa na plota
@@ -1979,6 +1993,18 @@ iztrii_temp_gcode_file()
 
 mainframe = Tk()
 #mainframe.geometry('450x450+500+300') - Use that for window size
+w,h=mainframe.winfo_screenwidth(),mainframe.winfo_screenheight()
+mainframe.geometry("%dx%d+0+0" % (w, h))
+
+canvasW = 1100
+canvasH = 700
+listboxW = 50
+buttonW = 10
+if w <= 1400:
+    canvasW = 750
+    listboxW = 30
+if h <= 800:
+    canvasH = 550
 
 ''' ***************************************************************************
 *** Variables za stoinosti na instrumentite
@@ -2110,8 +2136,14 @@ editButtonRightBaza = Button(rightBazaLabelBox, text=editButtonText, bg="lightbl
 editButtonRightBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
 # ********** Listbox *************
-listbox = Listbox(mainframe, width=50)
+listboxHorizontalScrollbar = Scrollbar(mainframe,  orient=HORIZONTAL)
+listboxHorizontalScrollbar.grid(row=3, column=0,sticky=E+W)
+
+
+listbox = Listbox(mainframe, width=listboxW, xscrollcommand=listboxHorizontalScrollbar.set)
 listbox.grid(row=2, sticky=N+S, padx=10)
+listboxHorizontalScrollbar.config(command=listbox.xview)
+
 
 # ********** Frame *************
 frame = Frame(mainframe)
@@ -2151,16 +2183,37 @@ zapisGCodeButton = Button(buttonBar, text=zapisGCodeButtonText, bg="tomato", com
 zapisGCodeButton.grid(row=0, column=2, padx = 3, pady = 10, sticky=E)
 
 # ********** Canvas *************
-canvas = Canvas(mainframe, width=1100, heigh=700, bg="grey")
+canvasFrame = Frame(mainframe, bd=2, relief=SUNKEN)
+canvasFrame.grid(row=2, column=2, columnspan = 2, padx=20, sticky=W+E+N+S)
+#canvasFrame.grid_rowconfigure(0, weight=1)
+#canvasFrame.grid_columnconfigure(0, weight=1)
+
+xscrollbar = Scrollbar(canvasFrame, orient=HORIZONTAL)
+xscrollbar.grid(row=1, column=0,sticky=E+W)
+
+yscrollbar = Scrollbar(canvasFrame)
+yscrollbar.grid(row=0, column=1, sticky=N+S)
+
+canvas = Canvas(canvasFrame, bd=0, width=canvasW, heigh=canvasH, scrollregion=(0, 0, 2000, 2000),
+                xscrollcommand=xscrollbar.set,
+                yscrollcommand=yscrollbar.set)
+
+canvas.grid(row=0, column=0, sticky=N+S+E+W)
+
+xscrollbar.config(command=canvas.xview)
+yscrollbar.config(command=canvas.yview)
+
+#canvas = Canvas(mainframe, width=1100, heigh=700, bg="grey")
 #Slojib bg = grey za da vijdam kude e canvas
-canvas.grid(row=2, column=2, columnspan = 2, padx=20, sticky=W+E+N+S)
+#canvas.grid(row=2, column=2, columnspan = 2, padx=20, sticky=W+E+N+S)
 
 # ********** Masa *************
 # Originalen razmer e 1500 mm na 600 mm. Mashtab (x 0.5) => duljinata e 750 i shirina e 300.
 # Sledovatelno koordinatite she sa offset s nachalnata tochka. (+20)
 masa = canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
 
-
+mainframe.update()
+mainframe.minsize(mainframe.winfo_width(), mainframe.winfo_height())
 mainframe.mainloop()
 
 print ('*** END PROGRAM *************************')
