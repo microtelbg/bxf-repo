@@ -52,10 +52,8 @@ detailRazmeriText = u'Размери '
 detailDuljinaText = u'Дължина: '
 detailShirinaText = u'Ширина: '
 detailDebelinaText = u'Дебелина: '
-
 okButtonText = u'Потвърди'
 cancelButtonText = u'Отхвърли'
-
 dobaviFixLabelText = u'Добави фикс'
 leftFixLabelText = u'Ляво'
 centerFixLabelText = u'Централно'
@@ -83,10 +81,10 @@ stupkaNazadLabelText = u'Стъпка назад'
 izchistiFixoveLabelText = u'Изчисти фиксове' 
 zapaziFixoveLabelText = u'Запази фиксове'
 izbereteOpciaLabelText = u'Изберете опция за редактиране ...'
-dobaviPantaLabelText = u'Добави панта'
 iztriiButtonText = u'Изтрий'
-
-
+izchistiVsichkoButtonText = u'Изтрий всички детайли'
+izchistiIzbranDetailButtonText =u'Изтрий избран детайл'
+detailiLabelText = u'Детайли'
 
 ''' ***************************************************************************
 *** Constants
@@ -100,7 +98,7 @@ PLOT_NA_MACHINA_Y = 600
 ''' ***************************************************************************
 *** Global Variables
 *************************************************************************** '''
-debelinaMaterial = 18.0 # Smeni sus debelinata koqto e v BXF ili koqto 
+debelinaMaterial = 18.0 # Tazi stoinost se smenq sus zadadenata ot BXF file
 bezopasno_z = "{0:.3f}".format(50.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
 TT = '' # instrumenta v momenta T1, T2, etc.
 n10 = 30
@@ -150,15 +148,11 @@ class ElementZaDupchene(object):
         print len(self.dupki)
         print "Dupki: ", self.dupki
         print "-----------------------------------------------------------------------------------"
-
-
+     
 def cheti_bxf_file(filename1):
     tree = ET.parse(filename1)
     myroot = tree.getroot()
     
-    #Reset
-    elementi_za_dupchene.clear()
-
     procheti_debelina_ot_bxf(myroot, 'Korpusdaten')
 
     suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Oberboden')
@@ -629,7 +623,36 @@ def zaredi_file_info():
     #Reset
     canvas.delete(ALL)
     canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
+
+def izchisti_vschki_detaili():
+    elementi_za_dupchene.clear()
+    listbox.delete(0, END)
+    if len(izbrani_elementi) > 0:
+        if izbrani_elementi.has_key('L'):
+            mahni_element_ot_lqva_baza()
+        if izbrani_elementi.has_key('R'):
+            mahni_element_ot_dqsna_baza()
+        
+def izchisti_izbrania_detail():  
+    itemIndex = int(listbox.curselection()[0])
+    itemValue = listbox.get(itemIndex)   
+    iValue = itemValue   
     
+    for eng, bg in prevod_za_elemnti_v_list.iteritems():
+        if itemValue == bg:
+            iValue = eng
+            break     
+        
+    if len(izbrani_elementi) > 0:
+        if izbrani_elementi.has_key('L') and izbrani_elementi['L'] == elementi_za_dupchene[iValue]:
+            mahni_element_ot_lqva_baza()
+        if izbrani_elementi.has_key('R') and izbrani_elementi['R'] == elementi_za_dupchene[iValue]:
+            mahni_element_ot_dqsna_baza()
+                  
+    del elementi_za_dupchene[iValue]
+   
+    listbox.delete(ANCHOR)
+       
 def izberi_element_za_dupchene(side, orienation, pripluzvane):
     
     if pripluzvane == 1:
@@ -2017,10 +2040,8 @@ def pokaji_redaktirai_window(side):
     verikalenOtvorButton.grid(row=0, column=1, padx = 2, pady = 2,sticky=W)
     horizontalenOtvorButton = Button(buttonFrame, text=dobaviHorOtvorLabelText, command=verikalenOtvorUI)
     horizontalenOtvorButton.grid(row=0, column=2, padx = 2, pady = 2, sticky=W)
-    pantaButton = Button(buttonFrame, text=dobaviPantaLabelText, command=verikalenOtvorUI)
-    pantaButton.grid(row=0, column=3, padx = 2, pady = 2, sticky=W)
     zavurtiButton = Button(buttonFrame, text=rotateButtonText, bg="lightblue", command=rotate_element_za_redakcia)
-    zavurtiButton.grid(row=0, column=4, padx = 2, pady = 2, sticky=W)
+    zavurtiButton.grid(row=0, column=3, padx = 2, pady = 2, sticky=W)
     
     frame1 = Frame(ramka)
     frame1.grid(row=2, sticky=N+S)
@@ -2040,15 +2061,17 @@ instrumentiOtConfig = read_instruments()
 mainframe = Tk()
 #mainframe.geometry('450x450+500+300') - Use that for window size
 w,h=mainframe.winfo_screenwidth(),mainframe.winfo_screenheight()
-mainframe.geometry("%dx%d+0+0" % (w, h))
+mainframe.geometry("%dx%d+0+0" % (w-100, h-100))
 
 canvasW = 1100
 canvasH = 700
 listboxW = 50
+listboxH = 40
 buttonW = 10
 if w <= 1400:
     canvasW = 750
     listboxW = 30
+    listboxH = 30
 if h <= 800:
     canvasH = 550
 
@@ -2182,14 +2205,25 @@ editButtonRightBaza = Button(rightBazaLabelBox, text=editButtonText, bg="lightbl
 editButtonRightBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
 # ********** Listbox *************
-listboxHorizontalScrollbar = Scrollbar(mainframe,  orient=HORIZONTAL)
-listboxHorizontalScrollbar.grid(row=3, column=0,sticky=E+W)
-
-
-listbox = Listbox(mainframe, width=listboxW, xscrollcommand=listboxHorizontalScrollbar.set)
-listbox.grid(row=2, sticky=N+S, padx=10)
+listboxLabelFrame = LabelFrame(mainframe, text=detailiLabelText)
+listboxLabelFrame.grid(row=2, sticky=N+S, padx=10)
+listboxHorizontalScrollbar = Scrollbar(listboxLabelFrame,  orient=HORIZONTAL)
+listboxHorizontalScrollbar.grid(row=1, column=0, sticky=E+W)
+listboxVerticalScrollbar = Scrollbar(listboxLabelFrame, orient=VERTICAL)
+listboxVerticalScrollbar.grid(row=0, column=1, sticky=N+S)
+listbox = Listbox(listboxLabelFrame, width=listboxW, height=listboxH, xscrollcommand=listboxHorizontalScrollbar.set, yscrollcommand=listboxVerticalScrollbar.set)
+listbox.grid(row=0, sticky=N+S, padx=10)
 listboxHorizontalScrollbar.config(command=listbox.xview)
+listboxVerticalScrollbar.config(command=listbox.yview)
 
+iztriiVsichkoButton = Button(listboxLabelFrame, text=izchistiVsichkoButtonText, command=izchisti_vschki_detaili)
+iztriiDetailButton = Button(listboxLabelFrame, text=izchistiIzbranDetailButtonText, command=izchisti_izbrania_detail)
+if listboxH <= 30:
+    iztriiVsichkoButton.grid(row=4, padx = 10, pady=5, sticky=E)
+    iztriiDetailButton.grid(row=5, padx=10, sticky=E)
+else:
+    iztriiVsichkoButton.grid(row=4, padx = 10, pady=10, sticky=W)
+    iztriiDetailButton.grid(row=4, padx=10, pady=10, sticky=E)
 
 # ********** Frame *************
 frame = Frame(mainframe)
