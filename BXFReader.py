@@ -229,7 +229,7 @@ def suzdai_element_strana(root, elements, name):
             razmer_debelina = float(pointc_y) - float(pos_y)
 
             #Dupki
-            dupki_map = suzdai_dupki(quader, 'xz', razmer_z, razmer_x)
+            dupki_map = suzdai_dupki(quader, 'xz', razmer_z, razmer_x, name)
         else:
             print 'Greshka -Quader tag ne e namer za ', name
 
@@ -253,7 +253,7 @@ def suzdai_element_strana(root, elements, name):
 ''' ***************************************************************************
 **** Tazi funkcia chete parametrite za dupkite
 *******************************************************************************'''
-def suzdai_dupki(curparent, orientation, element_x, element_y):
+def suzdai_dupki(curparent, orientation, element_x, element_y, imeNaElement):
     dupki_list = []
     #<Zylinder von_Bohrbild="*bb_sk_korpusschiene_422">
     bohrugen = curparent[0].find('blum:Bohrungen', ns)
@@ -270,11 +270,21 @@ def suzdai_dupki(curparent, orientation, element_x, element_y):
             zyl_r = zyl_radius.text
             
             if orientation == 'xy':
-                dupki = {"x" : zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                if imeNaElement == 'Unterboden':
+                    dupki = {"x" : zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif imeNaElement == 'Oberboden':
+                    dupki = {"x" : float(zyl_pos_y), "y": float(element_y) - float(zyl_pos_x), "h" : zyl_h, "r" : zyl_r}
+                else:
+                    dupki = {"x" : zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
             elif orientation == 'yz':
-                dupki = {"x" : zyl_pos_y, "y": float(element_y) - float(zyl_pos_z), "h" : zyl_h, "r" : zyl_r}
+                dupki = {"x" : zyl_pos_y, "y": float(zyl_pos_z), "h" : zyl_h, "r" : zyl_r}
             elif orientation == 'xz':
-                dupki = {"x" : float(element_x) - float(zyl_pos_z), "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                if imeNaElement == 'LinkeSeitenwand':
+                    dupki = {"x" : float(element_x) - float(zyl_pos_z), "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                elif imeNaElement == 'RechteSeitenwand':
+                    dupki = {"x" : float(zyl_pos_z), "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
+                else:
+                    dupki = {"x" : float(zyl_pos_z), "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
 
             dupki_list.append(dupki)
     return dupki_list
@@ -374,7 +384,7 @@ def suzdai_element_duno_gornica(root, elements, name):
             razmer_y = float(pointc_y) - float(pos_y)
             
             #Dupki
-            dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x)
+            dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x, name)
 
             #Create object
             razmeri_map = {"x" : razmer_y, "y": razmer_x, "h":razmer_debelina}
@@ -450,7 +460,7 @@ def suzdai_element_shkafche(root, elements, name):
                 razmer_y = float(pointc_y) - float(pos_y)
 
                 #Dupki
-                dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x)
+                dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x, name)
 
                 #Create object
                 razmeri_map = {"x" : razmer_y, "y": razmer_x, "h":razmer_debelina}
@@ -507,7 +517,7 @@ def suzdai_element_shkafche(root, elements, name):
                 razmer_y = float(pointc_y) - float(pos_y)
 
                 #Dupki
-                dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x)
+                dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x, name)
 
                 #Create object
                 razmeri_map = {"x" : razmer_y, "y": razmer_x, "z":razmer_debelina}
@@ -573,7 +583,7 @@ def suzdai_element_vrata(root, elements, name):
                 razmer_y = float(pointc_y) - float(pos_y)
 
                 #Dupki
-                dupki_map = suzdai_dupki(quader, 'yz', razmer_y, razmer_z)
+                dupki_map = suzdai_dupki(quader, 'yz', razmer_y, razmer_z, name)
 
                 #Create object
                 razmeri_map = {"x" : razmer_y, "y": razmer_z, "h" : razmer_debelina}
