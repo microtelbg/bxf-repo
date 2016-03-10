@@ -1061,7 +1061,7 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
             # Zapazi tochnite koordinati na dupkite za g-code
             if horizontOtvor == 1:
                 if dupka.has_key('f'):
-                    dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor, "f" : dupka['f']}
+                    dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor, "f" : dupka['f'], "defh" : dupka['defh']}
                 else:
                     dupka_za_gcode = {"x" : d_x, "y": d_y, "h" : dulbochina, "r" : d_r, "t" : horizontOtvor}
             else:   
@@ -1519,6 +1519,7 @@ def suzdai_gcode_file():
         global n10 
         
         locDebelinaMaterial = float(debelinaMaterial)
+        dulbochinaNaDupkata = dupka['h']
         
         SD = "{0:.1f}".format(izberi_skorost(skorostZaInstrumenti, TT))
         
@@ -1528,6 +1529,8 @@ def suzdai_gcode_file():
         else:
             if dupka.has_key('f'):
                 instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 1)
+                if instrZaDupka == 'T11':
+                    dulbochinaNaDupkata = dupka['defh']
             else:
                 instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 0)
             locDebelinaMaterial = 0
@@ -1550,12 +1553,18 @@ def suzdai_gcode_file():
         
         xKoordinata = dupka['x']
         if baza == 'R':
-            xKoordinata = PLOT_NA_MACHINA_X - dupka['x']
+            razmeri_na_elementa = izbrani_elementi['R'].razmeri
+            if izbrani_elementi['RO'] == 0 or izbrani_elementi['RO'] == 2:
+                element_x = float(razmeri_na_elementa['x'])
+            else:
+                element_x = float(razmeri_na_elementa['y'])
+ 
+            xKoordinata = (PLOT_NA_MACHINA_X-element_x) + dupka['x']
             
         d1Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
         n10 = n10 + 10
         fw.write(d1Line)
-        krainoZ = "{0:.3f}".format(locDebelinaMaterial - dupka['h'])
+        krainoZ = "{0:.3f}".format(locDebelinaMaterial - dulbochinaNaDupkata)
         d2Line = 'N'+str(n10)+'G1X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(krainoZ)+'F'+SD+'\n'
         n10 = n10 + 10
         fw.write(d2Line)   
@@ -1757,13 +1766,17 @@ def pokaji_redaktirai_window(side):
     def iztrii_vsichki_fiksove():
         izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
         dupki_na_elementa = izbranElement.dupki
-            
-        fiksCnt = len(listOfFiksove)
-        while fiksCnt > 0:
-            listOfFiksove.pop()
-            dupki_na_elementa.pop()
-            fiksCnt = fiksCnt-1
-            
+        
+        del listOfFiksove[:]
+        dupkiBezFiksove = []
+         
+        for fiks in dupki_na_elementa:
+            if not (fiks.has_key('fv') or fiks.has_key('f')):
+                dupkiBezFiksove.append(fiks)
+                
+        del dupki_na_elementa[:]
+        izbranElement.dupki = dupkiBezFiksove
+        
         rcanvas.delete(ALL)
         narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
     
@@ -1792,6 +1805,7 @@ def pokaji_redaktirai_window(side):
         zyl_r = float(fiksDiamturVerikalenOValue.get())/2.0
         zyl_h_hor = float(fiksDulbochinaHorizontOValue.get())
         zyl_r_hor = float(fiksDiamturHorizontOValue.get())/2.0
+        dulbochina25 = 25.0
         
         raztoqnie = 32
         
@@ -1814,23 +1828,26 @@ def pokaji_redaktirai_window(side):
         
         # Purvate dupka (obiknoveno 100 x 34) 
         # Ne se dobavq SAMO AKO edinstventa otmetka izbrana e Centralen Fix 
+        # Keys: "f" is for fiks, param 1 (vzemi koordinatite na tazi dupka za T11 - 2 instrumenta zaedno)
+        #       "defh" - default dulbochina koqto usera e vkaral (28 e standartna). Need pak za T11 logic.
+        #       "fv" - fiks vertikalen otvor  - triabva mi kogato iztrivame vsichki fiksove, parametura nqma znachenie
         if (simPoX == 0 and simPoY == 0 and centFix == 0 and copyCentFix == 0) or simPoX == 1 or simPoY == 1: 
             if rotation == 0:
-                dupka1  = {"x" : zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka1a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka1b  = {"x" : zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka1  = {"x" : zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka1a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka1b  = {"x" : zyl_pos_x-raztoqnie, "y": 0, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 1:
-                dupka1 = {"x" : zyl_pos_y, "y": element_x - zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka1a  = {"x" : 0, "y": element_x - zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka1b  = {"x" : 0, "y": element_x - zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka1 = {"x" : zyl_pos_y, "y": element_x - zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka1a  = {"x" : 0, "y": element_x - zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka1b  = {"x" : 0, "y": element_x - zyl_pos_x+raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 2:
-                dupka1 = {"x" : element_x-zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka1a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka1b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka1 = {"x" : element_x-zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka1a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka1b  = {"x" : element_x-zyl_pos_x+raztoqnie, "y": element_y, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 3:
-                dupka1 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka1a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka1b  = {"x" : element_y, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka1 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka1a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka1b  = {"x" : element_y, "y": zyl_pos_x-raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
     
             dupki_na_elementa.append(dupka1)
             dupki_na_elementa.append(dupka1a)
@@ -1843,21 +1860,21 @@ def pokaji_redaktirai_window(side):
         if simPoX == 1:
             # Vtorata dupka po X (ogledalna na dupka)
             if rotation == 0:
-                dupka2 = {"x" : element_x-zyl_pos_x, "y":zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka2a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka2b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka2 = {"x" : element_x-zyl_pos_x, "y":zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka2a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka2b  = {"x" : element_x-zyl_pos_x+raztoqnie, "y": 0, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 1:
-                dupka2 = {"x" : zyl_pos_y, "y": zyl_pos_x,  "h" : zyl_h, "r" : zyl_r}
-                dupka2a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka2b  = {"x" : 0, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka2 = {"x" : zyl_pos_y, "y": zyl_pos_x,  "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka2a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka2b  = {"x" : 0, "y": zyl_pos_x-raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 2:
-                dupka2 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka2a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka2b  = {"x" : zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka2 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka2a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka2b  = {"x" : zyl_pos_x-raztoqnie, "y": element_y, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 3:
-                dupka2 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka2a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka2b  = {"x" : element_y, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka2 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka2a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka2b  = {"x" : element_y, "y": element_x-zyl_pos_x+raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
                              
             dupki_na_elementa.append(dupka2)
             dupki_na_elementa.append(dupka2a)
@@ -1870,21 +1887,21 @@ def pokaji_redaktirai_window(side):
         if simPoY == 1:
             # Vtorata dupka po Y (ogledalna na dupka)
             if rotation == 0:
-                dupka3 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka3a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka3b  = {"x" : zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka3 = {"x" : zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka3a  = {"x" : zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka3b  = {"x" : zyl_pos_x-raztoqnie, "y": element_y, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 1:
-                dupka3 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka3a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka3b  = {"x" : element_y, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka3 = {"x" : element_y-zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka3a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka3b  = {"x" : element_y, "y": element_x-zyl_pos_x+raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 2:
-                dupka3 = {"x" : element_x-zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka3a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka3b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka3 = {"x" : element_x-zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka3a  = {"x" : element_x-zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka3b  = {"x" : element_x-zyl_pos_x+raztoqnie, "y": 0, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 3:
-                dupka3 = {"x" : zyl_pos_y, "y": zyl_pos_x,  "h" : zyl_h, "r" : zyl_r}
-                dupka3a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka3b  = {"x" : 0, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka3 = {"x" : zyl_pos_y, "y": zyl_pos_x,  "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka3a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka3b  = {"x" : 0, "y": zyl_pos_x-raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
                 
             dupki_na_elementa.append(dupka3)
             dupki_na_elementa.append(dupka3a)
@@ -1896,21 +1913,21 @@ def pokaji_redaktirai_window(side):
             
         if simPoX == 1 and simPoY == 1:
             if rotation == 0:
-                dupka4 =  {"x" : element_x-zyl_pos_x, "y": element_y- zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka4a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka4b  = {"x" : element_x-zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka4 =  {"x" : element_x-zyl_pos_x, "y": element_y- zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka4a  = {"x" : element_x-zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka4b  = {"x" : element_x-zyl_pos_x+raztoqnie, "y": element_y, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 1:
-                dupka4 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka4a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka4b  = {"x" : element_y, "y": zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka4 = {"x" : element_y-zyl_pos_y, "y": zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka4a  = {"x" : element_y, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka4b  = {"x" : element_y, "y": zyl_pos_x-raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 2:
-                dupka4 = {"x" : zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka4a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka4b  = {"x" : zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka4 = {"x" : zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka4a  = {"x" : zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka4b  = {"x" : zyl_pos_x-raztoqnie, "y": 0, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 3:
-                dupka4 = {"x" : zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka4a  = {"x" : 0, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka4b  = {"x" : 0, "y": element_x-zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka4 = {"x" : zyl_pos_y, "y": element_x-zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka4a  = {"x" : 0, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka4b  = {"x" : 0, "y": element_x-zyl_pos_x+raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
                 
             dupki_na_elementa.append(dupka4)
             dupki_na_elementa.append(dupka4a)
@@ -1924,21 +1941,21 @@ def pokaji_redaktirai_window(side):
             center_zyl_pos_x = element_x/2
              
             if rotation == 0:
-                dupka5 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka5a  = {"x" : center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka5b  = {"x" : center_zyl_pos_x+raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka5 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka5a  = {"x" : center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka5b  = {"x" : center_zyl_pos_x+raztoqnie, "y": 0, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 1:
-                dupka5 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka5a  = {"x" : 0, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka5b  = {"x" : 0, "y": center_zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka5 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka5a  = {"x" : 0, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka5b  = {"x" : 0, "y": center_zyl_pos_x-raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 2:
-                dupka5 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka5a  = {"x" : center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka5b  = {"x" : center_zyl_pos_x-raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka5 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka5a  = {"x" : center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka5b  = {"x" : center_zyl_pos_x-raztoqnie, "y": element_y, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
             elif rotation == 3:
-                dupka5 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka5a  = {"x" : element_y, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
-                dupka5b  = {"x" : element_y, "y": center_zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
+                dupka5 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka5a  = {"x" : element_y, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
+                dupka5b  = {"x" : element_y, "y": center_zyl_pos_x+raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
                             
             dupki_na_elementa.append(dupka5) 
             dupki_na_elementa.append(dupka5a) 
@@ -1952,21 +1969,21 @@ def pokaji_redaktirai_window(side):
             center_zyl_pos_x = element_x/2
             
             if rotation == 0:
-                dupka6 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka6a  = {"x" : center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka6b  = {"x" : center_zyl_pos_x+raztoqnie, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka6 = {"x" : center_zyl_pos_x, "y": element_y-zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka6a  = {"x" : center_zyl_pos_x, "y": element_y, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka6b  = {"x" : center_zyl_pos_x+raztoqnie, "y": element_y, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 1:
-                dupka6 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}
-                dupka6a  = {"x" : element_y, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka6b  = {"x" : element_y, "y": center_zyl_pos_x-raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka6 = {"x" : element_y-zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka6a  = {"x" : element_y, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka6b  = {"x" : element_y, "y": center_zyl_pos_x-raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 2:
-                dupka6 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r}
-                dupka6a  = {"x" : center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka6b  = {"x" : center_zyl_pos_x-raztoqnie, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka6 = {"x" : center_zyl_pos_x, "y": zyl_pos_y, "h" : zyl_h, "r" : zyl_r, "fv" : 1}
+                dupka6a  = {"x" : center_zyl_pos_x, "y": 0, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka6b  = {"x" : center_zyl_pos_x-raztoqnie, "y": 0, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
             elif rotation == 3:
-                dupka6 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r}  
-                dupka6a  = {"x" : 0, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0}
-                dupka6b  = {"x" : 0, "y": center_zyl_pos_x+raztoqnie, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1}
+                dupka6 = {"x" : zyl_pos_y, "y": center_zyl_pos_x, "h" : zyl_h, "r" : zyl_r, "fv" : 1}  
+                dupka6a  = {"x" : 0, "y": center_zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
+                dupka6b  = {"x" : 0, "y": center_zyl_pos_x+raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
                 
             dupki_na_elementa.append(dupka6) 
             dupki_na_elementa.append(dupka6a) 
