@@ -5,6 +5,7 @@ import time, os, sys
 
 from Tkinter import *
 from tkFileDialog import askopenfilename,asksaveasfilename
+from ConfigReader import read_instruments,write_instruments
 
 try:
     import xml.etree.cElementTree as ET
@@ -35,6 +36,8 @@ instrument4LabelText = u'Инструмент 4'
 instrument5LabelText = u'Инструмент 5'
 diameturLabelText = u'Диаметър (мм)'
 skorostText = u'Скорост (мм/мин)'
+zapaziInstrFileButtonText = u'Запази настройки'
+zatvoriButtonText = u'Затвори'
 generateGCodeLabelText =  u'Генериране на G код'
 generateGCodeButtonText = u'Генерирай G код'
 iztriiGCodeButtonText = u'Изтрий G код'
@@ -1099,8 +1102,18 @@ def pripluzni_element():
         izberi_element_za_dupchene('L', rotation, 1)
 
 def nastroika_na_instrumenti():
+    def on_closing_inst():
+        top.destroy()
+        
+    def save_instruments():
+        vertikalniInstrumenti = definirai_instrumenti('V')
+        horizontalniInstrumenti = definirai_instrumenti('H')
+        skorosti = definirai_skorosti()
+        write_instruments(vertikalniInstrumenti, horizontalniInstrumenti, skorosti)
+        
     top = Toplevel()
     top.title(nastroikaInstrumentButtonText)
+    top.protocol("WM_DELETE_WINDOW", on_closing_inst)
     
     frame1 = LabelFrame(top, text=vertikalnaGlavaText)
     frame1.grid(row=0, padx = 20, pady=10)
@@ -1217,6 +1230,11 @@ def nastroika_na_instrumenti():
     skorost5Label.grid(row=1, sticky=W)
     skorost5Entry = Entry(instr5LabelBox, textvariable=hginstrument5EntrySkorostValue)
     skorost5Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
+    
+    zapaziNastorikiButton = Button(top, text=zapaziInstrFileButtonText, command=save_instruments)
+    zapaziNastorikiButton.grid(row=1, padx = 15, pady = 10, sticky='E')
+    zatvoriButton = Button(top, text=zatvoriButtonText, command=on_closing_inst)
+    zatvoriButton.grid(row=1, column=1,padx = 15, pady = 10,  sticky='E')
 
 def iztrii_temp_gcode_file():
     if os.path.isfile("sample123.txt"):
@@ -1990,6 +2008,7 @@ def pokaji_redaktirai_window(side):
        
 print ('*** BEGIN PROGRAM *************************')
 iztrii_temp_gcode_file()
+instrumentiOtConfig = read_instruments()
 
 mainframe = Tk()
 #mainframe.geometry('450x450+500+300') - Use that for window size
@@ -2034,27 +2053,27 @@ hginstrument5EntryDiaValue = StringVar()
 hginstrument5EntrySkorostValue = StringVar()
 
 # Default values (she doidat posle of file)
-vginstrument1EntryDiaValue.set('35')
-vginstrument1EntrySkorostValue.set('800')
-vginstrument2EntryDiaValue.set('15')
-vginstrument2EntrySkorostValue.set('1000')
-vginstrument3EntryDiaValue.set('8')
-vginstrument3EntrySkorostValue.set('1200')
-vginstrument4EntryDiaValue.set('5')
-vginstrument4EntrySkorostValue.set('1500')
-vginstrument5EntryDiaValue.set('2.5')
-vginstrument5EntrySkorostValue.set('1500')
+vginstrument1EntryDiaValue.set(instrumentiOtConfig['T1'][0])
+vginstrument1EntrySkorostValue.set(instrumentiOtConfig['T1'][1])
+vginstrument2EntryDiaValue.set(instrumentiOtConfig['T2'][0])
+vginstrument2EntrySkorostValue.set(instrumentiOtConfig['T2'][1])
+vginstrument3EntryDiaValue.set(instrumentiOtConfig['T3'][0])
+vginstrument3EntrySkorostValue.set(instrumentiOtConfig['T3'][1])
+vginstrument4EntryDiaValue.set(instrumentiOtConfig['T4'][0])
+vginstrument4EntrySkorostValue.set(instrumentiOtConfig['T4'][1])
+vginstrument5EntryDiaValue.set(instrumentiOtConfig['T5'][0])
+vginstrument5EntrySkorostValue.set(instrumentiOtConfig['T5'][1])
 
-hginstrument1EntryDiaValue.set('35')
-hginstrument1EntrySkorostValue.set('800')
-hginstrument2EntryDiaValue.set('15')
-hginstrument2EntrySkorostValue.set('1000')
-hginstrument3EntryDiaValue.set('8')
-hginstrument3EntrySkorostValue.set('1200')
-hginstrument4EntryDiaValue.set('5')
-hginstrument4EntrySkorostValue.set('1500')
-hginstrument5EntryDiaValue.set('2.5')
-hginstrument5EntrySkorostValue.set('1500')
+hginstrument1EntryDiaValue.set(instrumentiOtConfig['T6'][0])
+hginstrument1EntrySkorostValue.set(instrumentiOtConfig['T6'][1])
+hginstrument2EntryDiaValue.set(instrumentiOtConfig['T7'][0])
+hginstrument2EntrySkorostValue.set(instrumentiOtConfig['T7'][1])
+hginstrument3EntryDiaValue.set(instrumentiOtConfig['T8'][0])
+hginstrument3EntrySkorostValue.set(instrumentiOtConfig['T8'][1])
+hginstrument4EntryDiaValue.set(instrumentiOtConfig['T9'][0])
+hginstrument4EntrySkorostValue.set(instrumentiOtConfig['T9'][1])
+hginstrument5EntryDiaValue.set(instrumentiOtConfig['T10'][0])
+hginstrument5EntrySkorostValue.set(instrumentiOtConfig['T10'][1])
 
 genHorizontOtvoriGCodeValue = IntVar()
 genVertikalOtvoriGCodeValue = IntVar()
