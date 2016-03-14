@@ -1,8 +1,5 @@
-'''
-Created on Mar 9, 2016
-
-@author: AS017303
-'''
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import os
 
 def read_instruments():    
@@ -115,4 +112,84 @@ def write_instruments(verIns, horIns, skorosti):
             configFileW.close()
         else:
             print 'File bxfconfig.config does not exists. To be continued ...'
+        
+def sort_detail_list(detaili):
+    defaultOrder = {'Oberboden':1, 'Oberboden-OTRAVHIN':2, 'Oberboden-OTRAVVOR':3, 
+                    'Unterboden':4,
+                    'LinkeSeitenwand':5,
+                    'RechteSeitenwand':6,
+                    'Tuer':7,
+                    'Doppeltuer':8,
+                    'Aussenschubkasten-Front':9,'Aussenschubkasten-Boden':10,'Aussenschubkasten-Rueckwand':11,
+                    'Klappensystem':12}
+    
+    sortingList = []
+    
+    for key, value in detaili.iteritems():
+        print key
+        razmer = value.razmeri
+        element_x = razmer['x']
+        element_y = razmer['y']
+        debelina = razmer['h']
+        if 'Aussenschubkasten' in key:
+            auss = key.split('-')
+            aussName = auss[1]
+            aussId = auss[3]
+            if 'Front' in key:
+                prevod = u'Чекмедже-'+aussName+u': Лице-'+aussId+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+                sortingPlace = defaultOrder['Aussenschubkasten-Front']
+                ttuple = sortingPlace, prevod, key
+            elif 'Rueckwand' in key:
+                prevod = u'Чекмедже-'+aussName+u': Гръб-'+aussId+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+                sortingPlace = defaultOrder['Aussenschubkasten-Rueckwand']
+                ttuple = sortingPlace, prevod, key
+            elif 'Boden' in key:
+                prevod = u'Чекмедже-'+aussName+u': Дъно-'+aussId+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+                sortingPlace = defaultOrder['Aussenschubkasten-Boden']
+                ttuple = sortingPlace, prevod, key
+            sortingList.append(ttuple)
+        elif 'LinkeSeitenwand' in key:
+            prevod = u'Лява страница на корпуса'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            #prevod = pad_with_dot(u'Лява страница на корпуса', str(element_x), str(element_y))
+            sortingPlace = defaultOrder['LinkeSeitenwand']
+            ttuple = sortingPlace, prevod, key
+            sortingList.append(ttuple)
+        elif 'RechteSeitenwand' in key:
+            prevod = u'Дясна страница на корпуса'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            #prevod = pad_with_dot(u'Дясна страница на корпуса', str(element_x), str(element_y))
+            sortingPlace = defaultOrder['RechteSeitenwand']
+            ttuple = sortingPlace, prevod, key
+            sortingList.append(ttuple)
+        elif 'Oberboden-OTRAVVOR' in key:
+            prevod = u'Горна царга отпред'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            sortingPlace = defaultOrder['Oberboden-OTRAVVOR']
+            ttuple = sortingPlace, prevod, key
+            sortingList.append(ttuple)
+        elif 'Oberboden-OTRAVHIN' in key:
+            prevod = u'Горна царга отзад'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            sortingPlace = defaultOrder['Oberboden-OTRAVHIN']
+            ttuple = sortingPlace, prevod, key    
+            sortingList.append(ttuple)
+        elif 'Unterboden' in key:
+            prevod = u'Дъно'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            sortingPlace = defaultOrder['Unterboden']
+            ttuple = sortingPlace, prevod, key  
+            sortingList.append(ttuple)
+    print '========================'       
+    return sorted(sortingList, key=lambda element: (element[0], element[1]))
+        
+        
+def pad_with_dot(prevod, elementx, elementy):
+    total = len(prevod) + len(elementx) + len(elementy) + 5
+    stringToReturn = prevod+' '
+    
+    dots = 50 - total
+    while dots > 0:
+        stringToReturn = stringToReturn+'.'
+        dots = dots - 1
+    
+    stringToReturn = stringToReturn+' '+elementx+' x '+elementy
+    return stringToReturn
+        
+         
         

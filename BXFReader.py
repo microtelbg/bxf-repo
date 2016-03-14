@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import time, os, sys
+import time, os
 ## dd/mm/yyyy format
 
 from Tkinter import *
 from tkFileDialog import askopenfilename,asksaveasfilename
-from ConfigReader import read_instruments,write_instruments
+from ConfigReader import read_instruments,write_instruments,sort_detail_list
 
 try:
     import xml.etree.cElementTree as ET
@@ -110,6 +110,8 @@ rightOvals = []
 #Vsichi elementi of BXF faila za dupchene
 elementi_za_dupchene = {}
 
+theSortedList = []
+
 # 0 - Po horizontalata, 1 - po verticalata
 # 0: ako e strana (X,Z of BXF), X->Y(masata) Z->X(masata)
 #    ako e duno   (X,Y ot BXF), X->Y(masata) Y->X(masata)
@@ -187,7 +189,6 @@ def procheti_debelina_ot_bxf(root, name):
 *******************************************************************************'''
 def suzdai_element_strana(root, elements, name):
     parenttag = 'blum:'+name
-    print parenttag
     parent = root.find(parenttag, ns) #Namira samo 1 element s tozi tag. Predpolagam che samo 1 ima v bxf
     if parent is not None:
         # Orientacia e XZ, Y e debelina
@@ -338,64 +339,72 @@ def suzdai_element_grub_prednica(root, elements, name):
      Unterboden(duno)
 *******************************************************************************'''
 def suzdai_element_duno_gornica(root, elements, name):
-    parenttag = 'blum:'+name
-
-    parent = root.find(parenttag, ns) #Namira samo 1 element s tozi tag. Predpolagam che samo 1 ima v bxf
-    if parent is not None:
-        quader = parent.findall('.//blum:Quader', ns)
-
-        if quader is not None:
-            # <Hoehe>0.0</Hoehe> visochina
-            hoehe = quader[0].find('blum:Hoehe', ns)
-            if hoehe is not None:
-                razmer_debelina = hoehe.text
-            else:
-                razmer_debelina = 0
-                print 'Greshka - Hoehe tag ne e nameren za ', name
-                    
-            # <Position X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
-            position = quader[0].find('blum:Position', ns)
-            if position is not None:
-                pos_x = position.attrib['X']
-                pos_y = position.attrib['Y']
-            else:
-                pos_x = 0
-                pos_y = 0
-                print 'Greshka - Position tag ne e namer za ', name
-
-            # <PunktC X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
-            point_c = quader[0].find('blum:PunktC', ns)
-            if point_c is not None:
-                pointc_x = point_c.attrib['X']
-                pointc_y = point_c.attrib['Y']
-            else:
-                pointc_x = 0
-                pointc_y = 0
-                print 'Greshka - PunktC tag ne e namer za ', name
-
-            #Izchisli razmerite na tazi starna
-            razmer_x = float(pointc_x) - float(pos_x)
-            razmer_y = float(pointc_y) - float(pos_y)
-            
-            #Dupki
-            dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x, name)
-
-            #Create object
-            razmeri_map = {"x" : razmer_y, "y": razmer_x, "h":razmer_debelina}
-
-            plot = ElementZaDupchene(name, razmeri_map, dupki_map)
-
-            if name == 'Oberboden':
-                elements['Oberboden'] = plot
-                prevod_za_elemnti_v_list['Oberboden'] = u'Горен плот '+str(razmer_x)+' x '+str(razmer_y)
-            elif name == 'Unterboden':
-                elements['Unterboden'] = plot
-                prevod_za_elemnti_v_list['Unterboden'] = u'Долен плот '+str(razmer_x)+' x '+str(razmer_y)
-            else:
-                elements[name] = plot
-                prevod_za_elemnti_v_list[name] = name
+    parenttag = './/blum:'+name
+    parents = root.findall(parenttag, ns) #Namira vsichki tags 
+    for parent in parents:
+        if name == 'Aussenschubkasten':
+            parentName = parent.attrib['Name']
         else:
-            print 'Greshka -Quader tag ne e namer za ', name
+            parentName = ''
+        boden = parent.findall('.//blum:Boden', ns)
+        for duno in boden:
+            dunoID = duno.attrib['ID']
+            quader = duno.findall('.//blum:Quader', ns)
+
+            if quader is not None:
+                # <Hoehe>0.0</Hoehe> visochina
+                hoehe = quader[0].find('blum:Hoehe', ns)
+                if hoehe is not None:
+                    razmer_debelina = hoehe.text
+                else:
+                    razmer_debelina = 0
+                    print 'Greshka - Hoehe tag ne e nameren za ', name
+                        
+                # <Position X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
+                position = quader[0].find('blum:Position', ns)
+                if position is not None:
+                    pos_x = position.attrib['X']
+                    pos_y = position.attrib['Y']
+                else:
+                    pos_x = 0
+                    pos_y = 0
+                    print 'Greshka - Position tag ne e namer za ', name
+    
+                # <PunktC X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
+                point_c = quader[0].find('blum:PunktC', ns)
+                if point_c is not None:
+                    pointc_x = point_c.attrib['X']
+                    pointc_y = point_c.attrib['Y']
+                else:
+                    pointc_x = 0
+                    pointc_y = 0
+                    print 'Greshka - PunktC tag ne e namer za ', name
+    
+                #Izchisli razmerite na tazi starna
+                razmer_x = float(pointc_x) - float(pos_x)
+                razmer_y = float(pointc_y) - float(pos_y)
+                
+                #Dupki
+                dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x, name)
+    
+                #Create object
+                razmeri_map = {"x" : razmer_y, "y": razmer_x, "h":razmer_debelina}
+    
+                plot = ElementZaDupchene(name, razmeri_map, dupki_map)
+    
+                if name == 'Oberboden':
+                    elements['Oberboden-'+dunoID] = plot
+                    #prevod_za_elemnti_v_list['Oberboden-'+dunoID] = u'Горен плот ('+str(dunoID)+')'+str(razmer_y)+' x '+str(razmer_x)
+                elif name == 'Unterboden':
+                    elements['Unterboden-'+dunoID] = plot
+                    #prevod_za_elemnti_v_list['Unterboden-'+dunoID] = u'Долен плот ('+str(dunoID)+')'+str(razmer_y)+' x '+str(razmer_x)
+                elif name == 'Aussenschubkasten':
+                    elements['Aussenschubkasten-'+parentName+'-Boden-'+dunoID] = plot
+                else:
+                    elements[name] = plot
+                    #prevod_za_elemnti_v_list[name] = name
+            else:
+                print 'Greshka -Quader tag ne e namer za ', name
 
     else:
         print 'Greshka -', name, " ne e nameren takuv tag"
@@ -408,6 +417,8 @@ def suzdai_element_duno_gornica(root, elements, name):
 def suzdai_element_shkafche(root, elements, name):
     #Prednata chast na shkafcheto e sushtata kato vratichka
     suzdai_element_vrata(root, elements, name)
+    #Dunoto na shkafcheto
+    suzdai_element_duno_gornica(root, elements, name)
 
     #Dunoto chast na shkafcheto
     parenttag = './/blum:'+name
@@ -462,8 +473,8 @@ def suzdai_element_shkafche(root, elements, name):
                 dunoShkafche = ElementZaDupchene(name, razmeri_map, dupki_map)
 
                 if name == 'Aussenschubkasten':
-                    elements['Shafche-'+parentName+'Duno-'+dunoID] = dunoShkafche
-                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Duno-'+dunoID] = u'Чекмедже-'+parentName+u'Дъно-'+dunoID+str(razmer_x)+' x '+str(razmer_y)
+                    elements['Aussenschubkasten-'+parentName+'-Duno-'+dunoID] = dunoShkafche
+                    prevod_za_elemnti_v_list['Aussenschubkasten-'+parentName+'-Duno-'+dunoID] = u'Чекмедже-'+parentName+u'Дъно-'+dunoID+str(razmer_x)+' x '+str(razmer_y)
                 else:
                     elements[name] = dunoShkafche
                     prevod_za_elemnti_v_list[name] = name+str(razmer_x)+' x '+str(razmer_y)
@@ -481,7 +492,7 @@ def suzdai_element_shkafche(root, elements, name):
                 # <Hoehe>0.0</Hoehe> visochina
                 hoehe = quader[0].find('blum:Hoehe', ns)
                 if hoehe is not None:
-                    razmer_debelina = hoehe.text
+                    razmer_z = hoehe.text
                 else:
                     razmer_debelina = 0
                     print 'Greshka - Hoehe tag ne e nameren za ', name
@@ -507,20 +518,20 @@ def suzdai_element_shkafche(root, elements, name):
                     print 'Greshka - PunktC tag ne e namer za ', name
 
                 #Izchisli razmerite na tazi vrata
-                razmer_x = float(pointc_x) - float(pos_x)
+                razmer_debelina = float(pointc_x) - float(pos_x)
                 razmer_y = float(pointc_y) - float(pos_y)
 
                 #Dupki
-                dupki_map = suzdai_dupki(quader, 'xy', razmer_y, razmer_x, name)
+                dupki_map = suzdai_dupki(quader, 'yz', razmer_y, razmer_z, name)
 
                 #Create object
-                razmeri_map = {"x" : razmer_y, "y": razmer_x, "z":razmer_debelina}
+                razmeri_map = {"x" : razmer_y, "y": razmer_z, "h":razmer_debelina}
 
                 rueckwandShkafche = ElementZaDupchene(name, razmeri_map, dupki_map)
 
                 if name == 'Aussenschubkasten':
-                    elements['Shafche-'+parentName+'Rueckwand-'+rueckwandID] = rueckwandShkafche
-                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Rueckwand-'+rueckwandID] = u'Чекмедже-'+parentName+'Rueckwand-'+rueckwandID+str(razmer_x)+' x '+str(razmer_y)
+                    elements['Aussenschubkasten-'+parentName+'-Rueckwand-'+rueckwandID] = rueckwandShkafche
+                    prevod_za_elemnti_v_list['Aussenschubkasten-'+parentName+'-Rueckwand-'+rueckwandID] = u'Чекмедже-'+parentName+'Rueckwand-'+rueckwandID+str(razmer_y)+' x '+str(razmer_z)
                 else:
                     elements[name] = rueckwandShkafche
                     prevod_za_elemnti_v_list[name] = name+str(razmer_x)+' x '+str(razmer_y)
@@ -593,8 +604,8 @@ def suzdai_element_vrata(root, elements, name):
                     elements[ekey] = vrata
                     prevod_za_elemnti_v_list[ekey] = u'Двойна Врата-'+'ID:'+parentName+u'Лице:'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
                 elif name == 'Aussenschubkasten':
-                    elements['Shafche-'+parentName+'Front-'+frontID] = vrata
-                    prevod_za_elemnti_v_list['Shafche-'+parentName+'Front-'+frontID] = u'Чекмедже-'+parentName+'Front-'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
+                    elements['Aussenschubkasten-'+parentName+'-Front-'+frontID] = vrata
+                    prevod_za_elemnti_v_list['Aussenschubkasten-'+parentName+'-Front-'+frontID] = u'Чекмедже-'+parentName+'Front-'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
                 elif name == 'Klappensystem':
                     elements['Vrata Aventos HF-'+parentName+'Front-'+frontID] = vrata
                     prevod_za_elemnti_v_list['Vrata Aventos HF-'+parentName+'Front-'+frontID] = u'Врата Aventos HF-'+parentName+'Front-'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
@@ -614,11 +625,19 @@ def zaredi_file_info():
     # 2. Pokaji izbrania file
     fileNameLabel['text'] = myfilename
 
+    global theSortedList
+    theSortedList = sort_detail_list(elementi_za_dupchene)
+    
     # 3. Populti lista s elementi
-    listbox.delete(0, END)
-    for ek in elementi_za_dupchene.keys():
-        prevod = prevod_za_elemnti_v_list[ek]
+    for ek in theSortedList:
+        prevod = ek[1]
         listbox.insert(END, prevod)
+    
+#     for ek in elementi_za_dupchene.keys():
+#         prevod = prevod_za_elemnti_v_list[ek]
+#         listbox.insert(END, prevod)
+
+
 
     #Reset
     canvas.delete(ALL)
@@ -667,10 +686,15 @@ def izberi_element_za_dupchene(side, orienation, pripluzvane):
         itemValue = listbox.get(itemIndex)
         iValue = itemValue
         
-        for eng, bg in prevod_za_elemnti_v_list.iteritems():
-            if itemValue == bg:
-                iValue = eng
+        for item in theSortedList:
+            if itemValue == item[1]:
+                iValue = item[2]
                 break
+        
+#         for eng, bg in prevod_za_elemnti_v_list.iteritems():
+#             if itemValue == bg:
+#                 iValue = eng
+#                 break
     
         izbranElement = elementi_za_dupchene[iValue]
         izbranElement.purvonachalnoPolojenie = ''
