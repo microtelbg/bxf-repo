@@ -118,16 +118,19 @@ def sort_detail_list(detaili):
                     'Unterboden':4,
                     'LinkeSeitenwand':5,
                     'RechteSeitenwand':6,
-                    'Tuer':7,
-                    'Doppeltuer':8,
-                    'Aussenschubkasten-Front':9,'Aussenschubkasten-Boden':10,'Aussenschubkasten-Rueckwand':11,
-                    'Klappensystem':12}
+                    'KorpusRueckwand':7,
+                    'Tuer':8,
+                    'Doppeltuer':9,
+                    'Aussenschubkasten-Front':10,'Aussenschubkasten-Boden':11,'Aussenschubkasten-Rueckwand':12,
+                    'Klappensystem':13,
+                    'customdetail':100}
     
     sortingList = []
     
     for key, value in detaili.iteritems():
         print key
         razmer = value.razmeri
+        imeValue = value.ime
         element_x = razmer['x']
         element_y = razmer['y']
         debelina = razmer['h']
@@ -160,6 +163,11 @@ def sort_detail_list(detaili):
             sortingPlace = defaultOrder['RechteSeitenwand']
             ttuple = sortingPlace, prevod, key
             sortingList.append(ttuple)
+        elif 'KorpusRueckwand' in key:
+            prevod = u'Гръб на корпуса'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            sortingPlace = defaultOrder['KorpusRueckwand']
+            ttuple = sortingPlace, prevod, key
+            sortingList.append(ttuple)
         elif 'Oberboden-OTRAVVOR' in key:
             prevod = u'Горна царга отпред'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
             sortingPlace = defaultOrder['Oberboden-OTRAVVOR']
@@ -175,7 +183,12 @@ def sort_detail_list(detaili):
             sortingPlace = defaultOrder['Unterboden']
             ttuple = sortingPlace, prevod, key  
             sortingList.append(ttuple)
-    print '========================'       
+        elif 'customdetail' in key:
+            prevod = u'Въведен детайл: '+imeValue+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            sortingPlace = defaultOrder['customdetail']
+            ttuple = sortingPlace, prevod, key  
+            sortingList.append(ttuple)
+    
     return sorted(sortingList, key=lambda element: (element[0], element[1]))
         
         

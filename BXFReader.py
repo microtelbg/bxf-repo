@@ -98,7 +98,7 @@ PLOT_NA_MACHINA_Y = 600
 ''' ***************************************************************************
 *** Global Variables
 *************************************************************************** '''
-debelinaMaterial = 18.0 # Tazi stoinost se smenq sus zadadenata ot BXF file
+detNo = 1
 bezopasno_z = "{0:.3f}".format(50.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
 TT = '' # instrumenta v momenta T1, T2, etc.
 n10 = 30
@@ -155,39 +155,80 @@ def cheti_bxf_file(filename1):
     tree = ET.parse(filename1)
     myroot = tree.getroot()
     
-    procheti_debelina_ot_bxf(myroot, 'Korpusdaten')
+    global detNo
 
-    suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Oberboden')
-    suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Unterboden')
-    suzdai_element_strana(myroot, elementi_za_dupchene, 'LinkeSeitenwand')
-    suzdai_element_strana(myroot, elementi_za_dupchene, 'RechteSeitenwand')
-    suzdai_element_vrata(myroot, elementi_za_dupchene, 'Tuer')
-    suzdai_element_vrata(myroot, elementi_za_dupchene, 'Doppeltuer')
-    suzdai_element_shkafche(myroot, elementi_za_dupchene, 'Aussenschubkasten')
-    suzdai_element_vrata(myroot, elementi_za_dupchene, 'Klappensystem')
+    suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Oberboden', detNo)
+    suzdai_element_duno_gornica(myroot, elementi_za_dupchene, 'Unterboden', detNo)
+    suzdai_element_grub(myroot, elementi_za_dupchene, 'KorpusRueckwand', detNo)
+    suzdai_element_strana(myroot, elementi_za_dupchene, 'LinkeSeitenwand', detNo)
+    suzdai_element_strana(myroot, elementi_za_dupchene, 'RechteSeitenwand', detNo)
+    suzdai_element_vrata(myroot, elementi_za_dupchene, 'Tuer', detNo)
+    suzdai_element_vrata(myroot, elementi_za_dupchene, 'Doppeltuer', detNo)
+    suzdai_element_shkafche(myroot, elementi_za_dupchene, 'Aussenschubkasten', detNo)
+    suzdai_element_vrata(myroot, elementi_za_dupchene, 'Klappensystem', detNo)
     
-def procheti_debelina_ot_bxf(root, name):
+    detNo = detNo + 1
+    
+''' ***************************************************************************
+**** Izpolzvai tazi funkcia za:
+     KorpusRueckwand (grub na korpusa)
+     Y and Z
+*******************************************************************************'''        
+def suzdai_element_grub(root, elements, name, bxfNo):
     parenttag = 'blum:'+name
     
     parent = root.find(parenttag, ns)
     if parent is not None:
-        debelinaRazmeri = parent.find('blum:Plattendicken', ns)
-        if debelinaRazmeri is not None:
-            debelina = debelinaRazmeri.attrib['Oben']
+        # Orientacia e YZ, X e debelina
+        quader = parent.findall('.//blum:Quader', ns)
+        if quader is not None:
+            hoehe = quader[0].find('blum:Hoehe', ns)
+            if hoehe is not None:
+                razmer_z = hoehe.text
+            else:
+                razmer_z = 0
+                print 'Greshka - Hoehe tag ne e nameren za ', name
+            
+            position = quader[0].find('blum:Position', ns)
+            if position is not None:
+                pos_x = position.attrib['X']
+                pos_y = position.attrib['Y']
+            else:
+                pos_x = 0
+                pos_y = 0
+                print 'Greshka - Position tag ne e namer za ', name
 
-    if debelina > 0.0:
-        global debelinaMaterial
-        debelinaMaterial = debelina
-        
-        
+            #<PunktC X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
+            pointc = quader[0].find('blum:PunktC', ns)
+            if pointc is not None:
+                pointc_x = pointc.attrib['X']
+                pointc_y = pointc.attrib['Y']
+            else:
+                pointc_x = 0
+                pointc_y = 0
+                print 'Greshka - PunktC tag ne e namer za ', name
+            razmer_debelina = float(pointc_x) - float(pos_x)
+            razmer_y = float(pointc_y) - float(pos_y)
+            
+            #Dupki
+            dupki_map = suzdai_dupki(quader, 'yz', razmer_y, razmer_z, name)
+            
+            #Create object
+            razmeri_map = {"x" : razmer_y, "y": razmer_z , "h":razmer_debelina}
 
+            grub = ElementZaDupchene(name, razmeri_map, dupki_map)
+            elements['DET:'+str(bxfNo)+'KorpusRueckwand'] = grub
+        else:
+            print 'Greshka -Quader tag ne e namer za ', name
+
+        
 ''' ***************************************************************************
 **** Izpolzvai tazi funkcia za:
      LinkeSeitenwand (lqva strana)
      RechteSeitenwand (dqsna strana)
      X and Z
 *******************************************************************************'''
-def suzdai_element_strana(root, elements, name):
+def suzdai_element_strana(root, elements, name, bxfNo):
     parenttag = 'blum:'+name
     parent = root.find(parenttag, ns) #Namira samo 1 element s tozi tag. Predpolagam che samo 1 ima v bxf
     if parent is not None:
@@ -233,14 +274,11 @@ def suzdai_element_strana(root, elements, name):
 
         stana = ElementZaDupchene(name, razmeri_map, dupki_map)
         if name == 'LinkeSeitenwand':
-            elements['LinkeSeitenwand'] = stana
-            prevod_za_elemnti_v_list['LinkeSeitenwand'] = u'Лява страна '+str(razmer_x)+' x '+str(razmer_z)
+            elements['DET:'+str(bxfNo)+'LinkeSeitenwand'] = stana
         elif  name == 'RechteSeitenwand':
-            elements['RechteSeitenwand'] = stana
-            prevod_za_elemnti_v_list['RechteSeitenwand'] = u'Дясна страна '+str(razmer_x)+' x '+str(razmer_z)
+            elements['DET:'+str(bxfNo)+'RechteSeitenwand'] = stana
         else:
-            elements[name] = stana
-            prevod_za_elemnti_v_list[name] = name
+            elements['DET:'+str(bxfNo)+name] = stana
 
     else:
         print 'Greshka -', name, " ne e nameren takuv tag"
@@ -286,59 +324,10 @@ def suzdai_dupki(curparent, orientation, element_x, element_y, imeNaElement):
 
 ''' ***************************************************************************
 **** Izpolzvai tazi funkcia za:
-     KorpusRueckwand (grub)
-     
-     Moje sigurno da se mahne, zashtoto e sushtoto kato _vrata
-*******************************************************************************'''
-def suzdai_element_grub_prednica(root, elements, name):
-    parenttag = 'blum:'+name
-    print parenttag
-    parent = root.find(parenttag, ns) #Namira samo 1 element s tozi tag. Predpolagam che samo 1 ima v bxf
-    if parent is not None:
-        quader = parent.findall('.//blum:Quader', ns)
-
-        if quader is not None:
-            # <Hoehe>0.0</Hoehe> visochina
-            hoehe = quader[0].find('blum:Hoehe', ns)
-            if hoehe is not None:
-                razmer_visochina = hoehe.text
-            else:
-                razmer_visochina = 0
-                print 'Greshka - Hoehe tag ne e nameren za ', name
-
-            # <Position X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
-            position = quader[0].find('blum:Position', ns)
-            if position is not None:
-                pos_y = position.attrib['Y']
-            else:
-                pos_y = 0
-                print 'Greshka - Position tag ne e namer za ', name
-
-            # <PunktC X="0.0" Y="0.0" Z="0.0" Bezug="A"/>
-            point_c = quader[0].find('blum:PunktC', ns)
-            if point_c is not None:
-                pointc_y = point_c.attrib['Y']
-            else:
-                pointc_y = 0
-                print 'Greshka - PunktC tag ne e namer za ', name
-
-            #Izchisli razmerite na tazi starna
-            razmer_x = float(razmer_visochina)
-            razmer_y = float(pointc_y) - float(pos_y)
-        else:
-            print 'Greshka -Quader tag ne e namer za ', name
-
-        print 'x:', razmer_x
-        print 'y:', razmer_y
-    else:
-        print 'Greshka -', name, " ne e nameren takuv tag"
-
-''' ***************************************************************************
-**** Izpolzvai tazi funkcia za:
      Oberboden(gornica)
      Unterboden(duno)
 *******************************************************************************'''
-def suzdai_element_duno_gornica(root, elements, name):
+def suzdai_element_duno_gornica(root, elements, name, bxfNo):
     parenttag = './/blum:'+name
     parents = root.findall(parenttag, ns) #Namira vsichki tags 
     for parent in parents:
@@ -393,15 +382,15 @@ def suzdai_element_duno_gornica(root, elements, name):
                 plot = ElementZaDupchene(name, razmeri_map, dupki_map)
     
                 if name == 'Oberboden':
-                    elements['Oberboden-'+dunoID] = plot
+                    elements['DET:'+str(bxfNo)+'Oberboden-'+dunoID] = plot
                     #prevod_za_elemnti_v_list['Oberboden-'+dunoID] = u'Горен плот ('+str(dunoID)+')'+str(razmer_y)+' x '+str(razmer_x)
                 elif name == 'Unterboden':
-                    elements['Unterboden-'+dunoID] = plot
+                    elements['DET:'+str(bxfNo)+'Unterboden-'+dunoID] = plot
                     #prevod_za_elemnti_v_list['Unterboden-'+dunoID] = u'Долен плот ('+str(dunoID)+')'+str(razmer_y)+' x '+str(razmer_x)
                 elif name == 'Aussenschubkasten':
-                    elements['Aussenschubkasten-'+parentName+'-Boden-'+dunoID] = plot
+                    elements['DET:'+str(bxfNo)+'Aussenschubkasten-'+parentName+'-Boden-'+dunoID] = plot
                 else:
-                    elements[name] = plot
+                    elements['DET:'+str(bxfNo)+name] = plot
                     #prevod_za_elemnti_v_list[name] = name
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
@@ -414,11 +403,11 @@ def suzdai_element_duno_gornica(root, elements, name):
      Aussenschubkasten(vunshno shkafche)
      Innenschubkasten (vutreshno shkafche)
 *******************************************************************************'''
-def suzdai_element_shkafche(root, elements, name):
+def suzdai_element_shkafche(root, elements, name, bxfNo):
     #Prednata chast na shkafcheto e sushtata kato vratichka
-    suzdai_element_vrata(root, elements, name)
+    suzdai_element_vrata(root, elements, name, bxfNo)
     #Dunoto na shkafcheto
-    suzdai_element_duno_gornica(root, elements, name)
+    suzdai_element_duno_gornica(root, elements, name, bxfNo)
 
     #Dunoto chast na shkafcheto
     parenttag = './/blum:'+name
@@ -473,11 +462,9 @@ def suzdai_element_shkafche(root, elements, name):
                 dunoShkafche = ElementZaDupchene(name, razmeri_map, dupki_map)
 
                 if name == 'Aussenschubkasten':
-                    elements['Aussenschubkasten-'+parentName+'-Duno-'+dunoID] = dunoShkafche
-                    prevod_za_elemnti_v_list['Aussenschubkasten-'+parentName+'-Duno-'+dunoID] = u'Чекмедже-'+parentName+u'Дъно-'+dunoID+str(razmer_x)+' x '+str(razmer_y)
+                    elements['DET:'+str(bxfNo)+'Aussenschubkasten-'+parentName+'-Duno-'+dunoID] = dunoShkafche
                 else:
-                    elements[name] = dunoShkafche
-                    prevod_za_elemnti_v_list[name] = name+str(razmer_x)+' x '+str(razmer_y)
+                    elements['DET:'+str(bxfNo)+name] = dunoShkafche
 
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
@@ -530,10 +517,10 @@ def suzdai_element_shkafche(root, elements, name):
                 rueckwandShkafche = ElementZaDupchene(name, razmeri_map, dupki_map)
 
                 if name == 'Aussenschubkasten':
-                    elements['Aussenschubkasten-'+parentName+'-Rueckwand-'+rueckwandID] = rueckwandShkafche
+                    elements['DET:'+str(bxfNo)+'Aussenschubkasten-'+parentName+'-Rueckwand-'+rueckwandID] = rueckwandShkafche
                     prevod_za_elemnti_v_list['Aussenschubkasten-'+parentName+'-Rueckwand-'+rueckwandID] = u'Чекмедже-'+parentName+'Rueckwand-'+rueckwandID+str(razmer_y)+' x '+str(razmer_z)
                 else:
-                    elements[name] = rueckwandShkafche
+                    elements['DET:'+str(bxfNo)+name] = rueckwandShkafche
                     prevod_za_elemnti_v_list[name] = name+str(razmer_x)+' x '+str(razmer_y)
 
             else:
@@ -544,7 +531,7 @@ def suzdai_element_shkafche(root, elements, name):
      Doppeltuer (dvoina vratichka)
      Aussenschubkasten (samo chast - prednata chast na shkafcheto)
 *******************************************************************************'''
-def suzdai_element_vrata(root, elements, name):
+def suzdai_element_vrata(root, elements, name, bxfNo):
     parenttag = './/blum:'+name
     parents = root.findall(parenttag, ns) #Namira vsichki tags 
     for parent in parents:
@@ -596,22 +583,17 @@ def suzdai_element_vrata(root, elements, name):
                 vrata = ElementZaDupchene(name, razmeri_map, dupki_map)
 
                 if name == 'Tuer':
-                    ekey = 'Vrata-'+parentName+'Front-'+frontID
+                    ekey = 'DET:'+str(bxfNo)+'Vrata-'+parentName+'Front-'+frontID
                     elements[ekey] = vrata
-                    prevod_za_elemnti_v_list[ekey] = u'Врата - '+'ID:'+parentName+u'Лице:'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
                 elif name == 'Doppeltuer':
-                    ekey = 'Dvoina Vrata-'+parentName+'Front-'+frontID
+                    ekey = 'DET:'+str(bxfNo)+'Dvoina Vrata-'+parentName+'Front-'+frontID
                     elements[ekey] = vrata
-                    prevod_za_elemnti_v_list[ekey] = u'Двойна Врата-'+'ID:'+parentName+u'Лице:'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
                 elif name == 'Aussenschubkasten':
-                    elements['Aussenschubkasten-'+parentName+'-Front-'+frontID] = vrata
-                    prevod_za_elemnti_v_list['Aussenschubkasten-'+parentName+'-Front-'+frontID] = u'Чекмедже-'+parentName+'Front-'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
+                    elements['DET:'+str(bxfNo)+'Aussenschubkasten-'+parentName+'-Front-'+frontID] = vrata
                 elif name == 'Klappensystem':
-                    elements['Vrata Aventos HF-'+parentName+'Front-'+frontID] = vrata
-                    prevod_za_elemnti_v_list['Vrata Aventos HF-'+parentName+'Front-'+frontID] = u'Врата Aventos HF-'+parentName+'Front-'+frontID+'.....'+str(razmer_y)+' x '+str(razmer_z)
+                    elements['DET:'+str(bxfNo)+'Vrata Aventos HF-'+parentName+'Front-'+frontID] = vrata
                 else:
-                    elements[name] = vrata
-                    prevod_za_elemnti_v_list[name] = name+str(razmer_y)+' x '+str(razmer_z)
+                    elements['DET:'+str(bxfNo)+name] = vrata
 
             else:
                 print 'Greshka -Quader tag ne e namer za ', name
@@ -627,8 +609,10 @@ def zaredi_file_info():
 
     global theSortedList
     theSortedList = sort_detail_list(elementi_za_dupchene)
+    #theSortedList.append(sortiranListOtFile)
     
     # 3. Populti lista s elementi
+    listbox.delete(0, END)
     for ek in theSortedList:
         prevod = ek[1]
         listbox.insert(END, prevod)
@@ -645,6 +629,7 @@ def zaredi_file_info():
 
 def izchisti_vschki_detaili():
     elementi_za_dupchene.clear()
+    theSortedList[:]
     listbox.delete(0, END)
     if len(izbrani_elementi) > 0:
         if izbrani_elementi.has_key('L'):
@@ -657,9 +642,11 @@ def izchisti_izbrania_detail():
     itemValue = listbox.get(itemIndex)   
     iValue = itemValue   
     
-    for eng, bg in prevod_za_elemnti_v_list.iteritems():
-        if itemValue == bg:
-            iValue = eng
+    indexToDelete = 0
+    for item in theSortedList:
+        indexToDelete = indexToDelete + 1
+        if itemValue == item[1]:
+            iValue = item[2]
             break     
         
     if len(izbrani_elementi) > 0:
@@ -668,7 +655,8 @@ def izchisti_izbrania_detail():
         if izbrani_elementi.has_key('R') and izbrani_elementi['R'] == elementi_za_dupchene[iValue]:
             mahni_element_ot_dqsna_baza()
                   
-    del elementi_za_dupchene[iValue]
+    del elementi_za_dupchene[iValue]            
+    del theSortedList[indexToDelete]
    
     listbox.delete(ANCHOR)
        
@@ -690,11 +678,6 @@ def izberi_element_za_dupchene(side, orienation, pripluzvane):
             if itemValue == item[1]:
                 iValue = item[2]
                 break
-        
-#         for eng, bg in prevod_za_elemnti_v_list.iteritems():
-#             if itemValue == bg:
-#                 iValue = eng
-#                 break
     
         izbranElement = elementi_za_dupchene[iValue]
         izbranElement.purvonachalnoPolojenie = ''
@@ -1561,11 +1544,10 @@ def suzdai_gcode_file():
         fw.write(zavurtiNaMaxOboroti)
         fw.write(prediNachalnoPozicionirane)
     
-    def gcode_lines_za_dupka(dupka, typeHiliV, baza):  
+    def gcode_lines_za_dupka(dupka, typeHiliV, baza, locDebelinaMaterial):  
         global TT       
         global n10 
         
-        locDebelinaMaterial = float(debelinaMaterial)
         dulbochinaNaDupkata = dupka['h']
         
         SD = "{0:.1f}".format(izberi_skorost(skorostZaInstrumenti, TT))
@@ -1580,7 +1562,7 @@ def suzdai_gcode_file():
                     dulbochinaNaDupkata = dupka['defh']
             else:
                 instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 0)
-            locDebelinaMaterial = 0
+            locDebelinaMaterial = 5
         
         purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 5)    
         if instrZaDupka != TT:  
@@ -1623,42 +1605,53 @@ def suzdai_gcode_file():
         global n10
         fw.write('N'+str(n10)+'G00X'+str("{0:.3f}".format(PLOT_NA_MACHINA_X/2))+'Y0.000Z'+str(bezopasno_z)+'\n')
         n10 = n10 + 10
-        fw.write('N'+str(n10)+'M1\n')
+        fw.write('N'+str(n10)+'M5 M1\n')
         n10 = n10 + 10
+        
+    
+    debelinaMaterialLqvo = 0
+    debelinaMaterialDqsno = 0
+    
+    if len(leftVertikalDupki) > 0:
+        razmerDet = izbrani_elementi['L'].razmeri
+        debelinaMaterialLqvo = razmerDet['h']
+    if len(rightVertikalDupki) > 0:
+        razmerDet = izbrani_elementi['R'].razmeri
+        debelinaMaterialDqsno = razmerDet['h']
         
     if napraviHorizontalniOtvori == 1:
         #Dupki - LQVA BAZA, HORIZONTAL
         for dupka in leftHorizontDupki:
             if t11instrument == 0:
-                gcode_lines_za_dupka(dupka, 'H', 'L')
+                gcode_lines_za_dupka(dupka, 'H', 'L', debelinaMaterialLqvo)
             else:
                 if dupka.has_key('f'):
                     if dupka['f'] == 1:
-                        gcode_lines_za_dupka(dupka, 'H', 'L')
+                        gcode_lines_za_dupka(dupka, 'H', 'L', debelinaMaterialLqvo)
                 else:
-                    gcode_lines_za_dupka(dupka, 'H', 'L')
+                    gcode_lines_za_dupka(dupka, 'H', 'L', debelinaMaterialLqvo)
                        
     if napraviVertiklaniOtvori == 1:
         #Dupki - LQVA BAZA, VERTIKAL
         for dupka in leftVertikalDupki:
-            gcode_lines_za_dupka(dupka, 'V', 'L')
+            gcode_lines_za_dupka(dupka, 'V', 'L', debelinaMaterialLqvo)
         
     if napraviHorizontalniOtvori == 1:
         #Dupki - DQSNA BAZA, HORIZONTAL
         for dupka in rightHorizontDupki:
             if t11instrument == 0:
-                gcode_lines_za_dupka(dupka, 'H', 'R')
+                gcode_lines_za_dupka(dupka, 'H', 'R', debelinaMaterialDqsno)
             else:
                 if dupka.has_key('f'):
                     if dupka['f'] == 1:
-                        gcode_lines_za_dupka(dupka, 'H', 'R')
+                        gcode_lines_za_dupka(dupka, 'H', 'R', debelinaMaterialDqsno)
                 else:
-                    gcode_lines_za_dupka(dupka, 'H', 'R')
+                    gcode_lines_za_dupka(dupka, 'H', 'R', debelinaMaterialDqsno)
         
     if napraviVertiklaniOtvori == 1:   
         #Dupki - DQSNA BAZA, VERTIKAL    
         for dupka in rightVertikalDupki:
-            gcode_lines_za_dupka(dupka, 'V', 'R')
+            gcode_lines_za_dupka(dupka, 'V', 'R', debelinaMaterialDqsno)
     
     if postaviPausa == 1:
         postavi_pauza(bezopasno_z)
@@ -1707,9 +1700,14 @@ def pokaji_suzdai_detail_window():
         detail = ElementZaDupchene(imeValue.get(), razmeri_map, dupki_blank)
         ekey = 'customdetail'+imeValue.get()
         elementi_za_dupchene[ekey] = detail
-        prevod_za_elemnti_v_list[ekey] = u'Въведен детайл: '+imeValue.get()+'..... '+str(razmer_x)+' x '+str(razmer_y)
+        prevod = u'Въведен детайл: '+imeValue.get()+' ..... '+str(razmer_x)+' x '+str(razmer_y)+' x '+str(debelina)
         
-        prevod = prevod_za_elemnti_v_list[ekey]
+        global theSortedList
+        theSortedList.append((100, prevod, ekey))
+        
+        #prevod_za_elemnti_v_list[ekey] = u'Въведен детайл: '+imeValue.get()+'..... '+str(razmer_x)+' x '+str(razmer_y)
+        
+
         listbox.insert(END, prevod)
 
         top.destroy()
@@ -2081,23 +2079,29 @@ def pokaji_redaktirai_window(side):
 print ('*** BEGIN PROGRAM *************************')
 iztrii_temp_gcode_file()
 instrumentiOtConfig = read_instruments()
-
+    
 mainframe = Tk()
 #mainframe.geometry('450x450+500+300') - Use that for window size
 w,h=mainframe.winfo_screenwidth(),mainframe.winfo_screenheight()
-mainframe.geometry("%dx%d+0+0" % (w-100, h-100))
 
+# Resolution
+useLowerResolution = 0
 canvasW = 1100
 canvasH = 700
 listboxW = 50
 listboxH = 40
-buttonW = 10
 if w <= 1400:
-    canvasW = 750
+    canvasW = 720
     listboxW = 30
     listboxH = 30
+    useLowerResolution = 1
 if h <= 800:
     canvasH = 550
+    useLowerResolution = 1
+    
+mainframe.geometry("%dx%d+0+0" % (w, h-100))
+
+
 
 ''' ***************************************************************************
 *** Variables za stoinosti na instrumentite
@@ -2217,10 +2221,13 @@ editButtonLeftBaza = Button(leftBazaLabelBox, text=editButtonText, bg="lightblue
 editButtonLeftBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
 pripluzniButton = Button(buttonsZaMasataFrame, text=pripluzniButtonText, bg="lightblue", state=DISABLED, command=pripluzni_element)
-pripluzniButton.grid(row=0, column=1, padx=100, pady =5, sticky=S)
-
 rightBazaLabelBox = LabelFrame(buttonsZaMasataFrame, text=rightBazaGrouperText)
-rightBazaLabelBox.grid(row=0, column=2, sticky=E, padx=20, pady=2)
+if useLowerResolution == 1:
+    pripluzniButton.grid(row=0, column=1, padx=50, pady =5, sticky=S)
+    rightBazaLabelBox.grid(row=0, column=2, sticky=W,padx=20, pady=2)
+else:
+    pripluzniButton.grid(row=0, column=1, padx=100, pady =5, sticky=S)
+    rightBazaLabelBox.grid(row=0, column=2, sticky=E, padx=20, pady=2)
 rotateButtonRightBaza = Button(rightBazaLabelBox, text=rotateButtonText, bg="lightblue", command=rotate_element_dqsna_baza)
 rotateButtonRightBaza.grid(row=0, sticky=W, padx=2, pady=2)
 removeElementButtonRightBaza = Button(rightBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_dqsna_baza)
@@ -2242,7 +2249,7 @@ listboxVerticalScrollbar.config(command=listbox.yview)
 
 iztriiVsichkoButton = Button(listboxLabelFrame, text=izchistiVsichkoButtonText, command=izchisti_vschki_detaili)
 iztriiDetailButton = Button(listboxLabelFrame, text=izchistiIzbranDetailButtonText, command=izchisti_izbrania_detail)
-if listboxH <= 30:
+if useLowerResolution == 1:
     iztriiVsichkoButton.grid(row=4, padx = 10, pady=5, sticky=E)
     iztriiDetailButton.grid(row=5, padx=10, sticky=E)
 else:
