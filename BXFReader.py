@@ -6,6 +6,7 @@ import time, os
 from Tkinter import *
 from tkFileDialog import askopenfilename,asksaveasfilename
 from ConfigReader import read_instruments,write_instruments,sort_detail_list
+from Optimizacii import optimizirai_otvori
 
 try:
     import xml.etree.cElementTree as ET
@@ -1456,10 +1457,10 @@ def suzdai_gcode_file():
     else:
         n10 = 30
         
-    leftHorizontDupki = []
-    leftVertikalDupki = []
-    rightHorizontDupki = []
-    rightVertikalDupki = [] 
+    leftHorizontDupkiNeOpt = []
+    leftVertikalDupkiNeOpt = []
+    rightHorizontDupkiNeOpt = []
+    rightVertikalDupkiNeOpt = [] 
     
     ''' COMENTARI '''
     # Tova e samo za komentar v g-code za da vidq koq sled koq dupka se dupchi
@@ -1470,13 +1471,13 @@ def suzdai_gcode_file():
         if dupka['t'] == 1:
             if napraviHorizontalniOtvori == 1 and dupka['y']== 0:
                 typeDupka = "(Horizontalen otvor: "
-                leftHorizontDupki.append(dupka)
+                leftHorizontDupkiNeOpt.append(dupka)
                 dupkaLine = typeDupka + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
                 fw.write(dupkaLine)
         else:
             if napraviVertiklaniOtvori == 1:
                 typeDupka = "(Vertikalen otvor: "
-                leftVertikalDupki.append(dupka)
+                leftVertikalDupkiNeOpt.append(dupka)
                 dupkaLine = typeDupka + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
                 fw.write(dupkaLine)
     
@@ -1487,15 +1488,33 @@ def suzdai_gcode_file():
         if dupka['t'] == 1:
             if napraviHorizontalniOtvori == 1 and dupka['y']== 0:
                 typeDupka = "(Horizontalen otvor: "
-                rightHorizontDupki.append(dupka)
+                rightHorizontDupkiNeOpt.append(dupka)
                 dupkaLine = typeDupka + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
                 fw.write(dupkaLine)   
         else:
             if napraviVertiklaniOtvori == 1:
                 typeDupka = "(Vertikalen otvor: "
-                rightVertikalDupki.append(dupka)      
+                rightVertikalDupkiNeOpt.append(dupka)      
                 dupkaLine = typeDupka + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
                 fw.write(dupkaLine)   
+    
+    #Optimizacia
+    if len(leftVertikalDupkiNeOpt) > 0:
+        leftVertikalDupki = optimizirai_otvori(leftVertikalDupkiNeOpt)
+    else:
+        leftVertikalDupki = []
+    if len(leftHorizontDupkiNeOpt) > 0:
+        leftHorizontDupki = optimizirai_otvori(leftHorizontDupkiNeOpt)
+    else:
+        leftHorizontDupki = []
+    if len(rightHorizontDupkiNeOpt) > 0:
+        rightHorizontDupki = optimizirai_otvori(rightHorizontDupkiNeOpt)
+    else:
+        rightHorizontDupki = []
+    if len(rightVertikalDupkiNeOpt) > 0:
+        rightVertikalDupki = optimizirai_otvori(rightVertikalDupkiNeOpt)
+    else:
+        rightVertikalDupki = []
             
     # Nameri instrument za purvata dupka
     razmerNachalnaDupka = 0

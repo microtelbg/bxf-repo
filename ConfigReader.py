@@ -190,8 +190,7 @@ def sort_detail_list(detaili):
             sortingList.append(ttuple)
     
     return sorted(sortingList, key=lambda element: (element[0], element[1]))
-        
-        
+    
 def pad_with_dot(prevod, elementx, elementy):
     total = len(prevod) + len(elementx) + len(elementy) + 5
     stringToReturn = prevod+' '
