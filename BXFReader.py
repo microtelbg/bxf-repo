@@ -1595,9 +1595,12 @@ def suzdai_gcode_file():
                     dulbochinaNaDupkata = dupka['defh']
             else:
                 instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 0)
-            locDebelinaMaterial = 5
+            locDebelinaMaterial = 0
         
         purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 5)    
+        if typeHiliV == 'H':
+            purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 10)  
+            
         if instrZaDupka != TT:  
             # Smeni instrumenta
             TT = instrZaDupka
@@ -1773,6 +1776,8 @@ def redaktirai_desen_detail():
 def pokaji_redaktirai_window(side):
     
     listOfFiksove = []
+    listOfVertikali = []
+    listOfHorizontali = []
 
     def on_closing():
         ramka.destroy()
@@ -1805,8 +1810,6 @@ def pokaji_redaktirai_window(side):
         dulbXEntry = Entry(voFrame, textvariable=vertikalenOtvorDulbochinaValue)
         dulbXEntry.grid(row=4, column=1, padx = 2, pady = 2, sticky=E)
         
-        
-        
         raztoqnieLabel = Label(voFrame, text=raztoqnieMejduOtvori)
         raztoqnieLabel.grid(row=5, sticky=W)
         raztoqnieEntry = Entry(voFrame, textvariable=raztoqnieMejduVertikalniValue)
@@ -1816,8 +1819,6 @@ def pokaji_redaktirai_window(side):
         broiEntry = Entry(voFrame, textvariable=broiVertikalniOtvoriValue)
         broiEntry.grid(row=6, column=1, padx = 2, pady = 2, sticky=E)
         
-        
-        
         copyPoXCheckBox = Checkbutton(frame1, text=kopiraiOtvorPoXSimetrichnoLabelText, variable=simetrichnoOtvorPoXValue)
         copyPoXCheckBox.grid(row=1, sticky=W)
         copyPoYCheckBox = Checkbutton(frame1, text=kopiraiOtvorPoYSimetrichnoLabelText, variable=simetrichnoOtvorPoYValue)
@@ -1825,9 +1826,9 @@ def pokaji_redaktirai_window(side):
         
         postaviFixButton = Button(frame1, text=postaviOtvorText, width=20, command=postavi_vertikalni_otvori)
         postaviFixButton.grid(row=5, padx = 5, pady = 5, sticky=E)
-        otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20, command=iztrii_posleden_fiks)
+        otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20, command=iztrii_posleden_vertikalen)
         otkajiFixButton.grid(row=6, padx = 5, pady = 5, sticky=E)
-        izchistiFixButton = Button(frame1, text=izchistiOtvoriText, width=20, command=iztrii_vsichki_fiksove)
+        izchistiFixButton = Button(frame1, text=izchistiOtvoriText, width=20, command=iztrii_vsichki_vertikalni)
         izchistiFixButton.grid(row=7, padx = 5, pady = 5, sticky=E)
         zapaziiFixButton = Button(frame1, text=zapaziOtvoriText, width=20, command=on_closing)
         zapaziiFixButton.grid(row=8, padx = 5, pady = 5, sticky=E)
@@ -1861,7 +1862,7 @@ def pokaji_redaktirai_window(side):
         raztoqnieEntry.grid(row=5, column=1, padx = 2, pady = 2, sticky=E)
         broiLabel = Label(hoFrame, text=broiOtvori)
         broiLabel.grid(row=6, sticky=W)
-        broiEntry = Entry(hoFrame, textvariable=broiVertikalniOtvoriValue)
+        broiEntry = Entry(hoFrame, textvariable=broiHorizontalniOtvoriValue)
         broiEntry.grid(row=6, column=1, padx = 2, pady = 2, sticky=E)
         copyPoXCheckBox = Checkbutton(frame1, text=kopiraiOtvorPoXSimetrichnoLabelText, variable=simetrichnoHorizontalenOtvorPoXValue)
         copyPoXCheckBox.grid(row=1, sticky=W)
@@ -1870,9 +1871,9 @@ def pokaji_redaktirai_window(side):
         
         postaviFixButton = Button(frame1, text=postaviOtvorText, width=20, command=postavi_horizontalni_otvori)
         postaviFixButton.grid(row=5, padx = 5, pady = 5, sticky=E)
-        otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20, command=iztrii_posleden_fiks)
+        otkajiFixButton = Button(frame1, text=stupkaNazadLabelText, width=20, command=iztrii_posleden_horizontalen)
         otkajiFixButton.grid(row=6, padx = 5, pady = 5, sticky=E)
-        izchistiFixButton = Button(frame1, text=izchistiOtvoriText, width=20, command=iztrii_vsichki_fiksove)
+        izchistiFixButton = Button(frame1, text=izchistiOtvoriText, width=20, command=iztrii_vsichki_horizontalni)
         izchistiFixButton.grid(row=7, padx = 5, pady = 5, sticky=E)
         zapaziiFixButton = Button(frame1, text=zapaziOtvoriText, width=20, command=on_closing)
         zapaziiFixButton.grid(row=8, padx = 5, pady = 5, sticky=E)
@@ -1928,37 +1929,102 @@ def pokaji_redaktirai_window(side):
         zapaziiFixButton.grid(row=8, padx = 5, pady = 5, sticky=E)
     
     def iztrii_vsichki_fiksove():
+        iztrii_vsichki_otvori('fiks')
+        
+    def iztrii_posleden_fiks():
+        iztrii_posleden_otvor('fiks')
+    
+    def iztrii_vsichki_horizontalni():
+        iztrii_vsichki_otvori('horizontal')
+        
+    def iztrii_posleden_horizontalen():
+        iztrii_posleden_otvor('horizontal')
+        
+    def iztrii_vsichki_vertikalni():
+        iztrii_vsichki_otvori('vertikal')
+        
+    def iztrii_posleden_vertikalen():
+        iztrii_posleden_otvor('vertikal')
+        
+    def iztrii_vsichki_otvori(vid):
         izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
         dupki_na_elementa = izbranElement.dupki
+        dupkiBezOtvori = []
         
-        del listOfFiksove[:]
-        dupkiBezFiksove = []
-         
-        for fiks in dupki_na_elementa:
-            if not (fiks.has_key('fv') or fiks.has_key('f')):
-                dupkiBezFiksove.append(fiks)
-                
+        if(vid == 'fiks'):
+            del listOfFiksove[:]
+          
+            for fiks in dupki_na_elementa:
+                if not (fiks.has_key('fv') or fiks.has_key('f')):
+                    dupkiBezOtvori.append(fiks)
+                    
+        elif(vid == 'vertikal'):
+            del listOfVertikali[:]
+            
+            for verOtvor in dupki_na_elementa:
+                if verOtvor.has_key('fv') or verOtvor.has_key('f'):
+                    dupkiBezOtvori.append(verOtvor)
+                if not verOtvor.has_key('t'):
+                    dupkiBezOtvori.append(verOtvor)
+                elif verOtvor['t'] == 'H':
+                    dupkiBezOtvori.append(verOtvor)   
+                    
+        elif(vid == 'horizontal'):
+            del listOfHorizontali[:]
+            
+            for horOtvor in dupki_na_elementa:
+                if horOtvor.has_key('fv') or horOtvor.has_key('f'):
+                    dupkiBezOtvori.append(horOtvor)
+                if not horOtvor.has_key('t'):
+                    dupkiBezOtvori.append(horOtvor)
+                elif horOtvor['t'] == 'V':
+                    dupkiBezOtvori.append(horOtvor)   
+                    
         del dupki_na_elementa[:]
-        izbranElement.dupki = dupkiBezFiksove
+        izbranElement.dupki = dupkiBezOtvori
         
         rcanvas.delete(ALL)
         narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
     
-    def iztrii_posleden_fiks():
-        if len(listOfFiksove) > 0:
-            d1 = listOfFiksove.pop()
-            d2 = listOfFiksove.pop()
-            d3 = listOfFiksove.pop()
+    def iztrii_posleden_otvor(vid):
+        if vid == 'fiks':
+            if len(listOfFiksove) > 0:
+                d1 = listOfFiksove.pop()
+                d2 = listOfFiksove.pop()
+                d3 = listOfFiksove.pop()
+                
+                izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
+                dupki_na_elementa = izbranElement.dupki
+                
+                dupki_na_elementa.remove(d1)
+                dupki_na_elementa.remove(d2)
+                dupki_na_elementa.remove(d3)
+                
+                rcanvas.delete(ALL)
+                narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
+                
+        elif vid == 'vertikal':
+            if len(listOfVertikali) > 0:
+                vd = listOfVertikali.pop()
+                
+                izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
+                dupki_na_elementa = izbranElement.dupki
+                
+                dupki_na_elementa.remove(vd)
+                rcanvas.delete(ALL)
+                narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
+        elif vid == 'horizontal':
+            if len(listOfHorizontali) > 0:
+                hd = listOfHorizontali.pop()
+                
+                izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
+                dupki_na_elementa = izbranElement.dupki
+                
+                dupki_na_elementa.remove(hd)
+                rcanvas.delete(ALL)
+                narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
             
-            izbranElement = izbrani_elementi[izbranElementZaRedakciaInd]
-            dupki_na_elementa = izbranElement.dupki
             
-            dupki_na_elementa.remove(d1)
-            dupki_na_elementa.remove(d2)
-            dupki_na_elementa.remove(d3)
-            
-            rcanvas.delete(ALL)
-            narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
     
     def postavi_fiks():
         postavi_dupki('fiks')
@@ -1989,7 +2055,8 @@ def pokaji_redaktirai_window(side):
         copyCentFix = 0
         zyl_h_hor = 0
         zyl_r_hor = 0
-        posoka = 'HORIZONTAL'
+        zyl_h = 0
+        zyl_r = 0
         if vid == 'fiks':
             zyl_pos_x = float(fiksXValue.get())
             zyl_pos_y = float(fixYValue.get())
@@ -2011,12 +2078,12 @@ def pokaji_redaktirai_window(side):
             broi_otvori = broiVertikalniOtvoriValue.get()
     
             simPoX = simetrichnoOtvorPoXValue.get()
-            simPoY = simetrichnoOtvorPoXValue.get()
+            simPoY = simetrichnoOtvorPoYValue.get()
         elif vid == 'horizontal':
             zyl_pos_x = float(horizontalenOtvorXValue.get())
             zyl_pos_y = float(horizontalenOtvorYValue.get())
-            zyl_h = float(dulbochinaHorizontalenOtvorValue.get())
-            zyl_r = float(horizontalenOtvorDiamValue.get())/2.0
+            zyl_h_hor = float(dulbochinaHorizontalenOtvorValue.get())
+            zyl_r_hor = float(horizontalenOtvorDiamValue.get())/2.0
             raztoqnie_mejdu_otvori = float(raztoqnieMejduHorizontalenValue.get())
             broi_otvori = broiHorizontalniOtvoriValue.get()
     
@@ -2059,17 +2126,35 @@ def pokaji_redaktirai_window(side):
             elif vid == 'vertikal':
                 if not is_dupka_duplicate(dupka1, dupki_na_elementa):
                     del dupka1['fv']
+                    dupka1['t'] = "V"
                     dupki_na_elementa.append(dupka1)
+                    listOfVertikali.append(dupka1)
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            if posoka == 'HORIZONTAL':
-                                novX = dupka1['x'] + raztoqnie_mejdu_otvori*cnt
-                                if element_x > novX:
-                                    dupkaV = {"x" :novX, "y": dupka1['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
-                                    if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
-                                        dupki_na_elementa.append(dupkaV)
+                            novX = dupka1['x'] + raztoqnie_mejdu_otvori*cnt
+                            if element_x > novX:
+                                dupkaV = {"x" :novX, "y": dupka1['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
+                                if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
+                                    dupki_na_elementa.append(dupkaV)
+                                    listOfVertikali.append(dupkaV)
                             cnt = cnt+1
+            elif vid == 'horizontal':
+                    del dupka1a['f']
+                    del dupka1a['defh']
+                    dupki_na_elementa.append(dupka1a)
+                    listOfHorizontali.append(dupka1a)
+                    if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
+                        cnt = 1
+                        while cnt < broi_otvori:
+                            novX = dupka1a['x'] + raztoqnie_mejdu_otvori*cnt
+                            if element_x > novX:
+                                dupkaH = {"x" :novX, "y": dupka1a['y'], "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                                if not is_dupka_duplicate(dupkaH, dupki_na_elementa):
+                                    dupki_na_elementa.append(dupkaH)
+                                    listOfHorizontali.append(dupkaH)
+                            cnt = cnt+1   
+                            
         if simPoX == 1:
             # Vtorata dupka po X (ogledalna na dupka)
             if rotation == 0:
@@ -2089,15 +2174,47 @@ def pokaji_redaktirai_window(side):
                 dupka2a  = {"x" : element_y, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
                 dupka2b  = {"x" : element_y, "y": element_x-zyl_pos_x+raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
              
-            if not is_dupka_duplicate(dupka2, dupki_na_elementa):
-                dupki_na_elementa.append(dupka2)
-                listOfFiksove.append(dupka2)
-            if not is_dupka_duplicate(dupka2b, dupki_na_elementa):    
-                dupki_na_elementa.append(dupka2b)
-                listOfFiksove.append(dupka2b)
-            if not is_dupka_duplicate(dupka2a, dupki_na_elementa):    
-                dupki_na_elementa.append(dupka2a)
-                listOfFiksove.append(dupka2a)
+            if vid == 'fiks':
+                if not is_dupka_duplicate(dupka2, dupki_na_elementa):
+                    dupki_na_elementa.append(dupka2)
+                    listOfFiksove.append(dupka2)
+                if not is_dupka_duplicate(dupka2b, dupki_na_elementa):    
+                    dupki_na_elementa.append(dupka2b)
+                    listOfFiksove.append(dupka2b)
+                if not is_dupka_duplicate(dupka2a, dupki_na_elementa):    
+                    dupki_na_elementa.append(dupka2a)
+                    listOfFiksove.append(dupka2a)
+            elif vid == 'vertikal':
+                if not is_dupka_duplicate(dupka2, dupki_na_elementa):
+                    del dupka2['fv']
+                    dupka2['t'] = "V"
+                    dupki_na_elementa.append(dupka2)
+                    listOfVertikali.append(dupka2)
+                    if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
+                        cnt = 1
+                        while cnt < broi_otvori:
+                            novX = dupka2['x'] - raztoqnie_mejdu_otvori*cnt
+                            if novX > 0:
+                                dupkaV = {"x" :novX, "y": dupka2['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
+                                if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
+                                    dupki_na_elementa.append(dupkaV)
+                                    listOfVertikali.append(dupkaV)
+                            cnt = cnt+1
+            elif vid == 'horizontal':
+                    del dupka2a['f']
+                    del dupka2a['defh']
+                    dupki_na_elementa.append(dupka2a)
+                    listOfHorizontali.append(dupka2a)
+                    if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
+                        cnt = 1
+                        while cnt < broi_otvori:
+                            novX = dupka2a['x'] - raztoqnie_mejdu_otvori*cnt
+                            if novX > 0:
+                                dupkaH = {"x" :novX, "y": dupka2a['y'], "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                                if not is_dupka_duplicate(dupkaH, dupki_na_elementa):
+                                    dupki_na_elementa.append(dupkaH)
+                                    listOfHorizontali.append(dupkaH)
+                            cnt = cnt+1  
 
         
         if simPoY == 1:
@@ -2119,15 +2236,47 @@ def pokaji_redaktirai_window(side):
                 dupka3a  = {"x" : 0, "y": zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
                 dupka3b  = {"x" : 0, "y": zyl_pos_x-raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
                 
-            if not is_dupka_duplicate(dupka3, dupki_na_elementa):
-                dupki_na_elementa.append(dupka3)
-                listOfFiksove.append(dupka3)
-            if not is_dupka_duplicate(dupka3b, dupki_na_elementa):    
-                dupki_na_elementa.append(dupka3b)
-                listOfFiksove.append(dupka3b)   
-            if not is_dupka_duplicate(dupka3a, dupki_na_elementa):    
-                dupki_na_elementa.append(dupka3a)
-                listOfFiksove.append(dupka3a)
+            if vid == 'fiks':
+                if not is_dupka_duplicate(dupka3, dupki_na_elementa):
+                    dupki_na_elementa.append(dupka3)
+                    listOfFiksove.append(dupka3)
+                if not is_dupka_duplicate(dupka3b, dupki_na_elementa):    
+                    dupki_na_elementa.append(dupka3b)
+                    listOfFiksove.append(dupka3b)
+                if not is_dupka_duplicate(dupka3a, dupki_na_elementa):    
+                    dupki_na_elementa.append(dupka3a)
+                    listOfFiksove.append(dupka3a)
+            elif vid == 'vertikal':
+                if not is_dupka_duplicate(dupka3, dupki_na_elementa):
+                    del dupka3['fv']
+                    dupka3['t'] = "V"
+                    dupki_na_elementa.append(dupka3)
+                    listOfVertikali.append(dupka3)
+                    if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
+                        cnt = 1
+                        while cnt < broi_otvori:
+                            novX = dupka3['x'] + raztoqnie_mejdu_otvori*cnt
+                            if element_x > novX:
+                                dupkaV = {"x" :novX, "y":  dupka3['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
+                                if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
+                                    dupki_na_elementa.append(dupkaV)
+                                    listOfVertikali.append(dupkaV)
+                            cnt = cnt+1
+            elif vid == 'horizontal':
+                    del dupka3a['f']
+                    del dupka3a['defh']
+                    dupki_na_elementa.append(dupka3a)
+                    listOfHorizontali.append(dupka3a)
+                    if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
+                        cnt = 1
+                        while cnt < broi_otvori:
+                            novX = dupka3a['x'] + raztoqnie_mejdu_otvori*cnt
+                            if element_x > novX:
+                                dupkaH = {"x" :novX, "y": dupka3['y'], "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                                if not is_dupka_duplicate(dupkaH, dupki_na_elementa):
+                                    dupki_na_elementa.append(dupkaH)
+                                    listOfHorizontali.append(dupkaH)
+                            cnt = cnt+1  
 
             
         if simPoX == 1 and simPoY == 1:
@@ -2148,15 +2297,47 @@ def pokaji_redaktirai_window(side):
                 dupka4a  = {"x" : 0, "y": element_x-zyl_pos_x, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H", "f" : 0, "defh" : zyl_h_hor}
                 dupka4b  = {"x" : 0, "y": element_x-zyl_pos_x+raztoqnie, "h" : dulbochina25, "r" : zyl_r_hor, "t" : "H", "f" : 1, "defh" : zyl_h_hor}
                 
-            if not is_dupka_duplicate(dupka4, dupki_na_elementa):
-                dupki_na_elementa.append(dupka4)
-                listOfFiksove.append(dupka4)
-            if not is_dupka_duplicate(dupka4b, dupki_na_elementa):    
-                dupki_na_elementa.append(dupka4b)
-                listOfFiksove.append(dupka4b) 
-            if not is_dupka_duplicate(dupka4a, dupki_na_elementa):    
-                dupki_na_elementa.append(dupka4a)
-                listOfFiksove.append(dupka4a)
+            if vid == 'fiks':
+                if not is_dupka_duplicate(dupka4, dupki_na_elementa):
+                    dupki_na_elementa.append(dupka4)
+                    listOfFiksove.append(dupka4)
+                if not is_dupka_duplicate(dupka4b, dupki_na_elementa):    
+                    dupki_na_elementa.append(dupka4b)
+                    listOfFiksove.append(dupka4b)
+                if not is_dupka_duplicate(dupka4a, dupki_na_elementa):    
+                    dupki_na_elementa.append(dupka4a)
+                    listOfFiksove.append(dupka4a)
+            elif vid == 'vertikal':
+                if not is_dupka_duplicate(dupka4, dupki_na_elementa):
+                    del dupka4['fv']
+                    dupka4['t'] = "V"
+                    dupki_na_elementa.append(dupka4)
+                    listOfVertikali.append(dupka4)
+                    if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
+                        cnt = 1
+                        while cnt < broi_otvori:
+                            novX = dupka4['x'] - raztoqnie_mejdu_otvori*cnt
+                            if element_x > novX:
+                                dupkaV = {"x" :novX, "y": dupka4['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
+                                if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
+                                    dupki_na_elementa.append(dupkaV)
+                                    listOfVertikali.append(dupkaV)
+                            cnt = cnt+1
+            elif vid == 'horizontal':
+                    del dupka4a['f']
+                    del dupka4a['defh']
+                    dupki_na_elementa.append(dupka4a)
+                    listOfHorizontali.append(dupka4a)
+                    if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
+                        cnt = 1
+                        while cnt < broi_otvori:
+                            novX = dupka4a['x'] - raztoqnie_mejdu_otvori*cnt
+                            if element_x > novX:
+                                dupkaH = {"x" :novX, "y": dupka4a['y'], "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                                if not is_dupka_duplicate(dupkaH, dupki_na_elementa):
+                                    dupki_na_elementa.append(dupkaH)
+                                    listOfHorizontali.append(dupkaH)
+                            cnt = cnt+1  
 
             
         if centFix == 1:
