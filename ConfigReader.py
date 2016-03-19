@@ -183,6 +183,16 @@ def sort_detail_list(detaili):
             sortingPlace = defaultOrder['Unterboden']
             ttuple = sortingPlace, prevod, key  
             sortingList.append(ttuple)
+        elif 'Tuer' in key:
+            prevod = u'Врата'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            sortingPlace = defaultOrder['Tuer']
+            ttuple = sortingPlace, prevod, key  
+            sortingList.append(ttuple)
+        elif 'Doppeltuer' in key:
+            prevod = u'Двойна врата'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            sortingPlace = defaultOrder['Tuer']
+            ttuple = sortingPlace, prevod, key  
+            sortingList.append(ttuple)
         elif 'customdetail' in key:
             prevod = u'Въведен детайл: '+imeValue+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
             sortingPlace = defaultOrder['customdetail']

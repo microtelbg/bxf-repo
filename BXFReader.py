@@ -593,15 +593,15 @@ def suzdai_element_vrata(root, elements, name, bxfNo):
                 vrata = ElementZaDupchene(name, razmeri_map, dupki_map)
 
                 if name == 'Tuer':
-                    ekey = 'DET:'+str(bxfNo)+'Vrata-'+parentName+'Front-'+frontID
+                    ekey = 'DET:'+str(bxfNo)+'Tuer-'+parentName+'Front-'+frontID
                     elements[ekey] = vrata
                 elif name == 'Doppeltuer':
-                    ekey = 'DET:'+str(bxfNo)+'Dvoina Vrata-'+parentName+'Front-'+frontID
+                    ekey = 'DET:'+str(bxfNo)+'Doppeltuer-'+parentName+'Front-'+frontID
                     elements[ekey] = vrata
                 elif name == 'Aussenschubkasten':
                     elements['DET:'+str(bxfNo)+'Aussenschubkasten-'+parentName+'-Front-'+frontID] = vrata
                 elif name == 'Klappensystem':
-                    elements['DET:'+str(bxfNo)+'Vrata Aventos HF-'+parentName+'Front-'+frontID] = vrata
+                    elements['DET:'+str(bxfNo)+'Klappensystem-'+parentName+'Front-'+frontID] = vrata
                 else:
                     elements['DET:'+str(bxfNo)+name] = vrata
 
@@ -1548,33 +1548,38 @@ def suzdai_gcode_file():
         razmerNachalnaDupka = dup['r']*2
         typeHiliV =  'V' 
     
-    if gcodeInProgress == 0 or TT=='':    
-        # Logika za liniite na g-coda
-        if typeHiliV == 'V':
-            TT = izberi_instrument(instrumentiZaVerGlava, razmerNachalnaDupka, 0)
-        else:
-            zaFiks = 0
-            if dup.has_key('f'):
-                if dup['f'] == 1:
-                    zaFiks = 1
-            TT = izberi_instrument(instrumentiZaHorizGlava, razmerNachalnaDupka, zaFiks)
-            
-        HT = 'H'+TT[1]
-        vzemiInstrument = 'N'+str(n10)+TT+'M06\n'
-        n10 = n10 + 10
-        predpazvaneNaZ = 'N'+str(n10)+'G00G43Z'+str(bezopasno_z)+HT+'\n'
-        n10 = n10 + 10
-        zavurtiNaMaxOboroti = 'N'+str(n10)+'S6000M03\n'
-        n10 = n10 + 10
+    #if gcodeInProgress == 0 or TT=='':    
+    # Logika za liniite na g-coda
+    if typeHiliV == 'V':
+        TT = izberi_instrument(instrumentiZaVerGlava, razmerNachalnaDupka, 0)
+    else:
+        zaFiks = 0
+        if dup.has_key('f'):
+            if dup['f'] == 1:
+                zaFiks = 1
+        TT = izberi_instrument(instrumentiZaHorizGlava, razmerNachalnaDupka, zaFiks)
+        
+    HT = 'H'+TT[1]
+    vzemiInstrument = 'N'+str(n10)+TT+'M06\n'
+    n10 = n10 + 10
+    predpazvaneNaZ = 'N'+str(n10)+'G00G43Z'+str(bezopasno_z)+HT+'\n'
+    n10 = n10 + 10
+    zavurtiNaMaxOboroti = 'N'+str(n10)+'S6000M03\n'
+    n10 = n10 + 10
+    
+    if gcodeInProgress == 0:
         prediNachalnoPozicionirane = 'N'+str(n10)+'G94\n'
         n10 = n10 + 10
-        
+    
         # Nachalo na g-code
         fw.write('N10G00G21G17G90G40G49G80\n')    
         fw.write('N20G71G91.1\n')  
-        fw.write(vzemiInstrument)
-        fw.write(predpazvaneNaZ)
-        fw.write(zavurtiNaMaxOboroti)
+        
+    fw.write(vzemiInstrument)
+    fw.write(predpazvaneNaZ)
+    fw.write(zavurtiNaMaxOboroti)
+    
+    if gcodeInProgress == 0:
         fw.write(prediNachalnoPozicionirane)
     
     def gcode_lines_za_dupka(dupka, typeHiliV, baza, locDebelinaMaterial):  
@@ -2132,9 +2137,21 @@ def pokaji_redaktirai_window(side):
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            novX = dupka1['x'] + raztoqnie_mejdu_otvori*cnt
-                            if element_x > novX:
-                                dupkaV = {"x" :novX, "y": dupka1['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
+                            if rotation == 0:
+                                novX = dupka1['x'] + raztoqnie_mejdu_otvori*cnt
+                                novY = dupka1['y']
+                            elif rotation == 1:
+                                novX = dupka1['x'] 
+                                novY = dupka1['y'] - raztoqnie_mejdu_otvori*cnt
+                            elif rotation == 2:
+                                novX = dupka1['x'] - raztoqnie_mejdu_otvori*cnt
+                                novY = dupka1['y']
+                            elif rotation == 3:
+                                novX = dupka1['x'] 
+                                novY = dupka1['y'] + raztoqnie_mejdu_otvori*cnt
+                             
+                            if ((rotation == 0 or rotation == 2) and (element_x >= novX and novX >= 0 and element_y >= novY and novY >= 0)) or ((rotation == 1 or rotation == 3) and (element_y >= novX and novX >= 0 and element_x >= novY and novY >= 0)):
+                                dupkaV = {"x" :novX, "y": novY, "h" : zyl_h, "r" : zyl_r, "t" : "V"}
                                 if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
                                     dupki_na_elementa.append(dupkaV)
                                     listOfVertikali.append(dupkaV)
@@ -2147,9 +2164,21 @@ def pokaji_redaktirai_window(side):
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            novX = dupka1a['x'] + raztoqnie_mejdu_otvori*cnt
-                            if element_x > novX:
-                                dupkaH = {"x" :novX, "y": dupka1a['y'], "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                            if rotation == 0:
+                                novX = dupka1a['x'] + raztoqnie_mejdu_otvori*cnt
+                                novY = dupka1a['y']
+                            elif rotation == 1:
+                                novX = dupka1a['x'] 
+                                novY = dupka1a['y'] - raztoqnie_mejdu_otvori*cnt
+                            elif rotation == 2:
+                                novX = dupka1a['x'] - raztoqnie_mejdu_otvori*cnt
+                                novY = dupka1a['y']
+                            elif rotation == 3:
+                                novX = dupka1a['x'] 
+                                novY = dupka1a['y'] + raztoqnie_mejdu_otvori*cnt
+                                
+                            if ((rotation == 0 or rotation == 2) and (element_x >= novX and novX >= 0 and element_y >= novY and novY >= 0)) or ((rotation == 1 or rotation == 3) and (element_y >= novX and novX >= 0 and element_x >= novY and novY >= 0)):
+                                dupkaH = {"x" :novX, "y": novY, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
                                 if not is_dupka_duplicate(dupkaH, dupki_na_elementa):
                                     dupki_na_elementa.append(dupkaH)
                                     listOfHorizontali.append(dupkaH)
@@ -2193,9 +2222,21 @@ def pokaji_redaktirai_window(side):
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            novX = dupka2['x'] - raztoqnie_mejdu_otvori*cnt
-                            if novX > 0:
-                                dupkaV = {"x" :novX, "y": dupka2['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
+                            if rotation == 0:
+                                novX = dupka2['x'] - raztoqnie_mejdu_otvori*cnt
+                                novY = dupka2['y']
+                            elif rotation == 1:
+                                novX = dupka2['x'] 
+                                novY = dupka2['y'] + raztoqnie_mejdu_otvori*cnt
+                            elif rotation == 2:
+                                novX = dupka2['x'] + raztoqnie_mejdu_otvori*cnt
+                                novY = dupka2['y']
+                            elif rotation == 3:
+                                novX = dupka2['x'] 
+                                novY = dupka2['y'] - raztoqnie_mejdu_otvori*cnt
+                                
+                            if ((rotation == 0 or rotation == 2) and (element_x >= novX and novX >= 0 and element_y >= novY and novY >= 0)) or ((rotation == 1 or rotation == 3) and (element_y >= novX and novX >= 0 and element_x >= novY and novY >= 0)):
+                                dupkaV = {"x" :novX, "y": novY, "h" : zyl_h, "r" : zyl_r, "t" : "V"}
                                 if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
                                     dupki_na_elementa.append(dupkaV)
                                     listOfVertikali.append(dupkaV)
@@ -2208,9 +2249,21 @@ def pokaji_redaktirai_window(side):
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            novX = dupka2a['x'] - raztoqnie_mejdu_otvori*cnt
-                            if novX > 0:
-                                dupkaH = {"x" :novX, "y": dupka2a['y'], "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                            if rotation == 0:
+                                novX = dupka2a['x'] - raztoqnie_mejdu_otvori*cnt
+                                novY = dupka2a['y']
+                            elif rotation == 1:
+                                novX = dupka2a['x'] 
+                                novY = dupka2a['y'] + raztoqnie_mejdu_otvori*cnt
+                            elif rotation == 2:
+                                novX = dupka2a['x'] + raztoqnie_mejdu_otvori*cnt
+                                novY = dupka2a['y']
+                            elif rotation == 3:
+                                novX = dupka2a['x'] 
+                                novY = dupka2a['y'] - raztoqnie_mejdu_otvori*cnt
+                                
+                            if ((rotation == 0 or rotation == 2) and (element_x >= novX and novX >= 0 and element_y >= novY and novY >= 0)) or ((rotation == 1 or rotation == 3) and (element_y >= novX and novX >= 0 and element_x >= novY and novY >= 0)):
+                                dupkaH = {"x" :novX, "y": novY, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
                                 if not is_dupka_duplicate(dupkaH, dupki_na_elementa):
                                     dupki_na_elementa.append(dupkaH)
                                     listOfHorizontali.append(dupkaH)
@@ -2255,9 +2308,21 @@ def pokaji_redaktirai_window(side):
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            novX = dupka3['x'] + raztoqnie_mejdu_otvori*cnt
-                            if element_x > novX:
-                                dupkaV = {"x" :novX, "y":  dupka3['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
+                            if rotation == 0:
+                                novX = dupka3['x'] + raztoqnie_mejdu_otvori*cnt
+                                novY = dupka3['y']
+                            elif rotation == 1:
+                                novX = dupka3['x'] 
+                                novY = dupka3['y'] - raztoqnie_mejdu_otvori*cnt
+                            elif rotation == 2:
+                                novX = dupka3['x'] - raztoqnie_mejdu_otvori*cnt
+                                novY = dupka3['y']
+                            elif rotation == 3:
+                                novX = dupka3['x'] 
+                                novY = dupka3['y'] + raztoqnie_mejdu_otvori*cnt
+                                
+                            if ((rotation == 0 or rotation == 2) and (element_x >= novX and novX >= 0 and element_y >= novY and novY >= 0)) or ((rotation == 1 or rotation == 3) and (element_y >= novX and novX >= 0 and element_x >= novY and novY >= 0)):
+                                dupkaV = {"x" :novX, "y":  novY, "h" : zyl_h, "r" : zyl_r, "t" : "V"}
                                 if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
                                     dupki_na_elementa.append(dupkaV)
                                     listOfVertikali.append(dupkaV)
@@ -2270,9 +2335,21 @@ def pokaji_redaktirai_window(side):
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            novX = dupka3a['x'] + raztoqnie_mejdu_otvori*cnt
-                            if element_x > novX:
-                                dupkaH = {"x" :novX, "y": dupka3['y'], "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                            if rotation == 0:
+                                novX = dupka3a['x'] + raztoqnie_mejdu_otvori*cnt
+                                novY = dupka3a['y']
+                            elif rotation == 1:
+                                novX = dupka3a['x'] 
+                                novY = dupka3a['y'] - raztoqnie_mejdu_otvori*cnt
+                            elif rotation == 2:
+                                novX = dupka3a['x'] - raztoqnie_mejdu_otvori*cnt
+                                novY = dupka3a['y']
+                            elif rotation == 3:
+                                novX = dupka3a['x'] 
+                                novY = dupka3a['y'] + raztoqnie_mejdu_otvori*cnt
+                                
+                            if ((rotation == 0 or rotation == 2) and (element_x >= novX and novX >= 0 and element_y >= novY and novY >= 0)) or ((rotation == 1 or rotation == 3) and (element_y >= novX and novX >= 0 and element_x >= novY and novY >= 0)):
+                                dupkaH = {"x" :novX, "y": novY, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
                                 if not is_dupka_duplicate(dupkaH, dupki_na_elementa):
                                     dupki_na_elementa.append(dupkaH)
                                     listOfHorizontali.append(dupkaH)
@@ -2316,9 +2393,21 @@ def pokaji_redaktirai_window(side):
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            novX = dupka4['x'] - raztoqnie_mejdu_otvori*cnt
-                            if element_x > novX:
-                                dupkaV = {"x" :novX, "y": dupka4['y'], "h" : zyl_h, "r" : zyl_r, "t" : "V"}
+                            if rotation == 0:
+                                novX = dupka4['x'] - raztoqnie_mejdu_otvori*cnt
+                                novY = dupka4['y']
+                            elif rotation == 1:
+                                novX = dupka4['x'] 
+                                novY = dupka4['y'] + raztoqnie_mejdu_otvori*cnt
+                            elif rotation == 2:
+                                novX = dupka4['x'] + raztoqnie_mejdu_otvori*cnt
+                                novY = dupka4['y']
+                            elif rotation == 3:
+                                novX = dupka4['x'] 
+                                novY = dupka4['y'] - raztoqnie_mejdu_otvori*cnt
+                                
+                            if ((rotation == 0 or rotation == 2) and (element_x >= novX and novX >= 0 and element_y >= novY and novY >= 0)) or ((rotation == 1 or rotation == 3) and (element_y >= novX and novX >= 0 and element_x >= novY and novY >= 0)):
+                                dupkaV = {"x" :novX, "y": novY, "h" : zyl_h, "r" : zyl_r, "t" : "V"}
                                 if not is_dupka_duplicate(dupkaV, dupki_na_elementa):
                                     dupki_na_elementa.append(dupkaV)
                                     listOfVertikali.append(dupkaV)
@@ -2331,9 +2420,21 @@ def pokaji_redaktirai_window(side):
                     if broi_otvori > 1 and raztoqnie_mejdu_otvori > 0:
                         cnt = 1
                         while cnt < broi_otvori:
-                            novX = dupka4a['x'] - raztoqnie_mejdu_otvori*cnt
-                            if element_x > novX:
-                                dupkaH = {"x" :novX, "y": dupka4a['y'], "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
+                            if rotation == 0:
+                                novX = dupka4a['x'] - raztoqnie_mejdu_otvori*cnt
+                                novY = dupka4a['y']
+                            elif rotation == 1:
+                                novX = dupka4a['x'] 
+                                novY = dupka4a['y'] + raztoqnie_mejdu_otvori*cnt
+                            elif rotation == 2:
+                                novX = dupka4a['x'] + raztoqnie_mejdu_otvori*cnt
+                                novY = dupka4a['y']
+                            elif rotation == 3:
+                                novX = dupka4a['x'] 
+                                novY = dupka4a['y'] - raztoqnie_mejdu_otvori*cnt
+                                
+                            if ((rotation == 0 or rotation == 2) and (element_x >= novX and novX >= 0 and element_y >= novY and novY >= 0)) or ((rotation == 1 or rotation == 3) and (element_y >= novX and novX >= 0 and element_x >= novY and novY >= 0)):
+                                dupkaH = {"x" :novX, "y": novY, "h" : zyl_h_hor, "r" : zyl_r_hor, "t" : "H"}
                                 if not is_dupka_duplicate(dupkaH, dupki_na_elementa):
                                     dupki_na_elementa.append(dupkaH)
                                     listOfHorizontali.append(dupkaH)
