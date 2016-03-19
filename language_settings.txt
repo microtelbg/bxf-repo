@@ -1,0 +1,11 @@
+detail.Oberboden=Горна страна
+detail.Oberboden.OTRAVHIN=Горна цагра отзад
+detail.Oberboden.OTRAVVOR=Горна цагра отпред
+detail.Unterboden=Дъно
+detail.LinkeSeitenwand=Лява страница на корпуса
+detail.RechteSeitenwand=Дясна страница на корпуса
+detail.Aussenschubkasten=Чекмедже
+detail.Aussenschubkasten.Front=Фронт
+detail.Aussenschubkasten.Boden=Дъно
+detail.Aussenschubkasten.Rueckwand=Гръб
+detail.KorpusRueckwand=Гръб на корпуса
