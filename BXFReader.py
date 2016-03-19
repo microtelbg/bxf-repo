@@ -1849,26 +1849,23 @@ def pokaji_redaktirai_window(side):
         xLabel.grid(row=1, sticky=W)
         xEntry = Entry(hoFrame, textvariable=horizontalenOtvorXValue)
         xEntry.grid(row=1, column=1, padx = 2, pady = 2, sticky=E)
-        yLabel = Label(hoFrame, text=otstoqniePoYLabelText)
-        yLabel.grid(row=2, sticky=W)
-        yEntry = Entry(hoFrame, textvariable=horizontalenOtvorYValue)
-        yEntry.grid(row=2, column=1, padx = 2, pady = 2, sticky=E)
+
         diamXLabel = Label(hoFrame, text=diameturHorizontOtvorLabelText)
-        diamXLabel.grid(row=3, sticky=W)
+        diamXLabel.grid(row=2, sticky=W)
         diamXEntry = Entry(hoFrame, textvariable=horizontalenOtvorDiamValue)
-        diamXEntry.grid(row=3, column=1, padx = 2, pady = 2, sticky=E)       
+        diamXEntry.grid(row=2, column=1, padx = 2, pady = 2, sticky=E)       
         dulbXLabel = Label(hoFrame, text=dulbochinaHorizontOtvorYLabelText)
-        dulbXLabel.grid(row=4, sticky=W)
+        dulbXLabel.grid(row=3, sticky=W)
         dulbXEntry = Entry(hoFrame, textvariable=dulbochinaHorizontalenOtvorValue)
-        dulbXEntry.grid(row=4, column=1, padx = 2, pady = 2, sticky=E)
+        dulbXEntry.grid(row=3, column=1, padx = 2, pady = 2, sticky=E)
         raztoqnieLabel = Label(hoFrame, text=raztoqnieMejduOtvori)
-        raztoqnieLabel.grid(row=5, sticky=W)
+        raztoqnieLabel.grid(row=4, sticky=W)
         raztoqnieEntry = Entry(hoFrame, textvariable=raztoqnieMejduHorizontalenValue)
-        raztoqnieEntry.grid(row=5, column=1, padx = 2, pady = 2, sticky=E)
+        raztoqnieEntry.grid(row=4, column=1, padx = 2, pady = 2, sticky=E)
         broiLabel = Label(hoFrame, text=broiOtvori)
-        broiLabel.grid(row=6, sticky=W)
+        broiLabel.grid(row=5, sticky=W)
         broiEntry = Entry(hoFrame, textvariable=broiHorizontalniOtvoriValue)
-        broiEntry.grid(row=6, column=1, padx = 2, pady = 2, sticky=E)
+        broiEntry.grid(row=5, column=1, padx = 2, pady = 2, sticky=E)
         copyPoXCheckBox = Checkbutton(frame1, text=kopiraiOtvorPoXSimetrichnoLabelText, variable=simetrichnoHorizontalenOtvorPoXValue)
         copyPoXCheckBox.grid(row=1, sticky=W)
         copyPoYCheckBox = Checkbutton(frame1, text=kopiraiOtvorPoYSimetrichnoLabelText, variable=simetrichnoHorizontalenOtvorPoYValue)
@@ -2086,7 +2083,7 @@ def pokaji_redaktirai_window(side):
             simPoY = simetrichnoOtvorPoYValue.get()
         elif vid == 'horizontal':
             zyl_pos_x = float(horizontalenOtvorXValue.get())
-            zyl_pos_y = float(horizontalenOtvorYValue.get())
+            zyl_pos_y = 0.0
             zyl_h_hor = float(dulbochinaHorizontalenOtvorValue.get())
             zyl_r_hor = float(horizontalenOtvorDiamValue.get())/2.0
             raztoqnie_mejdu_otvori = float(raztoqnieMejduHorizontalenValue.get())
@@ -2672,11 +2669,11 @@ broiVertikalniOtvoriValue = IntVar()
 simetrichnoOtvorPoXValue = IntVar()
 simetrichnoOtvorPoYValue = IntVar()
 
+broiVertikalniOtvoriValue.set(1)
 ''' ***************************************************************************
 *** Variables za stoinosti na horizontalnite otvori
 *************************************************************************** '''
 horizontalenOtvorXValue = StringVar()
-horizontalenOtvorYValue = StringVar()
 horizontalenOtvorDiamValue = StringVar()
 dulbochinaHorizontalenOtvorValue = StringVar()
 raztoqnieMejduHorizontalenValue = StringVar()
@@ -2684,7 +2681,7 @@ broiHorizontalniOtvoriValue = IntVar()
 simetrichnoHorizontalenOtvorPoXValue = IntVar()
 simetrichnoHorizontalenOtvorPoYValue = IntVar()
 
-
+broiHorizontalniOtvoriValue.set(1)
 # ********** File Menu *************
 mainMenu = Menu(mainframe)
 mainframe.config(menu=mainMenu)
