@@ -4,6 +4,7 @@ import time, os
 ## dd/mm/yyyy format
 
 from Tkinter import *
+import tkMessageBox
 from tkFileDialog import askopenfilename,asksaveasfilename
 from ConfigReader import read_instruments,write_instruments,sort_detail_list
 from Optimizacii import optimizirai_otvori, is_dupka_duplicate
@@ -1291,6 +1292,9 @@ def iztrii_temp_gcode_file():
         os.remove("sample123.txt")
     global gcodeInProgress
     gcodeInProgress = 0
+    global n10
+    n10 = 30
+    
     
 def zapishi_gcode_file():
     global n10
@@ -1334,9 +1338,7 @@ def zapishi_gcode_file():
     gCodeFile.close()
     
     #Delete Temp file:
-    os.remove("sample123.txt")
-    n10 = 30
-    gcodeInProgress = 0
+    iztrii_temp_gcode_file()
 
 def definirai_instrumenti(HorV):
     if HorV == 'V':
@@ -1406,7 +1408,32 @@ def napravi_comment_za_polojenieto(side):
         polojenie = '(Detail na 270 gradusa)'
         
     return polojenie   
+
+def ima_li_lipsvash_instrument(verGlavaInst, horGlavaInst):  
+    if len(dupki_za_gcode_left) > 0:
+        for dupka in dupki_za_gcode_left:
+            diam = dupka['r']*2
+            if dupka['t'] == 1:
+                if not diam in horGlavaInst.values():
+                    print 'lipsva horizontalna glava'
+                    return diam
+            else:
+                if not diam in verGlavaInst.values():
+                    print 'lipsva vertikalna glava'
+                    return diam
         
+        for dupka in dupki_za_gcode_right:
+            diam = dupka['r']*2
+            if dupka['t'] == 1:
+                if not diam in horGlavaInst.values():
+                    print 'lipsva horizontalna glava'
+                    return diam
+            else:
+                if not diam in verGlavaInst.values():
+                    print 'lipsva vertikalna glava'
+                    return diam
+            
+        return 0    
             
 def suzdai_gcode_file():  
     # Line iterator
@@ -1416,6 +1443,14 @@ def suzdai_gcode_file():
     bezopasno_z = "{0:.3f}".format(50.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
     instrumentiZaVerGlava = definirai_instrumenti('V')
     instrumentiZaHorizGlava = definirai_instrumenti('H')
+    
+    lispvashDiametur = ima_li_lipsvash_instrument(instrumentiZaVerGlava, instrumentiZaHorizGlava)
+    if lispvashDiametur > 0:
+        iztrii_temp_gcode_file()
+        msgLipsInst = u'Липсва инструмент с диаметър: '+str(lispvashDiametur)+ u' мм. Поставете липсващия инструмент и генерирайте кода отново.'
+        tkMessageBox.showinfo(title=u'Внимание', message=msgLipsInst)
+        return
+    
     skorostZaInstrumenti = definirai_skorosti()
     t11instrument = 0
     if hginstrument1EntryDiaValue.get() == hginstrument2EntryDiaValue.get():
