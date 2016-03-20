@@ -1796,7 +1796,7 @@ def pokaji_suzdai_detail_window():
         detail = ElementZaDupchene(imeValue.get(), razmeri_map, dupki_blank)
         ekey = 'customdetail'+imeValue.get()
         elementi_za_dupchene[ekey] = detail
-        prevod = u'Въведен детайл: '+imeValue.get()+' ..... '+str(razmer_x)+' x '+str(razmer_y)+' x '+str(debelina)
+        prevod = u'ВД: '+imeValue.get()+' ..... '+str(razmer_x)+' x '+str(razmer_y)+' x '+str(debelina)
         
         global theSortedList
         theSortedList.append((100, prevod, ekey))
@@ -2596,7 +2596,7 @@ def pokaji_redaktirai_window(side):
     rxscrollbar.grid(row=1, column=0,sticky=E+W)
     ryscrollbar = Scrollbar(rcanvasFrame)
     ryscrollbar.grid(row=0, column=1, sticky=N+S)
-    rcanvas = Canvas(rcanvasFrame, bg="grey", bd=0, width=canvasW, heigh=canvasH, scrollregion=(0, 0, 2000, 2000),
+    rcanvas = Canvas(rcanvasFrame, bg="grey", bd=0, width=canvasW+200, heigh=canvasH, scrollregion=(0, 0, 2000, 2000),
                     xscrollcommand=rxscrollbar.set,
                     yscrollcommand=ryscrollbar.set)
     rcanvas.grid(row=0, column=0, sticky=N+S+E+W)
@@ -2742,6 +2742,7 @@ broiVertikalniOtvoriValue = IntVar()
 simetrichnoOtvorPoXValue = IntVar()
 simetrichnoOtvorPoYValue = IntVar()
 
+raztoqnieMejduVertikalniValue.set('0')
 broiVertikalniOtvoriValue.set(1)
 ''' ***************************************************************************
 *** Variables za stoinosti na horizontalnite otvori
@@ -2754,6 +2755,7 @@ broiHorizontalniOtvoriValue = IntVar()
 simetrichnoHorizontalenOtvorPoXValue = IntVar()
 simetrichnoHorizontalenOtvorPoYValue = IntVar()
 
+raztoqnieMejduHorizontalenValue.set('0')
 broiHorizontalniOtvoriValue.set(1)
 # ********** File Menu *************
 mainMenu = Menu(mainframe)

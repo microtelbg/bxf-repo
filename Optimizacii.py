@@ -34,7 +34,7 @@ def optimizirai_otvori(otvori, start=None):
 
 def is_dupka_duplicate(dupka, dupki):
     for d in dupki:
-        if dupka['x'] == d['x'] and dupka['y'] == d['y']:
+        if dupka['x'] == d['x'] and dupka['y'] == d['y'] and dupka['r'] == dupka['r']:
             return 1
     
     return 0
