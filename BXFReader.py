@@ -882,16 +882,21 @@ def narisuvai_dupka_na_plota(isHorizontDupka, xcoordinata, ycoordinata, dulbochi
         nachalo_y = 30 + (ycoordinata - radius)*mashtab
         krai_y = 30 + (ycoordinata + radius)*mashtab
 
+    if side == 'L':
+        otag = 'lov'+ str(len(leftOvals)+1)
+    else:
+        otag = 'rov'+ str(len(rightOvals)+1)
+        
     if eIzvunPlota == 1:
         if isHorizontDupka == 1:
-            ov =  canvestodrawon.create_rectangle(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon")
+            ov =  canvestodrawon.create_rectangle(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon", tag=otag)
         else:    
-            ov = canvestodrawon.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon")
+            ov = canvestodrawon.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="maroon", tag=otag)
     else:
         if isHorizontDupka == 1:
-            ov =  canvestodrawon.create_rectangle(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
+            ov =  canvestodrawon.create_rectangle(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue", tag=otag)
         else: 
-            ov = canvestodrawon.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue")
+            ov = canvestodrawon.create_oval(nachalo_x, nachalo_y, krai_x, krai_y, fill="blue", tag=otag)
     
     if side == 'L':    
         leftOvals.append(ov)
@@ -903,8 +908,12 @@ def mahni_element_ot_lqva_baza():
     canvas.delete("leftRec")
     canvas.delete("border1")
     canvas.delete("border2")
-    for ov in leftOvals:
-        canvas.delete(ov)
+    
+    cnt = 1
+    while cnt <= len(leftOvals):
+        otag = 'lov'+str(cnt)
+        canvas.delete(otag)
+        cnt = cnt + 1
     
     #Oshte neshta za reset
     del dupki_za_gcode_left[:]
@@ -918,8 +927,12 @@ def mahni_element_ot_dqsna_baza():
     canvas.delete("rightRec")
     canvas.delete("border3")
     canvas.delete("border4")
-    for ov in rightOvals:
-        canvas.delete(ov)
+    
+    cnt = 1
+    while cnt <= len(rightOvals):
+        otag = 'rov'+str(cnt)
+        canvas.delete(otag)
+        cnt = cnt + 1
     
     #Oshte neshta za reset
     del dupki_za_gcode_right[:]
@@ -1024,14 +1037,21 @@ def narisuvai_element_na_plota(izbranElement, rotation, side, canvestodrawon, re
             canvestodrawon.delete("leftRec")
             canvestodrawon.delete("border1")
             canvestodrawon.delete("border2")
-            for ov in leftOvals:
-                canvestodrawon.delete(ov)
+            cnt = 1
+            while cnt <= len(leftOvals):
+                otag = 'lov'+str(cnt)
+                canvestodrawon.delete(otag)
+                cnt = cnt + 1  
         elif side == 'R':
             canvestodrawon.delete("rightRec")
             canvestodrawon.delete("border3")
             canvestodrawon.delete("border4")
-            for ov in rightOvals:
-                canvestodrawon.delete(ov)
+            
+            cnt = 1
+            while cnt <= len(rightOvals):
+                otag = 'rov'+str(cnt)
+                canvestodrawon.delete(otag)
+                cnt = cnt + 1            
             
     #Vzemi razmerite na stranata
     razmeri_na_elementa = izbranElement.razmeri
@@ -1829,6 +1849,7 @@ def pokaji_redaktirai_window(side):
     def verikalenOtvorUI():
         for wid in frame1.grid_slaves():
             wid.grid_forget()
+        natisti_button_prop('vertikal')
         
         voFrame = LabelFrame(frame1, text=paramVertikalenOtvorText)
         voFrame.grid(row=0, padx=5, pady=15, sticky=W+E)
@@ -1876,6 +1897,7 @@ def pokaji_redaktirai_window(side):
     def horizontalenOtvorUI():
         for wid in frame1.grid_slaves():
             wid.grid_forget()
+        natisti_button_prop('horizontal')
             
         hoFrame = LabelFrame(frame1, text=paramHorizontalenOtvorText)
         hoFrame.grid(row=0, padx=5, pady=15, sticky=W+E)
@@ -1918,6 +1940,7 @@ def pokaji_redaktirai_window(side):
     def fiksUI():
         for wid in frame1.grid_slaves():
             wid.grid_forget()
+        natisti_button_prop('fiks')
         
         paramFixLabelBox = LabelFrame(frame1, text=paramFixLabelText)
         paramFixLabelBox.grid(row=0, padx=5, pady=15, sticky=W+E)
@@ -2061,8 +2084,6 @@ def pokaji_redaktirai_window(side):
                 rcanvas.delete(ALL)
                 narisuvai_element_na_plota(izbranElement, izbrani_elementi[izbranElementZaRedakciaInd+'O'], izbranElementZaRedakciaInd, rcanvas, 0, 0)
             
-            
-    
     def postavi_fiks():
         postavi_dupki('fiks')
     
@@ -2578,6 +2599,19 @@ def pokaji_redaktirai_window(side):
     rxscrollbar.config(command=rcanvas.xview)
     ryscrollbar.config(command=rcanvas.yview)
 
+    def natisti_button_prop(vid):
+        if vid == 'fiks':
+            fixButton.config(relief=SUNKEN)
+            verikalenOtvorButton.config(relief=RAISED)
+            horizontalenOtvorButton.config(relief=RAISED)
+        elif vid == 'vertikal':
+            fixButton.config(relief=RAISED)
+            verikalenOtvorButton.config(relief=SUNKEN)
+            horizontalenOtvorButton.config(relief=RAISED) 
+        elif vid == 'horizontal':
+            fixButton.config(relief=RAISED)
+            verikalenOtvorButton.config(relief=RAISED)
+            horizontalenOtvorButton.config(relief=SUNKEN) 
     
     # Narisuvai elementa na plota
     narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, rcanvas, 0, 0)
