@@ -2210,6 +2210,7 @@ def pokaji_redaktirai_window(side):
                                     listOfVertikali.append(dupkaV)
                             cnt = cnt+1
             elif vid == 'horizontal':
+                if not is_dupka_duplicate(dupka1a, dupki_na_elementa):
                     del dupka1a['f']
                     del dupka1a['defh']
                     dupki_na_elementa.append(dupka1a)
@@ -2295,6 +2296,7 @@ def pokaji_redaktirai_window(side):
                                     listOfVertikali.append(dupkaV)
                             cnt = cnt+1
             elif vid == 'horizontal':
+                if not is_dupka_duplicate(dupka2a, dupki_na_elementa):
                     del dupka2a['f']
                     del dupka2a['defh']
                     dupki_na_elementa.append(dupka2a)
@@ -2381,6 +2383,7 @@ def pokaji_redaktirai_window(side):
                                     listOfVertikali.append(dupkaV)
                             cnt = cnt+1
             elif vid == 'horizontal':
+                if not is_dupka_duplicate(dupka3a, dupki_na_elementa):
                     del dupka3a['f']
                     del dupka3a['defh']
                     dupki_na_elementa.append(dupka3a)
@@ -2466,6 +2469,7 @@ def pokaji_redaktirai_window(side):
                                     listOfVertikali.append(dupkaV)
                             cnt = cnt+1
             elif vid == 'horizontal':
+                if not is_dupka_duplicate(dupka4a, dupki_na_elementa):
                     del dupka4a['f']
                     del dupka4a['defh']
                     dupki_na_elementa.append(dupka4a)
