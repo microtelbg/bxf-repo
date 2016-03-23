@@ -1350,6 +1350,8 @@ def zapishi_gcode_file():
         
     gCodeFile.close()
     
+    stepsList.delete(0, END)
+    
     #Delete Temp file:
     iztrii_temp_gcode_file()
 
