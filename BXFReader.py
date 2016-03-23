@@ -6,7 +6,7 @@ import time, os
 from Tkinter import *
 import tkMessageBox
 from tkFileDialog import askopenfilename,asksaveasfilename
-from ConfigReader import read_instruments,write_instruments,sort_detail_list
+from ConfigReader import read_instruments,write_instruments,sort_detail_list,write_param_za_otvori,read_param_za_otvori
 from Optimizacii import optimizirai_otvori, is_dupka_duplicate
 
 try:
@@ -620,7 +620,6 @@ def zaredi_file_info():
 
     global theSortedList
     theSortedList = sort_detail_list(elementi_za_dupchene)
-    #theSortedList.append(sortiranListOtFile)
     
     # 3. Populti lista s elementi
     listbox.delete(0, END)
@@ -628,12 +627,6 @@ def zaredi_file_info():
         prevod = ek[1]
         listbox.insert(END, prevod)
     
-#     for ek in elementi_za_dupchene.keys():
-#         prevod = prevod_za_elemnti_v_list[ek]
-#         listbox.insert(END, prevod)
-
-
-
     #Reset
     canvas.delete(ALL)
     canvas.create_rectangle(20, 20, PLOT_NA_MACHINA_X*mashtab+20, PLOT_NA_MACHINA_Y*mashtab+20, fill="bisque")
@@ -1579,11 +1572,6 @@ def suzdai_gcode_file():
         rightVertikalDupki = optimizirai_otvori(rightVertikalDupkiNeOpt)
     else:
         rightVertikalDupki = []
-           
-    print leftVertikalDupkiNeOpt
-    print leftVertikalDupki
-    print leftHorizontDupkiNeOpt
-    print leftHorizontDupki
     
     # Nameri instrument za purvata dupka
     razmerNachalnaDupka = 0
@@ -1657,9 +1645,9 @@ def suzdai_gcode_file():
                 instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 0)
             locDebelinaMaterial = 0
         
-        purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 5)    
+        purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 5)   
         if typeHiliV == 'H':
-            purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 10)  
+            purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 10)
             
         if instrZaDupka != TT:  
             # Smeni instrumenta
@@ -1689,7 +1677,7 @@ def suzdai_gcode_file():
         d1Line = 'N'+str(n10)+'G00X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(purvonachaloZ)+'\n'
         n10 = n10 + 10
         fw.write(d1Line)
-        krainoZ = "{0:.3f}".format(locDebelinaMaterial - dulbochinaNaDupkata)
+        krainoZ = "{0:.3f}".format(float(locDebelinaMaterial) - dulbochinaNaDupkata)
         d2Line = 'N'+str(n10)+'G1X'+str("{0:.3f}".format(xKoordinata))+'Y'+str("{0:.3f}".format(dupka['y']))+"Z"+str(krainoZ)+'F'+SD+'\n'
         n10 = n10 + 10
         fw.write(d2Line)   
@@ -1710,10 +1698,10 @@ def suzdai_gcode_file():
     
     if len(leftVertikalDupki) > 0:
         razmerDet = izbrani_elementi['L'].razmeri
-        debelinaMaterialLqvo = razmerDet['h']
+        debelinaMaterialLqvo = float(razmerDet['h'])
     if len(rightVertikalDupki) > 0:
         razmerDet = izbrani_elementi['R'].razmeri
-        debelinaMaterialDqsno = razmerDet['h']
+        debelinaMaterialDqsno = float(razmerDet['h'])
         
     if napraviHorizontalniOtvori == 1:
         #Dupki - LQVA BAZA, HORIZONTAL
@@ -1754,6 +1742,8 @@ def suzdai_gcode_file():
     
     # Kraq na G-code
     fw.close()
+    
+    pokaji_stupki(napraviHorizontalniOtvori, napraviVertiklaniOtvori, len(leftHorizontDupki), len(leftVertikalDupki), len(rightHorizontDupki), len(rightVertikalDupki))
     
     gcodeInProgress = 1
 
@@ -1801,9 +1791,6 @@ def pokaji_suzdai_detail_window():
         global theSortedList
         theSortedList.append((100, prevod, ekey))
         
-        #prevod_za_elemnti_v_list[ekey] = u'Въведен детайл: '+imeValue.get()+'..... '+str(razmer_x)+' x '+str(razmer_y)
-        
-
         listbox.insert(END, prevod)
 
         top.destroy()
@@ -1850,6 +1837,16 @@ def pokaji_redaktirai_window(side):
         for wid in frame1.grid_slaves():
             wid.grid_forget()
         natisti_button_prop('vertikal')
+        
+        #Populni default stoinosti
+        defStoinosti = read_param_za_otvori('vertikal')
+        if len(defStoinosti) > 0:
+            vertikalenOtvorXValue.set(defStoinosti[0])
+            vertikalenOtvorYValue.set(defStoinosti[1])
+            vertikalenOtvorDiamValue.set(defStoinosti[2])
+            vertikalenOtvorDulbochinaValue.set(defStoinosti[3])
+            raztoqnieMejduVertikalniValue.set(defStoinosti[4])
+            broiVertikalniOtvoriValue.set(defStoinosti[5])
         
         voFrame = LabelFrame(frame1, text=paramVertikalenOtvorText)
         voFrame.grid(row=0, padx=5, pady=15, sticky=W+E)
@@ -1898,6 +1895,14 @@ def pokaji_redaktirai_window(side):
         for wid in frame1.grid_slaves():
             wid.grid_forget()
         natisti_button_prop('horizontal')
+        
+        defStoinosti = read_param_za_otvori('horizontal')
+        if len(defStoinosti) > 0:
+            horizontalenOtvorXValue.set(defStoinosti[0])
+            horizontalenOtvorDiamValue.set(defStoinosti[2])
+            dulbochinaHorizontalenOtvorValue.set(defStoinosti[3])
+            raztoqnieMejduHorizontalenValue.set(defStoinosti[4])
+            broiHorizontalniOtvoriValue.set(defStoinosti[5])   
             
         hoFrame = LabelFrame(frame1, text=paramHorizontalenOtvorText)
         hoFrame.grid(row=0, padx=5, pady=15, sticky=W+E)
@@ -2137,6 +2142,9 @@ def pokaji_redaktirai_window(side):
     
             simPoX = simetrichnoOtvorPoXValue.get()
             simPoY = simetrichnoOtvorPoYValue.get()
+            
+            # Zapishi gi vuv file kato default values
+            write_param_za_otvori(vid, zyl_pos_x, zyl_pos_y, zyl_r*2, zyl_h, raztoqnie_mejdu_otvori, broi_otvori)
         elif vid == 'horizontal':
             zyl_pos_x = float(horizontalenOtvorXValue.get())
             zyl_pos_y = 0.0
@@ -2147,6 +2155,9 @@ def pokaji_redaktirai_window(side):
     
             simPoX = simetrichnoHorizontalenOtvorPoXValue.get()
             simPoY = simetrichnoHorizontalenOtvorPoYValue.get()
+            
+            # Zapishi gi vuv file kato default values
+            write_param_za_otvori(vid, zyl_pos_x, zyl_pos_y, zyl_r_hor*2, zyl_h_hor, raztoqnie_mejdu_otvori, broi_otvori)
         
         # Purvate dupka (obiknoveno 100 x 34) 
         # Ne se dobavq SAMO AKO edinstventa otmetka izbrana e Centralen Fix 
@@ -2619,7 +2630,26 @@ def pokaji_redaktirai_window(side):
     
     # Narisuvai elementa na plota
     narisuvai_element_na_plota(izbrani_elementi[side], izbrani_elementi[side+'O'], side, rcanvas, 0, 0)
-       
+ 
+def pokaji_stupki(horInd, verInd, numHDLB, numVDLB, numHDDB, numVDDB):
+    line1 = u'Стъпка'
+    if numHDLB > 0 or numVDLB > 0:
+        line1 = line1 + u' ...Лява Б.--'
+        if horInd == 1:
+            line1 = line1 + u' Х:'+str(numHDLB)
+        if verInd == 1:
+            line1 = line1 + u' В:'+str(numVDLB)
+            
+    if numHDDB > 0 or numVDDB > 0:
+        line1 = line1 + u' ...Дясна Б.--'
+        if horInd == 1:
+            line1 = line1 + u' Х:'+str(numHDDB)
+        if verInd == 1:
+            line1 = line1 + u' В:'+str(numVDDB)
+            
+    if line1 != u'Стъпка':
+        stepsList.insert(END, line1)
+           
 print ('*** BEGIN PROGRAM *************************')
 iztrii_temp_gcode_file()
 instrumentiOtConfig = read_instruments()
@@ -2863,9 +2893,14 @@ iztriiGCodeButton.grid(row=0, column=1,padx = 3, pady = 10)
 zapisGCodeButton = Button(buttonBar, text=zapisGCodeButtonText, bg="tomato", command=zapishi_gcode_file)
 zapisGCodeButton.grid(row=0, column=2, padx = 3, pady = 10, sticky=E)
 
+# ********** List box - Steps *************
+stepsList = Listbox(frame, height = 15)
+stepsList.grid(row=3, padx = 2, pady = 30, columnspan=2,sticky=N+S+W+E)
+
+
 # ********** Canvas *************
 canvasFrame = Frame(mainframe, bd=2, relief=SUNKEN)
-canvasFrame.grid(row=2, column=2, columnspan = 2, padx=20, sticky=W+E+N+S)
+canvasFrame.grid(row=2, column=2, columnspan = 2, padx=10, sticky=W+E+N+S)
 xscrollbar = Scrollbar(canvasFrame, orient=HORIZONTAL)
 xscrollbar.grid(row=1, column=0,sticky=E+W)
 yscrollbar = Scrollbar(canvasFrame)

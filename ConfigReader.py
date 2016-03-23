@@ -3,6 +3,7 @@
 import os
 
 def read_instruments():    
+
     # _d e diametur; _s e skorost
     t1_d = 35
     t1_s = 1000
@@ -25,8 +26,8 @@ def read_instruments():
     t10_d = 2.5
     t10_s = 1500
     
-    if os.path.isfile("bxfconfig.config"):
-        configFile = open("bxfconfig.config", "r")
+    if os.path.isfile("rm_instrumenti.config"):
+        configFile = open("rm_instrumenti.config", "r")
          
         for line in configFile:
             t, vs = line.split('=')
@@ -63,56 +64,26 @@ def read_instruments():
                 t10_s = float(s)
         configFile.close()
         
-    return {'T1':(t1_d,t1_s),'T2':(t2_d,t2_s),'T3':(t3_d,t3_s),'T4':(t4_d,t4_s),'T5':(t5_d,t5_s),'T6':(t6_d,t6_s),'T7':(t7_d,t7_s),'T8':(t8_d,t8_s),'T9':(t9_d,t9_s),'T10':(t10_d,t10_s)}
+    return {'T1':(t1_d,t1_s),'T2':(t2_d,t2_s),'T3':(t3_d,t3_s),'T4':(t4_d,t4_s),'T5':(t5_d,t5_s),'T6':(t6_d,t6_s),'T7':(t7_d,t7_s),'T8':(t8_d,t8_s),'T9':(t9_d,t9_s),'T10':(t10_d,t10_s)}        
 
-def write_instruments(verIns, horIns, skorosti):
-        if os.path.isfile("bxfconfig.config"):
-            configFile = open("bxfconfig.config", "r")  
-            vsichko = configFile.readlines()
-            configFile.close()
-            
-            configFileW = open("bxfconfig.config", "w") 
-            for line in vsichko:
-                if line.startswith('T'):
-                    t, vs = line.split('=')
-                    if t == 'T1':
-                        newLine = 'T1='+str(verIns['T1'])+';'+str(skorosti['T1'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T2':
-                        newLine = 'T2='+str(verIns['T2'])+';'+str(skorosti['T2'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T3':
-                        newLine = 'T3='+str(verIns['T3'])+';'+str(skorosti['T3'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T4':
-                        newLine = 'T4='+str(verIns['T4'])+';'+str(skorosti['T4'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T5':
-                        newLine = 'T5='+str(verIns['T5'])+';'+str(skorosti['T5'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T6':
-                        newLine = 'T6='+str(horIns['T6'])+';'+str(skorosti['T6'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T7':
-                        newLine = 'T7='+str(horIns['T7'])+';'+str(skorosti['T7'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T8':
-                        newLine = 'T8='+str(horIns['T8'])+';'+str(skorosti['T8'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T9':
-                        newLine = 'T9='+str(horIns['T9'])+';'+str(skorosti['T9'])+'\n'
-                        configFileW.write(newLine)
-                    elif t == 'T10':
-                        newLine = 'T10='+str(horIns['T10'])+';'+str(skorosti['T10'])+'\n'
-                        configFileW.write(newLine)
-                    else:
-                        configFileW.write(line)
-                else:
-                    configFileW.write(line)
-            configFileW.close()
+def read_param_za_otvori(vid):
+    if vid == 'horizontal':
+        if os.path.isfile("rm_horizontal_otvori.config"):
+            configFile = open("rm_horizontal_otvori.config", "r")
         else:
-            print 'File bxfconfig.config does not exists. To be continued ...'
+            return []
+    else:
+        if os.path.isfile("rm_vertikal_otvori.config"):
+            configFile = open("rm_vertikal_otvori.config", "r")
+        else:
+            return []
+    
+    stoinosti = []    
+    for line in configFile:
+        stoinosti.append(line.split(':')[1])
         
+    return stoinosti
+    
 def sort_detail_list(detaili):
     defaultOrder = {'Oberboden':1, 'Oberboden-OTRAVHIN':2, 'Oberboden-OTRAVVOR':3, 
                     'Unterboden':4,
@@ -128,7 +99,6 @@ def sort_detail_list(detaili):
     sortingList = []
     
     for key, value in detaili.iteritems():
-        print key
         razmer = value.razmeri
         imeValue = value.ime
         element_x = razmer['x']
@@ -153,13 +123,11 @@ def sort_detail_list(detaili):
             sortingList.append(ttuple)
         elif 'LinkeSeitenwand' in key:
             prevod = u'Лява страница на корпуса'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
-            #prevod = pad_with_dot(u'Лява страница на корпуса', str(element_x), str(element_y))
             sortingPlace = defaultOrder['LinkeSeitenwand']
             ttuple = sortingPlace, prevod, key
             sortingList.append(ttuple)
         elif 'RechteSeitenwand' in key:
             prevod = u'Дясна страница на корпуса'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
-            #prevod = pad_with_dot(u'Дясна страница на корпуса', str(element_x), str(element_y))
             sortingPlace = defaultOrder['RechteSeitenwand']
             ttuple = sortingPlace, prevod, key
             sortingList.append(ttuple)
@@ -200,18 +168,45 @@ def sort_detail_list(detaili):
             sortingList.append(ttuple)
     
     return sorted(sortingList, key=lambda element: (element[0], element[1]))
+
+def write_instruments(verIns, horIns, skorosti):
+    configFileW = open("rm_instrumenti.config", "w") 
+
+    newLine = 'T1='+str(verIns['T1'])+';'+str(skorosti['T1'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T2='+str(verIns['T2'])+';'+str(skorosti['T2'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T3='+str(verIns['T3'])+';'+str(skorosti['T3'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T4='+str(verIns['T4'])+';'+str(skorosti['T4'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T5='+str(verIns['T5'])+';'+str(skorosti['T5'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T6='+str(horIns['T6'])+';'+str(skorosti['T6'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T7='+str(horIns['T7'])+';'+str(skorosti['T7'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T8='+str(horIns['T8'])+';'+str(skorosti['T8'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T9='+str(horIns['T9'])+';'+str(skorosti['T9'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'T10='+str(horIns['T10'])+';'+str(skorosti['T10'])+'\n'
+    configFileW.write(newLine)
+
+    configFileW.close()
     
-def pad_with_dot(prevod, elementx, elementy):
-    total = len(prevod) + len(elementx) + len(elementy) + 5
-    stringToReturn = prevod+' '
-    
-    dots = 50 - total
-    while dots > 0:
-        stringToReturn = stringToReturn+'.'
-        dots = dots - 1
-    
-    stringToReturn = stringToReturn+' '+elementx+' x '+elementy
-    return stringToReturn
+def write_param_za_otvori(vid, otstoqniePoX, otstoqniePoY, diametur, dulbochina, raztoqnie, broi):
+    if vid == 'horizontal':
+        otvoriFile = open("rm_horizontal_otvori.config", "w")
+    else:
+        otvoriFile = open("rm_vertikal_otvori.config", "w")
         
-         
-        
+    otvoriFile.write('x:'+str(otstoqniePoX)+'\n')
+    otvoriFile.write('y:'+str(otstoqniePoY)+'\n')
+    otvoriFile.write('diam:'+str(diametur)+'\n')
+    otvoriFile.write('dulb:'+str(dulbochina)+'\n')
+    otvoriFile.write('razt:'+str(raztoqnie)+'\n')
+    otvoriFile.write('broi:'+str(broi)+'\n')
+    
+    otvoriFile.close()
+    
