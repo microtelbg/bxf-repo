@@ -140,6 +140,8 @@ dupki_za_gcode_right = []
 
 prevod_za_elemnti_v_list = {}
 
+stepsList = None
+
 class ElementZaDupchene(object):
     def __init__(self, ime, razmeri, dupki):
         self.ime = ime
@@ -292,7 +294,7 @@ def suzdai_element_strana(root, elements, name, bxfNo):
             elements['DET:'+str(bxfNo)+name] = stana
 
     else:
-        print 'Greshka -', name, " ne e nameren takuv tag"
+        print name, " ne e nameren takuv tag"
 
 ''' ***************************************************************************
 **** Tazi funkcia chete parametrite za dupkite
@@ -407,7 +409,7 @@ def suzdai_element_duno_gornica(root, elements, name, bxfNo):
                 print 'Greshka -Quader tag ne e namer za ', name
 
     else:
-        print 'Greshka -', name, " ne e nameren takuv tag"
+        print name, " ne e nameren takuv tag"
 
 ''' ***************************************************************************
 **** Izpolzvai tazi funkcia za:
@@ -1301,12 +1303,16 @@ def nastroika_na_instrumenti():
     zatvoriButton.grid(row=1, column=1,padx = 15, pady = 10,  sticky='E')
 
 def iztrii_temp_gcode_file():
+    #iztrii_stupki()
     if os.path.isfile("sample123.txt"):
         os.remove("sample123.txt")
     global gcodeInProgress
     gcodeInProgress = 0
     global n10
     n10 = 30
+    
+    if stepsList is not None:
+        stepsList.delete(0, END)
     
     
 def zapishi_gcode_file():
@@ -1350,6 +1356,7 @@ def zapishi_gcode_file():
         
     gCodeFile.close()
     
+    #iztrii_stupki()
     stepsList.delete(0, END)
     
     #Delete Temp file:
@@ -2651,7 +2658,10 @@ def pokaji_stupki(horInd, verInd, numHDLB, numVDLB, numHDDB, numVDDB):
             
     if line1 != u'Стъпка':
         stepsList.insert(END, line1)
-           
+
+def iztrii_stupki():
+    stepsList.delete(0, END)
+                   
 print ('*** BEGIN PROGRAM *************************')
 iztrii_temp_gcode_file()
 instrumentiOtConfig = read_instruments()
@@ -2898,8 +2908,7 @@ zapisGCodeButton.grid(row=0, column=2, padx = 3, pady = 10, sticky=E)
 # ********** List box - Steps *************
 stepsList = Listbox(frame, height = 15)
 stepsList.grid(row=3, padx = 2, pady = 30, columnspan=2,sticky=N+S+W+E)
-
-
+    
 # ********** Canvas *************
 canvasFrame = Frame(mainframe, bd=2, relief=SUNKEN)
 canvasFrame.grid(row=2, column=2, columnspan = 2, padx=10, sticky=W+E+N+S)
