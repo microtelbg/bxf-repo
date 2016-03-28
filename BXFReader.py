@@ -1326,6 +1326,7 @@ def zapishi_gcode_file():
     tempFile = open("sample123.txt", "r")
     gCodeFile = open(saveFileName, "w")
     
+    gCodeFile.write("("+saveFileName+")\n")
     for line in tempFile:
         gCodeFile.write(line)
          
@@ -1489,7 +1490,6 @@ def suzdai_gcode_file():
         fw = open("sample123.txt", "a")
     else:    
         fw = open("sample123.txt", "a")
-        fw.write("(Imeto na file)\n")
         
     # SLOJI KOMENTARI ZA POLOJENIETO NA DETAILA
 
@@ -1497,29 +1497,8 @@ def suzdai_gcode_file():
         ''' COMENTARI '''
         # Stoinosti na instrumentite
         dateTimeLine = '('+time.strftime("%d/%m/%Y")+')\n' # or try today = datetime.date.today()
-        vginstr1Value = '(Vertikalen Instrument 1: Diametur:'+ vginstrument1EntryDiaValue.get()+', Skorost:'+ vginstrument1EntrySkorostValue.get()+ ')\n'
-        vginstr2Value = '(Vertikalen Instrument 2: Diametur:'+ vginstrument2EntryDiaValue.get()+', Skorost:'+ vginstrument2EntrySkorostValue.get()+ ')\n'
-        vginstr3Value = '(Vertikalen Instrument 3: Diametur:'+ vginstrument3EntryDiaValue.get()+', Skorost:'+ vginstrument3EntrySkorostValue.get()+ ')\n'
-        vginstr4Value = '(Vertikalen Instrument 4: Diametur:'+ vginstrument4EntryDiaValue.get()+', Skorost:'+ vginstrument4EntrySkorostValue.get()+ ')\n'
-        vginstr5Value = '(Vertikalen Instrument 5: Diametur:'+ vginstrument5EntryDiaValue.get()+', Skorost:'+ vginstrument5EntrySkorostValue.get()+ ')\n'
-        
-        hginstr1Value = '(Horizontalen Instrument 1: Diametur:'+ hginstrument1EntryDiaValue.get()+', Skorost:'+ hginstrument1EntrySkorostValue.get()+ ')\n'
-        hginstr2Value = '(Horizontalen Instrument 2: Diametur:'+ hginstrument2EntryDiaValue.get()+', Skorost:'+ hginstrument2EntrySkorostValue.get()+ ')\n'
-        hginstr3Value = '(Horizontalen Instrument 3: Diametur:'+ hginstrument3EntryDiaValue.get()+', Skorost:'+ hginstrument3EntrySkorostValue.get()+ ')\n'
-        hginstr4Value = '(Horizontalen Instrument 4: Diametur:'+ hginstrument4EntryDiaValue.get()+', Skorost:'+ hginstrument4EntrySkorostValue.get()+ ')\n'
-        hginstr5Value = '(Horizontalen Instrument 5: Diametur:'+ hginstrument5EntryDiaValue.get()+', Skorost:'+ hginstrument5EntrySkorostValue.get()+ ')\n'
-
         fw.write(dateTimeLine)
-        fw.write(vginstr1Value)
-        fw.write(vginstr2Value)
-        fw.write(vginstr3Value)
-        fw.write(vginstr4Value)
-        fw.write(vginstr5Value)   
-        fw.write(hginstr1Value)
-        fw.write(hginstr2Value)
-        fw.write(hginstr3Value)
-        fw.write(hginstr4Value)
-        fw.write(hginstr5Value)  
+ 
     else:
         n10 = 30
         
