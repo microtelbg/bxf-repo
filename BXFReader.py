@@ -1801,11 +1801,6 @@ def redaktirai_lqv_detail():
     global izbranElementZaRedakciaInd
     izbranElementZaRedakciaInd = 'L'
     pokaji_redaktirai_window('L')
-    
-def redaktirai_desen_detail():
-    global izbranElementZaRedakciaInd
-    izbranElementZaRedakciaInd = 'R'
-    pokaji_redaktirai_window('R')
         
 def pokaji_redaktirai_window(side):
     
@@ -2822,8 +2817,6 @@ rotateButtonRightBaza = Button(rightBazaLabelBox, text=rotateButtonText, bg="lig
 rotateButtonRightBaza.grid(row=0, sticky=W, padx=2, pady=2)
 removeElementButtonRightBaza = Button(rightBazaLabelBox, text=removeButtonText, bg="lightblue", command=mahni_element_ot_dqsna_baza)
 removeElementButtonRightBaza.grid(row=0, column=1, sticky=W, padx=2, pady=2)
-editButtonRightBaza = Button(rightBazaLabelBox, text=editButtonText, bg="lightblue", command=redaktirai_desen_detail)
-editButtonRightBaza.grid(row=0, column=2, sticky=W, padx=2, pady=2)
 
 # ********** Listbox *************
 listboxLabelFrame = LabelFrame(mainframe, text=detailiLabelText)
