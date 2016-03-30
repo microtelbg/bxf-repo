@@ -1421,14 +1421,16 @@ def izberi_instrument(instrMap, diametur, zaFiks):
 def napravi_comment_za_polojenieto(side):
     polojenie = ''
     orientation = izbrani_elementi[side]
+    rameriMap = izbrani_elementi[side[0]].razmeri
+    razmeri = str(rameriMap['x'])+' x '+str(rameriMap['y'])
     if orientation == 0:
-        polojenie = '(Detail na 0 gradusa)'
+        polojenie = 'Detail '+razmeri+' na 0 gradusa'
     elif orientation == 1:
-        polojenie = '(Detail na 90 gradusa)'
+        polojenie = 'Detail '+razmeri+' na 90 gradusa'
     elif orientation == 2:
-        polojenie = '(Detail na 180 gradusa)'
+        polojenie = 'Detail '+razmeri+' na 180 gradusa'
     elif orientation == 3:
-        polojenie = '(Detail na 270 gradusa)'
+        polojenie = 'Detail '+razmeri+' na 270 gradusa'
         
     return polojenie   
 
@@ -1510,38 +1512,34 @@ def suzdai_gcode_file():
     ''' COMENTARI '''
     # Tova e samo za komentar v g-code za da vidq koq sled koq dupka se dupchi
     if len(dupki_za_gcode_left) > 0:
-        fw.write('(Lqva Baza Otvori:)\n')
-        fw.write(napravi_comment_za_polojenieto('LO')+'\n')
+#         fw.write('(Lqva Baza Otvori:)\n')
+        fw.write('(Lqva Baza: '+napravi_comment_za_polojenieto('LO')+')\n')
     for dupka in dupki_za_gcode_left:
         if dupka['t'] == 1:
             if napraviHorizontalniOtvori == 1 and dupka['y']== 0:
-                typeDupka = "(Horizontalen otvor: "
                 leftHorizontDupkiNeOpt.append(dupka)
-                dupkaLine = typeDupka + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
-                fw.write(dupkaLine)
+#                 dupkaLine = "(Horizontalen otvor: " + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
+#                 fw.write(dupkaLine)
         else:
             if napraviVertiklaniOtvori == 1:
-                typeDupka = "(Vertikalen otvor: "
                 leftVertikalDupkiNeOpt.append(dupka)
-                dupkaLine = typeDupka + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
-                fw.write(dupkaLine)
+#                 dupkaLine = "(Vertikalen otvor: " + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
+#                 fw.write(dupkaLine)
     
     if len(dupki_za_gcode_right) > 0:
-        fw.write('(Dqsna Baza Otvori:)\n')     
-        fw.write(napravi_comment_za_polojenieto('RO')+'\n')
+#         fw.write('(Dqsna Baza Otvori:)\n')     
+        fw.write('(Dqsna Baza: '+napravi_comment_za_polojenieto('RO')+')\n')
     for dupka in dupki_za_gcode_right:
         if dupka['t'] == 1:
             if napraviHorizontalniOtvori == 1 and dupka['y']== 0:
-                typeDupka = "(Horizontalen otvor: "
                 rightHorizontDupkiNeOpt.append(dupka)
-                dupkaLine = typeDupka + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
-                fw.write(dupkaLine)   
+#                 dupkaLine = "(Horizontalen otvor: " + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
+#                 fw.write(dupkaLine)   
         else:
             if napraviVertiklaniOtvori == 1:
-                typeDupka = "(Vertikalen otvor: "
                 rightVertikalDupkiNeOpt.append(dupka)      
-                dupkaLine = typeDupka + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
-                fw.write(dupkaLine)   
+#                 dupkaLine = "(Vertikalen otvor: " + 'X:'+ str(dupka['x']) + ', Y:' + str(dupka['y']) +', R:'+ str(dupka['r']) + ', H:'+str(dupka['h'])+')\n'
+#                 fw.write(dupkaLine)   
     
     #Optimizacia
     if len(leftVertikalDupkiNeOpt) > 0:
@@ -1764,7 +1762,7 @@ def pokaji_suzdai_detail_window():
     debelinaEntry = Entry(razmeriLabelBox, textvariable=debelinaValue)
     debelinaEntry.grid(row=2, column=1, padx = 5, pady = 2, sticky=E)
     
-    def zapazi_nov_detail():
+    def zapazi_nov_detail(*args):
         dupki_blank = []
         # Narochno sa oburnati X,Y zashtoto orientacia xy ot BXF oznachva oburnati X,Y ...Taka che ne promenqi tuk!
         razmer_x = float(duljinaValue.get())
@@ -1784,6 +1782,7 @@ def pokaji_suzdai_detail_window():
         top.destroy()
     
     okbutton = Button(top, text=okButtonText, command=zapazi_nov_detail)
+    okbutton.bind('<Return>', zapazi_nov_detail)
     okbutton.grid(row=2, padx = 10, pady = 10, sticky = W)
     cancelButton = Button(top, text=cancelButtonText, command=top.destroy)
     cancelButton.grid(row=2, column=1, pady = 10, sticky=W)
