@@ -194,7 +194,7 @@ def suzdai_element_grub(root, elements, name, bxfNo):
     if parent is not None:
         # Orientacia e YZ, X e debelina
         quader = parent.findall('.//blum:Quader', ns)
-        if quader is not None:
+        if len(quader) > 0:
             hoehe = quader[0].find('blum:Hoehe', ns)
             if hoehe is not None:
                 razmer_z = hoehe.text
@@ -247,7 +247,7 @@ def suzdai_element_strana(root, elements, name, bxfNo):
     if parent is not None:
         # Orientacia e XZ, Y e debelina
         quader = parent.findall('.//blum:Quader', ns)
-        if quader is not None:
+        if len(quader) > 0:
             hoehe = quader[0].find('blum:Hoehe', ns)
             if hoehe is not None:
                 razmer_z = hoehe.text
@@ -279,19 +279,19 @@ def suzdai_element_strana(root, elements, name, bxfNo):
 
             #Dupki
             dupki_map = suzdai_dupki(quader, 'xz', razmer_z, razmer_x, name)
+            
+            #Create object
+            razmeri_map = {"x" : razmer_z, "y": razmer_x , "h":razmer_debelina}
+    
+            stana = ElementZaDupchene(name, razmeri_map, dupki_map)
+            if name == 'LinkeSeitenwand':
+                elements['DET:'+str(bxfNo)+'LinkeSeitenwand'] = stana
+            elif  name == 'RechteSeitenwand':
+                elements['DET:'+str(bxfNo)+'RechteSeitenwand'] = stana
+            else:
+                elements['DET:'+str(bxfNo)+name] = stana
         else:
             print 'Greshka -Quader tag ne e namer za ', name
-
-        #Create object
-        razmeri_map = {"x" : razmer_z, "y": razmer_x , "h":razmer_debelina}
-
-        stana = ElementZaDupchene(name, razmeri_map, dupki_map)
-        if name == 'LinkeSeitenwand':
-            elements['DET:'+str(bxfNo)+'LinkeSeitenwand'] = stana
-        elif  name == 'RechteSeitenwand':
-            elements['DET:'+str(bxfNo)+'RechteSeitenwand'] = stana
-        else:
-            elements['DET:'+str(bxfNo)+name] = stana
 
     else:
         print name, " ne e nameren takuv tag"
@@ -353,7 +353,7 @@ def suzdai_element_duno_gornica(root, elements, name, bxfNo):
             dunoID = duno.attrib['ID']
             quader = duno.findall('.//blum:Quader', ns)
 
-            if quader is not None:
+            if len(quader) > 0:
                 # <Hoehe>0.0</Hoehe> visochina
                 hoehe = quader[0].find('blum:Hoehe', ns)
                 if hoehe is not None:
@@ -433,7 +433,7 @@ def suzdai_element_shkafche(root, elements, name, bxfNo):
             dunoID = duno.attrib['ID']
             quader = duno.findall('.//blum:Quader', ns)
 
-            if quader is not None:
+            if len(quader) > 0:
                 # <Hoehe>0.0</Hoehe> visochina
                 hoehe = quader[0].find('blum:Hoehe', ns)
                 if hoehe is not None:
@@ -488,7 +488,7 @@ def suzdai_element_shkafche(root, elements, name, bxfNo):
             rueckwandID = rueckwand.attrib['ID']
             quader = rueckwand.findall('.//blum:Quader', ns)
 
-            if quader is not None:
+            if len(quader) > 0:
                 # <Hoehe>0.0</Hoehe> visochina
                 hoehe = quader[0].find('blum:Hoehe', ns)
                 if hoehe is not None:
@@ -554,7 +554,7 @@ def suzdai_element_vrata(root, elements, name, bxfNo):
             frontID = front.attrib['ID']
             quader = front.findall('.//blum:Quader', ns)
 
-            if quader is not None:
+            if len(quader) > 0:
                 # <Hoehe>0.0</Hoehe> visochina
                 hoehe = quader[0].find('blum:Hoehe', ns)
                 if hoehe is not None:
