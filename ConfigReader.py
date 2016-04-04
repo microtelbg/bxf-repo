@@ -2,6 +2,25 @@
 # -*- coding: utf-8 -*-
 import os
 
+
+def check_license_key():
+    authKey1 = '1'
+    authKey2 = '2'
+    if os.path.isfile('C:/Temp/rmauth.config'):
+        authFile1 = open('C:/Temp/rmauth.config')
+        authKey1 = authFile1.read()
+        authFile1.close()
+        
+    if os.path.isfile('C:/Windows/rmauth.config'):
+        authFile2 = open('C:/Windows/rmauth.config')
+        authKey2 = authFile2.read()
+        authFile2.close()
+
+    if authKey1 == authKey2:
+        return True
+    
+    return False
+    
 def read_instruments():    
 
     # _d e diametur; _s e skorost
@@ -120,6 +139,19 @@ def sort_detail_list(detaili):
                 prevod = u'Чекмедже-'+aussName+u': Дъно-'+aussId+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
                 sortingPlace = defaultOrder['Aussenschubkasten-Boden']
                 ttuple = sortingPlace, prevod, key
+            elif 'Holzschubkasten' in key:
+                prevod = u'Чекмедже-'+aussName+u': Дъно-'+aussId+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+                sortingPlace = defaultOrder['Aussenschubkasten-Boden']
+                ttuple = sortingPlace, prevod, key
+            sortingList.append(ttuple)
+        elif 'Klappensystem' in key:
+            auss = key.split('-')
+            aussName = auss[1]
+            aussId = auss[2]
+            if 'Front' in key:
+                prevod = u'Шкафче-'+aussName+u': Лице-'+aussId+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+                sortingPlace = defaultOrder['Klappensystem']
+                ttuple = sortingPlace, prevod, key
             sortingList.append(ttuple)
         elif 'LinkeSeitenwand' in key:
             prevod = u'Лява страница на корпуса'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
@@ -151,6 +183,11 @@ def sort_detail_list(detaili):
             sortingPlace = defaultOrder['Unterboden']
             ttuple = sortingPlace, prevod, key  
             sortingList.append(ttuple)
+        elif 'Oberboden' in key:
+            prevod = u'Таван'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
+            sortingPlace = defaultOrder['Oberboden']
+            ttuple = sortingPlace, prevod, key  
+            sortingList.append(ttuple)    
         elif 'Tuer' in key:
             prevod = u'Врата'+' ..... '+str(element_x)+' x '+str(element_y)+' x '+str(debelina)
             sortingPlace = defaultOrder['Tuer']
