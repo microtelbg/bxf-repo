@@ -1593,7 +1593,7 @@ def suzdai_gcode_file():
                 zaFiks = 1
         TT = izberi_instrument(instrumentiZaHorizGlava, razmerNachalnaDupka, zaFiks)
         
-    HT = 'H'+TT[1]
+    HT = 'H'+TT[1:]
     vzemiInstrument = 'N'+str(n10)+TT+'M06\n'
     n10 = n10 + 10
     predpazvaneNaZ = 'N'+str(n10)+'G00G43Z'+str(bezopasno_z)+HT+'\n'
