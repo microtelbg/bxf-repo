@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import time, os
 ## dd/mm/yyyy format
+#import gettext
 
 from Tkinter import *
 import tkMessageBox
@@ -13,6 +14,10 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+
+# Set up message catalog access
+#t = gettext.translation('BXFReader', 'locale', fallback=True)
+#_ = t.ugettext
 
 ''' ***************************************************************************
 *** Labels
@@ -110,7 +115,7 @@ PLOT_NA_MACHINA_Y = 600
 *** Global Variables
 *************************************************************************** '''
 detNo = 1
-bezopasno_z = "{0:.3f}".format(50.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
+bezopasno_z = "{0:.3f}".format(20.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
 TT = '' # instrumenta v momenta T1, T2, etc.
 n10 = 30
 gcodeInProgress = 0
@@ -1465,7 +1470,7 @@ def suzdai_gcode_file():
     global n10
     global TT 
     global gcodeInProgress    
-    bezopasno_z = "{0:.3f}".format(50.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
+    bezopasno_z = "{0:.3f}".format(20.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
     instrumentiZaVerGlava = definirai_instrumenti('V')
     instrumentiZaHorizGlava = definirai_instrumenti('H')
     
@@ -1631,14 +1636,14 @@ def suzdai_gcode_file():
                 instrZaDupka = izberi_instrument(instrumentiZaHorizGlava, dupka['r']*2, 0)
             locDebelinaMaterial = 0
         
-        purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 5)   
+        purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 10)   
         if typeHiliV == 'H':
             purvonachaloZ = "{0:.3f}".format(locDebelinaMaterial + 10)
             
         if instrZaDupka != TT:  
             # Smeni instrumenta
             TT = instrZaDupka
-            HT = 'H'+TT[1]
+            HT = 'H'+TT[1:]
             SD = "{0:.1f}".format(izberi_skorost(skorostZaInstrumenti, TT))
             vzemiInstrument = 'N'+str(n10)+TT+'M06\n'
             n10 = n10 + 10

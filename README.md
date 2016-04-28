@@ -1,7 +1,6 @@
 # bxf-repo
 Repo for BXF project
 
-- dibli (nova machina)
 - prevod na English
 - encryption, licence key to use
 - zapishi suzdadenite elementi vuv fail (ot nov button)
@@ -20,15 +19,12 @@ Repo for BXF project
 Main Functionality:
 
 - Nova orqzana versia za novata machina za horizontalni otvori (version V2) Drill Master
--- Otemneta Dobavi kod za Verktikalni otvori ... sloji "Dobavi kod za dibli"
--- Razlika dali horizontalia otvor dali e s dibla ili bez, za fiksovete - edinia e dibla sus sigurnost
--- Otvor za dibla s kafqvo
--- Redaktirai, sloji otmetka dali e dibla ili ne
 -- Gcode - smqna za instruemnt (T20), sushtite koordinati na otvora. Vmezsto G1 sus skorost, izpolzvai G0 sus max skorost. 
 T20M6
 G0X Y edin red za dupka) (pozicioniraneto)
 M4 
--- Nastroika na instruemtni - samo za horizontali
+-- Make sure no code and no dupki za generated for vertikalni otvori!!!
+
 
 - Dobavka za opcia za dibli vuv RM (po natam kato opcia)
 - Prevod na angliiski
