@@ -115,7 +115,7 @@ PLOT_NA_MACHINA_Y = 600
 *** Global Variables
 *************************************************************************** '''
 detNo = 1
-bezopasno_z = "{0:.3f}".format(20.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
+bezopasno_z = "{0:.3f}".format(30.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
 TT = '' # instrumenta v momenta T1, T2, etc.
 n10 = 30
 gcodeInProgress = 0
@@ -1470,7 +1470,7 @@ def suzdai_gcode_file():
     global n10
     global TT 
     global gcodeInProgress    
-    bezopasno_z = "{0:.3f}".format(20.000) # Tova she bude izchesleno kato debelinata na materiala ot bxf + 20
+    global bezopasno_z
     instrumentiZaVerGlava = definirai_instrumenti('V')
     instrumentiZaHorizGlava = definirai_instrumenti('H')
     
@@ -1693,6 +1693,12 @@ def suzdai_gcode_file():
     if len(rightVertikalDupki) > 0:
         razmerDet = izbrani_elementi['R'].razmeri
         debelinaMaterialDqsno = float(razmerDet['h'])
+        
+    if debelinaMaterialLqvo > 20 or debelinaMaterialDqsno > 20:
+        if debelinaMaterialLqvo > debelinaMaterialDqsno:
+            bezopasno_z = debelinaMaterialLqvo + 10
+        else:
+            bezopasno_z = debelinaMaterialDqsno + 10
         
     if napraviHorizontalniOtvori == 1:
         #Dupki - LQVA BAZA, HORIZONTAL
