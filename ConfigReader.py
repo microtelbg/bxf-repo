@@ -44,6 +44,8 @@ def read_instruments():
     t9_s = 1500
     t10_d = 2.5
     t10_s = 1500
+    px = 1505 #plot na masata po X
+    py = 600 #plot na masata po Y
     
     if os.path.isfile("rm_instrumenti.config"):
         configFile = open("rm_instrumenti.config", "r")
@@ -81,9 +83,12 @@ def read_instruments():
             elif t == 'T10':
                 t10_d = float(d)
                 t10_s = float(s)
+            elif t == 'PL':
+                px = float(d)
+                py = float(s)
         configFile.close()
         
-    return {'T1':(t1_d,t1_s),'T2':(t2_d,t2_s),'T3':(t3_d,t3_s),'T4':(t4_d,t4_s),'T5':(t5_d,t5_s),'T6':(t6_d,t6_s),'T7':(t7_d,t7_s),'T8':(t8_d,t8_s),'T9':(t9_d,t9_s),'T10':(t10_d,t10_s)}        
+    return {'T1':(t1_d,t1_s),'T2':(t2_d,t2_s),'T3':(t3_d,t3_s),'T4':(t4_d,t4_s),'T5':(t5_d,t5_s),'T6':(t6_d,t6_s),'T7':(t7_d,t7_s),'T8':(t8_d,t8_s),'T9':(t9_d,t9_s),'T10':(t10_d,t10_s), 'PL':(px, py)}        
 
 def read_param_za_otvori(vid):
     if vid == 'horizontal':
@@ -206,7 +211,7 @@ def sort_detail_list(detaili):
     
     return sorted(sortingList, key=lambda element: (element[0], element[1]))
 
-def write_instruments(verIns, horIns, skorosti):
+def write_instruments(verIns, horIns, skorosti, plotPoX):
     configFileW = open("rm_instrumenti.config", "w") 
 
     newLine = 'T1='+str(verIns['T1'])+';'+str(skorosti['T1'])+'\n'
@@ -228,6 +233,8 @@ def write_instruments(verIns, horIns, skorosti):
     newLine = 'T9='+str(horIns['T9'])+';'+str(skorosti['T9'])+'\n'
     configFileW.write(newLine)
     newLine = 'T10='+str(horIns['T10'])+';'+str(skorosti['T10'])+'\n'
+    configFileW.write(newLine)
+    newLine = 'PL='+str(plotPoX)+';'+'600'+'\n'
     configFileW.write(newLine)
 
     configFileW.close()

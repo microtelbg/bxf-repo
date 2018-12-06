@@ -101,15 +101,14 @@ iztriiButtonText = u'Изтрий'
 izchistiVsichkoButtonText = u'Изтрий всички детайли'
 izchistiIzbranDetailButtonText =u'Изтрий избран детайл'
 detailiLabelText = u'Детайли'
+plotLabelText =  u'Плот на машината'
+duljinaLabelText = u'Дължина'
 
 ''' ***************************************************************************
 *** Constants
 *************************************************************************** '''
 ns = {'blum' : 'http://www.blum.com/bxf'}
 mashtab = 0.45
-
-PLOT_NA_MACHINA_X = 1504
-PLOT_NA_MACHINA_Y = 600
 
 ''' ***************************************************************************
 *** Global Variables
@@ -1180,7 +1179,8 @@ def nastroika_na_instrumenti():
         vertikalniInstrumenti = definirai_instrumenti('V')
         horizontalniInstrumenti = definirai_instrumenti('H')
         skorosti = definirai_skorosti()
-        write_instruments(vertikalniInstrumenti, horizontalniInstrumenti, skorosti)
+        PLOT_NA_MACHINA_X = definirai_razmer_na_plot()
+        write_instruments(vertikalniInstrumenti, horizontalniInstrumenti, skorosti, PLOT_NA_MACHINA_X)
         
     top = Toplevel()
     top.title(nastroikaInstrumentButtonText)
@@ -1302,10 +1302,17 @@ def nastroika_na_instrumenti():
     skorost5Entry = Entry(instr5LabelBox, textvariable=hginstrument5EntrySkorostValue)
     skorost5Entry.grid(row=1, column=1, padx = 5, pady = 2, sticky=E)
     
+    plotFrame = LabelFrame(top, text=plotLabelText)
+    plotFrame.grid(row=1, padx = 0)  
+    plotLabel = Label(plotFrame, text=duljinaLabelText)
+    plotLabel.grid(row=0, sticky=W, padx = 10, pady = 2)
+    plotEntry = Entry(plotFrame, textvariable=razmerNaMasataPoX)
+    plotEntry.grid(row=0, column=1, padx = 5, pady = 2, sticky=W)
+    
     zapaziNastorikiButton = Button(top, text=zapaziInstrFileButtonText, command=save_instruments)
-    zapaziNastorikiButton.grid(row=1, padx = 15, pady = 10, sticky='E')
+    zapaziNastorikiButton.grid(row=2, padx = 15, pady = 10, sticky='E')
     zatvoriButton = Button(top, text=zatvoriButtonText, command=on_closing_inst)
-    zatvoriButton.grid(row=1, column=1,padx = 15, pady = 10,  sticky='E')
+    zatvoriButton.grid(row=2, column=1,padx = 15, pady = 10,  sticky='E')
 
 def iztrii_temp_gcode_file():
     #iztrii_stupki()
@@ -1399,6 +1406,10 @@ def definirai_skorosti():
     t10Skorost = float(hginstrument5EntrySkorostValue.get())
     
     return {'T1':t1Skorost,'T2':t2Skorost,'T3':t3Skorost,'T4':t4Skorost,'T5':t5Skorost,'T6':t6Skorost,'T7':t7Skorost,'T8':t8Skorost,'T9':t9Skorost,'T10':t10Skorost,'T11':t6Skorost}
+
+def definirai_razmer_na_plot():
+    zadadenRazmerNaMasataX = float(razmerNaMasataPoX.get())
+    return zadadenRazmerNaMasataX
 
 def izberi_skorost(skorostMap, instrument):
     skorost = 0
@@ -2646,8 +2657,14 @@ def iztrii_stupki():
     stepsList.delete(0, END)
                    
 print ('*** BEGIN PROGRAM *************************')
+PLOT_NA_MACHINA_X = 1504 # read_instruments() go smenqva! taka che nqma da e 1504
+PLOT_NA_MACHINA_Y = 600
+
 iztrii_temp_gcode_file()
 instrumentiOtConfig = read_instruments()
+PLOT_NA_MACHINA_X = instrumentiOtConfig['PL'][0]
+
+print (PLOT_NA_MACHINA_X)
     
 mainframe = Tk()
 #mainframe.geometry('450x450+500+300') - Use that for window size
@@ -2699,6 +2716,9 @@ hginstrument4EntrySkorostValue = StringVar()
 hginstrument5EntryDiaValue = StringVar()
 hginstrument5EntrySkorostValue = StringVar()
 
+# RAZMER NA MASATA
+razmerNaMasataPoX = StringVar()
+
 # Default values (she doidat posle of file)
 vginstrument1EntryDiaValue.set(instrumentiOtConfig['T1'][0])
 vginstrument1EntrySkorostValue.set(instrumentiOtConfig['T1'][1])
@@ -2721,6 +2741,8 @@ hginstrument4EntryDiaValue.set(instrumentiOtConfig['T9'][0])
 hginstrument4EntrySkorostValue.set(instrumentiOtConfig['T9'][1])
 hginstrument5EntryDiaValue.set(instrumentiOtConfig['T10'][0])
 hginstrument5EntrySkorostValue.set(instrumentiOtConfig['T10'][1])
+
+razmerNaMasataPoX.set(instrumentiOtConfig['PL'][0])
 
 genHorizontOtvoriGCodeValue = IntVar()
 genVertikalOtvoriGCodeValue = IntVar()
